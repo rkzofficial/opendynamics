@@ -19,6 +19,12 @@ bunx convex deploy                # Deploy to production
 
 **Note**: No test framework or linter is currently configured. Use TypeScript strict mode for type checking.
 
+## API Documentation
+
+For Dynamics 365 CRM API details, refer to:
+- [`dynamics_crm_api_complete_reference.md`](./dynamics_crm_api_complete_reference.md) - Complete API reference for Microsoft Dynamics 365 Dataverse Web API (OData v4.0)
+- [`dynamics_crm_integration_guide.md`](./dynamics_crm_integration_guide.md) - Integration guide covering case management workflows and authentication
+
 ## Code Style Guidelines
 
 ### TypeScript & JavaScript

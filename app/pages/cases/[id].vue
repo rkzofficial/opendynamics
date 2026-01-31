@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
+import { processEmailHtml } from '~/utils/email-processor'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,6 +90,13 @@ function getActivityIcon(activityType: string) {
   }
 }
 
+function getActivityContent(activity: Activity): string {
+  if (activity.activitytypecode === 'email' && activity.attachments) {
+    return processEmailHtml(activity.description || '', activity.attachments)
+  }
+  return activity.description || ''
+}
+
 interface TimelineItem {
   id: string
   type: 'activity' | 'annotation'
@@ -142,20 +150,22 @@ const timelineItems = computed<TimelineItem[]>(() => {
 
     <template v-else-if="currentCase">
       <!-- Case header -->
-      <div class="flex items-start justify-between">
-        <div>
-          <div class="flex items-center gap-3 mb-2">
-            <span class="text-sm font-medium text-muted-foreground">
-              {{ currentCase.ticketnumber }}
-            </span>
-            <UiBadge :variant="getStatusVariant(currentCase.statecode)">
-              {{ getStatusLabel(currentCase.statecode) }}
-            </UiBadge>
-            <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
-              {{ getPriorityLabel(currentCase.prioritycode) }}
-            </UiBadge>
+      <div class="sticky top-16 z-30 -mx-4 -mt-4 mb-6 bg-background px-4 py-4 md:-mx-6 md:-mt-6 md:px-6 md:py-6 border-b">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-sm font-medium text-muted-foreground">
+                {{ currentCase.ticketnumber }}
+              </span>
+              <UiBadge :variant="getStatusVariant(currentCase.statecode)">
+                {{ getStatusLabel(currentCase.statecode) }}
+              </UiBadge>
+              <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
+                {{ getPriorityLabel(currentCase.prioritycode) }}
+              </UiBadge>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">{{ currentCase.title }}</h1>
           </div>
-          <h1 class="text-2xl font-bold tracking-tight">{{ currentCase.title }}</h1>
         </div>
       </div>
 
@@ -257,7 +267,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
                           ? 'bg-white text-gray-900 border-gray-200'
                           : 'text-muted-foreground border-transparent'
                       ]"
-                      v-html="(item.data as Activity).description || ''"
+                      v-html="getActivityContent(item.data as Activity)"
                     />
                     <p
                       v-else
@@ -276,7 +286,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-6">
+        <div class="space-y-6 lg:sticky lg:top-48 lg:self-start">
           <!-- Case info -->
           <UiCard>
             <UiCardHeader>
@@ -315,6 +325,36 @@ const timelineItems = computed<TimelineItem[]>(() => {
                   <p class="text-sm text-muted-foreground">Modified</p>
                   <p class="text-sm">{{ formatDate(currentCase.modifiedon) }}</p>
                 </div>
+              </div>
+              <UiSeparator />
+              <div>
+                <p class="text-sm text-muted-foreground">First Response SLA</p>
+                <p class="text-sm">{{ currentCase.responseby ? formatDate(currentCase.responseby) : 'Not set' }}</p>
+              </div>
+              <UiSeparator />
+              <div>
+                <p class="text-sm text-muted-foreground">Customer Update SLA</p>
+                <p class="text-sm">{{ currentCase.followupby ? formatDate(currentCase.followupby) : 'Not set' }}</p>
+              </div>
+              <UiSeparator />
+              <div>
+                <p class="text-sm text-muted-foreground">Support Plan</p>
+                <p class="text-sm">{{ currentCase.entitlementid?.name || 'Not set' }}</p>
+              </div>
+              <UiSeparator />
+              <div>
+                <p class="text-sm text-muted-foreground">Primary Contact</p>
+                <p class="text-sm">{{ currentCase.primarycontactid?.fullname || 'Not set' }}</p>
+              </div>
+              <UiSeparator />
+              <div>
+                <p class="text-sm text-muted-foreground">Org</p>
+                <p class="text-sm">{{ currentCase.customerid_account?.name || 'Not set' }}</p>
+              </div>
+              <UiSeparator />
+              <div>
+                <p class="text-sm text-muted-foreground">Additional Contact Name</p>
+                <p class="text-sm">{{ currentCase.additionalContactName || 'Not set' }}</p>
               </div>
             </UiCardContent>
           </UiCard>

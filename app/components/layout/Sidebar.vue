@@ -54,7 +54,7 @@ function isActive(href: string) {
   <!-- Sidebar -->
   <aside
     :class="[
-      'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r bg-background transition-transform duration-300 md:static md:translate-x-0',
+      'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r bg-background transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0',
       isOpen ? 'translate-x-0' : '-translate-x-full'
     ]"
   >

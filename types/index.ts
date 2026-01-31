@@ -38,6 +38,33 @@ export interface Case {
   ownerid?: {
     fullname?: string
   }
+  // SLA and deadline fields
+  responseby?: string
+  followupby?: string
+  // Support plan / entitlement
+  _entitlementid_value?: string
+  entitlementid?: {
+    name?: string
+  }
+  // Primary contact
+  _primarycontactid_value?: string
+  primarycontactid?: {
+    fullname?: string
+  }
+  // Organization/Account
+  _accountid_value?: string
+  customerid_account?: {
+    name?: string
+  }
+  // Additional contact (field name to be determined)
+  additionalContactName?: string
+}
+
+export interface ActivityAttachment {
+  activitymimeattachmentid: string
+  filename: string
+  mimetype: string
+  body: string // base64 encoded
 }
 
 export interface Activity {
@@ -54,6 +81,7 @@ export interface Activity {
     title?: string
     ticketnumber?: string
   }
+  attachments?: ActivityAttachment[]
 }
 
 export interface Email extends Activity {

@@ -80,21 +80,52 @@ export class DynamicsApiClient {
 
   async getCase(incidentId: string): Promise<unknown> {
     const query = buildODataQuery({
-      select: ['incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode', 'createdon', 'modifiedon', '_customerid_value', '_ownerid_value'],
-      expand: ['customerid_contact($select=fullname,emailaddress1)', 'owninguser($select=fullname)'],
+      select: [
+        'incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode',
+        'createdon', 'modifiedon', '_customerid_value', '_ownerid_value',
+        'responseby', 'followupby', '_entitlementid_value', '_primarycontactid_value', '_accountid_value'
+      ],
+      expand: [
+        'customerid_contact($select=fullname,emailaddress1)',
+        'owninguser($select=fullname)',
+        'entitlementid($select=name)',
+        'primarycontactid($select=fullname)',
+        'customerid_account($select=name)'
+      ],
     })
 
     return this.fetch(`/incidents(${incidentId})${query}`)
   }
 
   async getCaseActivities(incidentId: string): Promise<{ value: unknown[] }> {
+    // First get all activities
     const query = buildODataQuery({
       select: ['activityid', 'subject', 'activitytypecode', 'createdon', 'modifiedon', 'description', 'statecode', 'statuscode'],
       filter: `_regardingobjectid_value eq ${incidentId} and activitytypecode ne 'ent_notificationactivity'`,
       orderby: 'createdon desc',
     })
 
-    return this.fetch(`/activitypointers${query}`)
+    const activities = await this.fetch<{ value: unknown[] }>(`/activitypointers${query}`)
+
+    // For each email activity, fetch attachments
+    for (const activity of activities.value) {
+      const act = activity as Record<string, unknown>
+      if (act.activitytypecode === 'email') {
+        try {
+          const attachmentQuery = buildODataQuery({
+            select: ['activitymimeattachmentid', 'filename', 'mimetype', 'body'],
+            filter: `_objectid_value eq ${act.activityid}`,
+          })
+          const attachments = await this.fetch<{ value: unknown[] }>(`/activitymimeattachments${attachmentQuery}`)
+          ;(act as Record<string, unknown>).attachments = attachments.value
+        } catch {
+          // If attachments fail to load, continue without them
+          (act as Record<string, unknown>).attachments = []
+        }
+      }
+    }
+
+    return activities
   }
 
   async getCaseAnnotations(incidentId: string): Promise<{ value: unknown[] }> {

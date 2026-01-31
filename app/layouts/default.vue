@@ -36,7 +36,7 @@ watch(isAuthenticated, (value) => {
     <div class="flex flex-1 flex-col">
       <LayoutHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
-      <main class="flex-1 overflow-y-auto p-4 md:p-6">
+      <main class="flex-1 p-4 md:p-6">
         <slot />
       </main>
     </div>
