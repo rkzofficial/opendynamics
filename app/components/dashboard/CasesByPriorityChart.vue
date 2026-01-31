@@ -16,7 +16,11 @@ const chartData = computed(() => ({
     {
       label: 'Cases',
       data: props.data.map((d) => d.count),
-      backgroundColor: ['#ef4444', '#eab308', '#6b7280'],
+      backgroundColor: [
+        'hsl(0 84.2% 60.2%)',
+        'hsl(45 93.4% 47.5%)',
+        'hsl(var(--muted-foreground))',
+      ],
       borderWidth: 0,
       borderRadius: 4,
     },

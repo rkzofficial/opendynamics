@@ -15,7 +15,7 @@ const chartData = computed(() => ({
   datasets: [
     {
       data: [props.value, 100 - props.value],
-      backgroundColor: ['#22c55e', '#e5e7eb'],
+      backgroundColor: ['hsl(142.1 70.6% 45.3%)', 'hsl(var(--muted))'],
       borderWidth: 0,
     },
   ],

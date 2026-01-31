@@ -8,6 +8,13 @@ import type { Id } from '@convex/_generated/dataModel'
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
+  if (user.role === 'admin') {
+    throw createError({
+      statusCode: 403,
+      message: 'Administrators cannot connect Dynamics accounts',
+    })
+  }
+
   const body = await readBody(event)
   const { deviceCode } = body
 

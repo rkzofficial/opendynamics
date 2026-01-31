@@ -1,7 +1,10 @@
 import { getDynamicsClient } from '../../utils/dynamics'
 
 export default defineEventHandler(async (event) => {
-  const dynamics = await getDynamicsClient(event)
+  const query = getQuery(event)
+  const userId = query.userId as string | undefined
+
+  const dynamics = await getDynamicsClient(event, userId)
   const caseId = getRouterParam(event, 'id')
 
   if (!caseId) {

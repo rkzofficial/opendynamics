@@ -39,13 +39,15 @@ function close() {
           )"
         >
           <!-- Close button -->
-          <button
-            class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+          <UiButton
+            variant="ghost"
+            size="icon"
+            class="absolute right-4 top-4 h-8 w-8 rounded-sm opacity-70 hover:opacity-100"
             @click="close"
           >
             <X class="h-4 w-4" />
             <span class="sr-only">Close</span>
-          </button>
+          </UiButton>
 
           <!-- Header -->
           <div v-if="title || description" class="flex flex-col space-y-1.5 text-center sm:text-left">

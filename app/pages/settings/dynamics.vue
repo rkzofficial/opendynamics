@@ -6,13 +6,6 @@ const { isAdmin } = useAuth()
 const { connectionStatus, fetchConnectionStatus, startDeviceCodeFlow, pollForToken, disconnect, cancelConnect, deviceCode, isConnecting } = useDynamics()
 const router = useRouter()
 
-// Redirect non-admins
-onMounted(() => {
-  if (!isAdmin()) {
-    router.push('/')
-  }
-})
-
 const config = reactive<DynamicsConfig>({
   clientId: '51f81489-12ee-4a9e-aaae-a2591f45987d',
   tenantId: '',
@@ -191,7 +184,7 @@ onUnmounted(() => {
           </div>
 
           <UiButton
-            v-if="connectionStatus?.connected"
+            v-if="connectionStatus?.connected && !isAdmin()"
             variant="outline"
             @click="handleDisconnect"
           >
@@ -199,16 +192,19 @@ onUnmounted(() => {
             Disconnect
           </UiButton>
           <UiButton
-            v-else-if="!isConnecting"
+            v-else-if="!isConnecting && !isAdmin()"
             @click="handleConnect"
           >
             <Link2 class="mr-2 h-4 w-4" />
             Connect
           </UiButton>
+          <p v-if="isAdmin()" class="text-sm text-muted-foreground">
+            Administrators cannot connect Dynamics accounts
+          </p>
         </div>
 
-        <!-- Device Code Dialog -->
-        <div v-if="deviceCode" class="mt-6 p-4 border rounded-lg bg-muted/50">
+        <!-- Device Code Dialog - Not for admins -->
+        <div v-if="deviceCode && !isAdmin()" class="mt-6 p-4 border rounded-lg bg-muted/50">
           <h4 class="font-medium mb-2">Complete Authentication</h4>
           <p class="text-sm text-muted-foreground mb-4">
             {{ deviceCode.message }}
@@ -248,8 +244,8 @@ onUnmounted(() => {
       </UiCardContent>
     </UiCard>
 
-    <!-- Configuration -->
-    <UiCard>
+    <!-- Configuration - Admin Only -->
+    <UiCard v-if="isAdmin()">
       <UiCardHeader>
         <UiCardTitle>Dynamics Configuration</UiCardTitle>
         <UiCardDescription>

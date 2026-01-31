@@ -5,7 +5,14 @@ import { decryptJson } from '../../utils/encryption'
 import { startDeviceCodeFlow } from '../../services/dynamics-api'
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event)
+  const user = await requireAuth(event)
+
+  if (user.role === 'admin') {
+    throw createError({
+      statusCode: 403,
+      message: 'Administrators cannot connect Dynamics accounts',
+    })
+  }
 
   const config = useRuntimeConfig()
   const convex = getConvexClient()

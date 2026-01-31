@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LogOut, User, Link2 } from 'lucide-vue-next'
+import { LogOut, User } from 'lucide-vue-next'
 
 const { user, logout, isAdmin } = useAuth()
 const router = useRouter()
@@ -33,10 +33,6 @@ function goToProfile() {
       <UiDropdownMenuItem @click="goToProfile(); close()">
         <User class="mr-2 h-4 w-4" />
         Profile
-      </UiDropdownMenuItem>
-      <UiDropdownMenuItem v-if="isAdmin()" @click="router.push('/settings/dynamics'); close()">
-        <Link2 class="mr-2 h-4 w-4" />
-        Dynamics Connection
       </UiDropdownMenuItem>
       <UiSeparator class="my-1" />
       <UiDropdownMenuItem destructive @click="handleLogout(); close()">

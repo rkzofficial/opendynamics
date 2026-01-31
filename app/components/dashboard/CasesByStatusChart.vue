@@ -15,7 +15,11 @@ const chartData = computed(() => ({
   datasets: [
     {
       data: props.data.map((d) => d.count),
-      backgroundColor: ['#3b82f6', '#22c55e', '#6b7280'],
+      backgroundColor: [
+        'hsl(217.2 91.2% 59.8%)',
+        'hsl(142.1 70.6% 45.3%)',
+        'hsl(var(--muted-foreground))',
+      ],
       borderWidth: 0,
     },
   ],

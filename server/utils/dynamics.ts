@@ -6,13 +6,24 @@ import { decryptJson, decrypt, encrypt } from './encryption'
 import { DynamicsApiClient, refreshAccessToken } from '../services/dynamics-api'
 import type { Id } from '@convex/_generated/dataModel'
 
-export async function getDynamicsClient(event: H3Event): Promise<DynamicsApiClient> {
+export async function getDynamicsClient(event: H3Event, targetUserId?: string): Promise<DynamicsApiClient> {
   const user = await requireAuth(event)
   const config = useRuntimeConfig()
   const convex = getConvexClient()
 
+  // If admin is requesting to view another user's cases
+  let effectiveUserId = user._id
+  if (targetUserId && user.role === 'admin') {
+    effectiveUserId = targetUserId
+  } else if (targetUserId && user.role !== 'admin') {
+    throw createError({
+      statusCode: 403,
+      message: 'Only administrators can view other users\' cases',
+    })
+  }
+
   // Get user's tokens
-  const tokens = await convex.query(api.tokens.getForUser, { userId: user._id as Id<'users'> })
+  const tokens = await convex.query(api.tokens.getForUser, { userId: effectiveUserId as Id<'users'> })
 
   if (!tokens) {
     throw createError({
@@ -60,7 +71,7 @@ export async function getDynamicsClient(event: H3Event): Promise<DynamicsApiClie
       const encryptedRefreshToken = encrypt(refreshToken, config.encryptionKey)
 
       await convex.mutation(api.tokens.save, {
-        userId: user._id as Id<'users'>,
+        userId: effectiveUserId as Id<'users'>,
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
         expiresAt,

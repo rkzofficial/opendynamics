@@ -136,3 +136,30 @@ export const getConnectionStatus = query({
     };
   },
 });
+
+// Get all users with Dynamics tokens (for admin)
+export const getUsersWithTokens = query({
+  args: {},
+  handler: async (ctx) => {
+    const tokens = await ctx.db.query("dynamicsTokens").collect();
+    
+    const usersWithTokens = [];
+    
+    for (const token of tokens) {
+      const user = await ctx.db.get(token.userId);
+      if (user) {
+        usersWithTokens.push({
+          _id: user._id,
+          username: user.username,
+          name: user.name,
+          email: token.email || user.email,
+          role: user.role,
+          connected: true,
+          expiresAt: token.expiresAt,
+        });
+      }
+    }
+    
+    return usersWithTokens;
+  },
+});

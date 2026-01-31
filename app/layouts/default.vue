@@ -3,9 +3,11 @@ const sidebarOpen = ref(false)
 
 const { fetchSession, isLoading, isAuthenticated } = useAuth()
 const { fetchConnectionStatus } = useDynamics()
+const { initTheme } = useTheme()
 const router = useRouter()
 
 onMounted(async () => {
+  initTheme()
   await fetchSession()
 
   if (!isAuthenticated.value) {

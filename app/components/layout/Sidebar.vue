@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LayoutDashboard, FolderOpen, Settings, X, Link2 } from 'lucide-vue-next'
+import { LayoutDashboard, FolderOpen, X, Link2, Users, Eye } from 'lucide-vue-next'
 
 interface Props {
   isOpen: boolean
@@ -21,8 +21,17 @@ const navigation = computed(() => {
     { name: 'Cases', href: '/cases', icon: FolderOpen },
   ]
 
+  // Add admin-only navigation items
   if (isAdmin()) {
-    items.push({ name: 'Settings', href: '/settings', icon: Settings })
+    items.push(
+      { name: 'User Cases', href: '/admin/cases', icon: Eye },
+      { name: 'Users', href: '/settings/users', icon: Users }
+    )
+  }
+
+  // Only show Connect Dynamics for non-admin users
+  if (!isAdmin()) {
+    items.push({ name: 'Connect Dynamics', href: '/settings/dynamics', icon: Link2 })
   }
 
   return items
@@ -59,12 +68,14 @@ function isActive(href: string) {
         </div>
         <span>OpenDynamics</span>
       </NuxtLink>
-      <button
-        class="md:hidden rounded-md p-2 hover:bg-accent"
+      <UiButton
+        variant="ghost"
+        size="icon"
+        class="md:hidden"
         @click="emit('close')"
       >
         <X class="h-5 w-5" />
-      </button>
+      </UiButton>
     </div>
 
     <!-- Navigation -->
@@ -86,20 +97,20 @@ function isActive(href: string) {
       </NuxtLink>
     </nav>
 
-    <!-- Connection status -->
-    <div class="border-t p-4">
+    <!-- Connection status - Not shown for admins -->
+    <div v-if="!isAdmin()" class="border-t p-4">
       <div class="flex items-center gap-3 rounded-lg bg-muted px-3 py-2">
         <Link2 class="h-5 w-5" />
         <div class="flex-1 text-sm">
           <div class="font-medium">Dynamics CRM</div>
-          <div :class="connectionStatus?.connected ? 'text-green-600' : 'text-muted-foreground'">
+          <div :class="connectionStatus?.connected ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'">
             {{ connectionStatus?.connected ? 'Connected' : 'Not connected' }}
           </div>
         </div>
         <div
           :class="[
             'h-2 w-2 rounded-full',
-            connectionStatus?.connected ? 'bg-green-500' : 'bg-muted-foreground'
+            connectionStatus?.connected ? 'bg-emerald-500' : 'bg-muted-foreground'
           ]"
         />
       </div>

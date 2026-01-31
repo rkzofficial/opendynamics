@@ -1,8 +1,10 @@
 <script setup lang="ts">
 const { fetchSession, isLoading, isAuthenticated } = useAuth()
+const { initTheme } = useTheme()
 const router = useRouter()
 
 onMounted(async () => {
+  initTheme()
   await fetchSession()
 
   if (isAuthenticated.value) {

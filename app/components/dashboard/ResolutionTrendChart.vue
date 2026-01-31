@@ -19,8 +19,8 @@ const chartData = computed(() => ({
     {
       label: 'Avg Resolution Time (hours)',
       data: props.data.map((d) => d.avgHours),
-      borderColor: '#3b82f6',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderColor: 'hsl(217.2 91.2% 59.8%)',
+      backgroundColor: 'hsla(217.2 91.2% 59.8% / 0.1)',
       fill: true,
       tension: 0.4,
     },
