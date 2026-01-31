@@ -1,9 +1,9 @@
-import { api } from '../../../convex/_generated/api'
+import { api } from '@convex/_generated/api'
 import { getConvexClient } from '../../utils/convex'
 import { requireAuth } from '../../utils/auth'
 import { decryptJson, decrypt, encrypt } from '../../utils/encryption'
 import { refreshAccessToken } from '../../services/dynamics-api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import type { Id } from '@convex/_generated/dataModel'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)

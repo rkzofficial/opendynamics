@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { api } from '../../convex/_generated/api'
+import { api } from '@convex/_generated/api'
 import { getConvexClient } from './convex'
 
 export interface AuthUser {

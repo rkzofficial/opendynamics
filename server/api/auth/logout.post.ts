@@ -1,4 +1,4 @@
-import { api } from '../../../convex/_generated/api'
+import { api } from '@convex/_generated/api'
 import { getConvexClient } from '../../utils/convex'
 
 export default defineEventHandler(async (event) => {

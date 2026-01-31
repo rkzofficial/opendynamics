@@ -1,10 +1,10 @@
 import type { H3Event } from 'h3'
-import { api } from '../../convex/_generated/api'
+import { api } from '@convex/_generated/api'
 import { getConvexClient } from './convex'
 import { requireAuth } from './auth'
 import { decryptJson, decrypt, encrypt } from './encryption'
 import { DynamicsApiClient, refreshAccessToken } from '../services/dynamics-api'
-import type { Id } from '../../convex/_generated/dataModel'
+import type { Id } from '@convex/_generated/dataModel'
 
 export async function getDynamicsClient(event: H3Event): Promise<DynamicsApiClient> {
   const user = await requireAuth(event)

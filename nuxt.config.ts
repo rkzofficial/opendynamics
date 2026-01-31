@@ -1,3 +1,8 @@
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const currentDir = dirname(fileURLToPath(import.meta.url))
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -9,6 +14,10 @@ export default defineNuxtConfig({
   ],
 
   css: ['~/assets/css/main.css'],
+
+  alias: {
+    '@convex': join(currentDir, 'convex'),
+  },
 
   runtimeConfig: {
     sessionSecret: process.env.SESSION_SECRET || 'default-session-secret-change-in-production',
@@ -35,6 +44,9 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    alias: {
+      '@convex': join(currentDir, 'convex'),
+    },
     routeRules: {
       '/api/**': { cors: true },
     },

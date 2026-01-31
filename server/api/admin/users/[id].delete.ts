@@ -1,7 +1,7 @@
-import { api } from '../../../../convex/_generated/api'
+import { api } from '@convex/_generated/api'
 import { getConvexClient } from '../../../utils/convex'
 import { requireAdmin } from '../../../utils/auth'
-import type { Id } from '../../../../convex/_generated/dataModel'
+import type { Id } from '@convex/_generated/dataModel'
 
 export default defineEventHandler(async (event) => {
   const currentUser = await requireAdmin(event)
