@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
 
-  const dynamics = await getDynamicsClient(event, userId)
+  const { client } = await getDynamicsClient(event, userId)
   const caseId = getRouterParam(event, 'id')
 
   if (!caseId) {
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const caseData = await dynamics.getCase(caseId)
+    const caseData = await client.getCase(caseId)
     return caseData
   } catch (error: unknown) {
     const err = error as Error

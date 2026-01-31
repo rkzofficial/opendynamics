@@ -4,8 +4,9 @@ interface CasesState {
   cases: Case[]
   currentCase: Case | null
   activities: ActivitiesResponse | null
-  total: number
-  page: number
+  skipToken: string | null
+  skipTokenHistory: string[]
+  hasMore: boolean
   pageSize: number
   isLoading: boolean
   isLoadingActivities: boolean
@@ -16,8 +17,9 @@ const casesState = reactive<CasesState>({
   cases: [],
   currentCase: null,
   activities: null,
-  total: 0,
-  page: 1,
+  skipToken: null,
+  skipTokenHistory: [],
+  hasMore: false,
   pageSize: 20,
   isLoading: false,
   isLoadingActivities: false,
@@ -37,7 +39,7 @@ export function useCases() {
       if (mergedFilters.search) params.set('search', mergedFilters.search)
       if (mergedFilters.dateFrom) params.set('dateFrom', mergedFilters.dateFrom)
       if (mergedFilters.dateTo) params.set('dateTo', mergedFilters.dateTo)
-      if (mergedFilters.page) params.set('page', String(mergedFilters.page))
+      if (mergedFilters.skipToken) params.set('skipToken', mergedFilters.skipToken)
       if (mergedFilters.pageSize) params.set('pageSize', String(mergedFilters.pageSize))
       if (mergedFilters.orderBy) params.set('orderBy', mergedFilters.orderBy)
       if (mergedFilters.orderDirection) params.set('orderDirection', mergedFilters.orderDirection)
@@ -45,16 +47,42 @@ export function useCases() {
       const response = await $fetch<CasesResponse>(`/api/cases?${params.toString()}`)
 
       casesState.cases = response.cases
-      casesState.total = response.total
-      casesState.page = response.page
+      casesState.skipToken = response.skipToken || null
+      casesState.hasMore = response.hasMore
       casesState.pageSize = response.pageSize
       casesState.filters = mergedFilters
     } catch (error) {
       console.error('Failed to fetch cases:', error)
       casesState.cases = []
+      casesState.skipToken = null
+      casesState.hasMore = false
     } finally {
       casesState.isLoading = false
     }
+  }
+
+  async function fetchNextPage() {
+    if (!casesState.skipToken) return
+
+    // Save current skip token to history before navigating
+    if (casesState.filters.skipToken) {
+      casesState.skipTokenHistory.push(casesState.filters.skipToken)
+    }
+
+    await fetchCases({ skipToken: casesState.skipToken })
+  }
+
+  async function fetchPreviousPage() {
+    if (casesState.skipTokenHistory.length === 0) {
+      // Go back to first page
+      await fetchCases({ skipToken: undefined })
+      casesState.skipTokenHistory = []
+      return
+    }
+
+    // Pop the previous skip token from history
+    const previousSkipToken = casesState.skipTokenHistory.pop()
+    await fetchCases({ skipToken: previousSkipToken })
   }
 
   async function fetchCase(id: string) {
@@ -106,28 +134,32 @@ export function useCases() {
 
   function clearFilters() {
     casesState.filters = {}
+    casesState.skipToken = null
+    casesState.skipTokenHistory = []
   }
 
-  function setPage(page: number) {
-    casesState.filters.page = page
+  function canGoBack() {
+    return casesState.skipTokenHistory.length > 0 || casesState.filters.skipToken !== undefined
   }
 
   return {
     cases: computed(() => casesState.cases),
     currentCase: computed(() => casesState.currentCase),
     activities: computed(() => casesState.activities),
-    total: computed(() => casesState.total),
-    page: computed(() => casesState.page),
+    skipToken: computed(() => casesState.skipToken),
+    hasMore: computed(() => casesState.hasMore),
     pageSize: computed(() => casesState.pageSize),
     isLoading: computed(() => casesState.isLoading),
     isLoadingActivities: computed(() => casesState.isLoadingActivities),
     filters: computed(() => casesState.filters),
+    canGoBack,
     fetchCases,
+    fetchNextPage,
+    fetchPreviousPage,
     fetchCase,
     fetchActivities,
     addReply,
     setFilters,
     clearFilters,
-    setPage,
   }
 }

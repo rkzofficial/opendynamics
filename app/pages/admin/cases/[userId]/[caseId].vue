@@ -1,40 +1,87 @@
 <script setup lang="ts">
-import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar } from 'lucide-vue-next'
+import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
 
 const route = useRoute()
 const router = useRouter()
-const caseId = route.params.id as string
+const userId = computed(() => route.params.userId as string)
+const caseId = computed(() => route.params.caseId as string)
 
 const {
-  currentCase,
-  activities,
-  isLoading,
-  isLoadingActivities,
-  fetchCase,
-  fetchActivities,
-  addReply,
-} = useCases()
+  users,
+  fetchUsersWithDynamics,
+  fetchCaseDetails,
+} = useAdminCases()
+
+const currentCase = ref<any>(null)
+const activities = ref<any>(null)
+const isLoading = ref(true)
+const isLoadingActivities = ref(false)
+const error = ref('')
 
 const replyText = ref('')
 const replySubject = ref('')
 const isSubmitting = ref(false)
 
-onMounted(async () => {
-  await fetchCase(caseId)
-  await fetchActivities(caseId)
+// Get selected user info
+const selectedUser = computed(() => {
+  return users.value.find(u => u._id === userId.value)
 })
 
+onMounted(async () => {
+  await fetchUsersWithDynamics()
+  await loadCase()
+})
+
+async function loadCase() {
+  if (!userId.value || !caseId.value) return
+  
+  isLoading.value = true
+  error.value = ''
+  
+  try {
+    currentCase.value = await fetchCaseDetails(userId.value, caseId.value)
+    await loadActivities()
+  } catch (e: any) {
+    error.value = e?.data?.message || 'Failed to load case details'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function loadActivities() {
+  if (!userId.value || !caseId.value) return
+  
+  isLoadingActivities.value = true
+  try {
+    activities.value = await $fetch(`/api/cases/${caseId.value}/activities`, {
+      params: { userId: userId.value }
+    })
+  } catch (e) {
+    console.error('Failed to load activities:', e)
+  } finally {
+    isLoadingActivities.value = false
+  }
+}
+
 async function handleSubmitReply() {
-  if (!replyText.value.trim()) return
+  if (!replyText.value.trim() || !userId.value || !caseId.value) return
 
   isSubmitting.value = true
   try {
-    const result = await addReply(caseId, replyText.value, replySubject.value || undefined)
-    if (result.success) {
-      replyText.value = ''
-      replySubject.value = ''
-    }
+    await $fetch(`/api/cases/${caseId.value}/reply`, {
+      method: 'POST',
+      params: { userId: userId.value },
+      body: {
+        text: replyText.value,
+        subject: replySubject.value || undefined
+      }
+    })
+    replyText.value = ''
+    replySubject.value = ''
+    await loadActivities()
+  } catch (e) {
+    console.error('Failed to add reply:', e)
   } finally {
     isSubmitting.value = false
   }
@@ -89,6 +136,13 @@ function getActivityIcon(activityType: string) {
   }
 }
 
+function getUserDisplayName(user: typeof selectedUser.value): string {
+  if (!user) return 'Unknown User'
+  if (user.name) return `${user.name} (${user.username})`
+  if (user.email) return `${user.username} (${user.email})`
+  return user.username
+}
+
 interface TimelineItem {
   id: string
   type: 'activity' | 'annotation'
@@ -124,21 +178,50 @@ const timelineItems = computed<TimelineItem[]>(() => {
   // Sort by date descending
   return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 })
+
+function goBack() {
+  router.push(`/admin/cases/${userId.value}`)
+}
 </script>
 
 <template>
   <div class="space-y-6">
     <!-- Back button -->
-    <UiButton variant="ghost" @click="router.push('/cases')">
-      <ArrowLeft class="mr-2 h-4 w-4" />
-      Back to Cases
-    </UiButton>
+    <div class="flex items-center gap-4">
+      <UiButton variant="ghost" @click="goBack">
+        <ArrowLeft class="mr-2 h-4 w-4" />
+        Back to Cases
+      </UiButton>
+    </div>
+
+    <!-- User info card -->
+    <UiCard class="bg-muted/50">
+      <UiCardContent class="py-4">
+        <div class="flex items-center gap-3">
+          <div class="rounded-full bg-primary/10 p-2">
+            <Users class="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p class="text-sm text-muted-foreground">Viewing case for user</p>
+            <p class="font-medium">
+              {{ getUserDisplayName(selectedUser) }}
+            </p>
+          </div>
+        </div>
+      </UiCardContent>
+    </UiCard>
 
     <!-- Loading state -->
     <div v-if="isLoading" class="space-y-4">
       <UiSkeleton class="h-8 w-64" />
       <UiSkeleton class="h-48 w-full" />
     </div>
+
+    <!-- Error state -->
+    <UiAlert v-else-if="error" variant="destructive">
+      <AlertTriangle class="h-4 w-4" />
+      <UiAlertDescription>{{ error }}</UiAlertDescription>
+    </UiAlert>
 
     <template v-else-if="currentCase">
       <!-- Case header -->
@@ -349,8 +432,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
     <UiCard v-else>
       <UiCardContent class="py-12 text-center">
         <p class="text-muted-foreground">Case not found</p>
-        <UiButton variant="outline" class="mt-4" @click="router.push('/cases')">
-          Go to Cases
+        <UiButton variant="outline" class="mt-4" @click="goBack">
+          Go Back
         </UiButton>
       </UiCardContent>
     </UiCard>

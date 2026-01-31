@@ -77,6 +77,7 @@ export default defineEventHandler(async (event) => {
       refreshToken: encryptedRefreshToken,
       expiresAt,
       organizationId: whoAmI.OrganizationId,
+      dynamicsUserId: whoAmI.UserId,
     })
 
     return {

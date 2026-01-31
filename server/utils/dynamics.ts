@@ -6,7 +6,12 @@ import { decryptJson, decrypt, encrypt } from './encryption'
 import { DynamicsApiClient, refreshAccessToken } from '../services/dynamics-api'
 import type { Id } from '@convex/_generated/dataModel'
 
-export async function getDynamicsClient(event: H3Event, targetUserId?: string): Promise<DynamicsApiClient> {
+export interface DynamicsClientResult {
+  client: DynamicsApiClient
+  dynamicsUserId?: string
+}
+
+export async function getDynamicsClient(event: H3Event, targetUserId?: string): Promise<DynamicsClientResult> {
   const user = await requireAuth(event)
   const config = useRuntimeConfig()
   const convex = getConvexClient()
@@ -86,9 +91,14 @@ export async function getDynamicsClient(event: H3Event, targetUserId?: string): 
     }
   }
 
-  return new DynamicsApiClient(dynamicsConfig, {
+  const client = new DynamicsApiClient(dynamicsConfig, {
     accessToken,
     refreshToken,
     expiresAt,
   })
+
+  return {
+    client,
+    dynamicsUserId: tokens.dynamicsUserId,
+  }
 }

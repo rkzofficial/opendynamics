@@ -49,19 +49,39 @@ export class DynamicsApiClient {
     return this.fetch('/WhoAmI')
   }
 
-  async getCases(queryOptions?: ODataQueryOptions): Promise<{ value: unknown[]; '@odata.count'?: number }> {
+  async getCases(queryOptions?: ODataQueryOptions, ownerId?: string): Promise<{ value: unknown[]; nextSkipToken?: string }> {
+    // Build filter with owner constraint if provided
+    let filter = queryOptions?.filter
+    if (ownerId) {
+      const ownerFilter = `_ownerid_value eq ${ownerId}`
+      filter = filter ? `${filter} and ${ownerFilter}` : ownerFilter
+    }
+
     const query = buildODataQuery({
       select: ['incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode', 'createdon', 'modifiedon', '_customerid_value', '_ownerid_value'],
       ...queryOptions,
+      filter,
     })
 
-    return this.fetch(`/incidents${query}`)
+    const response = await this.fetch<{ value: unknown[]; '@odata.nextLink'?: string }>(`/incidents${query}`)
+
+    // Extract skip token from nextLink if present
+    let nextSkipToken: string | undefined
+    if (response['@odata.nextLink']) {
+      const nextLinkUrl = new URL(response['@odata.nextLink'])
+      nextSkipToken = nextLinkUrl.searchParams.get('$skiptoken') || undefined
+    }
+
+    return {
+      value: response.value,
+      nextSkipToken,
+    }
   }
 
   async getCase(incidentId: string): Promise<unknown> {
     const query = buildODataQuery({
       select: ['incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode', 'createdon', 'modifiedon', '_customerid_value', '_ownerid_value'],
-      expand: ['customerid_contact($select=fullname,emailaddress1)', 'ownerid($select=fullname)'],
+      expand: ['customerid_contact($select=fullname,emailaddress1)', 'owninguser($select=fullname)'],
     })
 
     return this.fetch(`/incidents(${incidentId})${query}`)
@@ -70,7 +90,7 @@ export class DynamicsApiClient {
   async getCaseActivities(incidentId: string): Promise<{ value: unknown[] }> {
     const query = buildODataQuery({
       select: ['activityid', 'subject', 'activitytypecode', 'createdon', 'modifiedon', 'description', 'statecode', 'statuscode'],
-      filter: `_regardingobjectid_value eq ${incidentId}`,
+      filter: `_regardingobjectid_value eq ${incidentId} and activitytypecode ne 'ent_notificationactivity'`,
       orderby: 'createdon desc',
     })
 
@@ -162,7 +182,7 @@ export class DynamicsApiClient {
       const date = new Date()
       date.setDate(date.getDate() - i)
       resolutionTimeTrend.push({
-        date: date.toISOString().split('T')[0],
+        date: date.toISOString().split('T')[0] || '',
         avgHours: Math.random() * 24 + 12, // Mock data
       })
     }
@@ -177,7 +197,7 @@ export class DynamicsApiClient {
 }
 
 // Device code flow functions
-export async function startDeviceCodeFlow(clientId: string, tenantId: string): Promise<{
+export async function startDeviceCodeFlow(clientId: string, tenantId: string, orgUrl: string): Promise<{
   device_code: string
   user_code: string
   verification_uri: string
@@ -192,7 +212,7 @@ export async function startDeviceCodeFlow(clientId: string, tenantId: string): P
     },
     body: new URLSearchParams({
       client_id: clientId,
-      scope: 'https://admin.services.crm.dynamics.com/.default offline_access',
+      scope: `${orgUrl}/user_impersonation offline_access`,
     }),
   })
 

@@ -1,7 +1,7 @@
 import { getDynamicsClient } from '../../../utils/dynamics'
 
 export default defineEventHandler(async (event) => {
-  const dynamics = await getDynamicsClient(event)
+  const { client } = await getDynamicsClient(event)
   const caseId = getRouterParam(event, 'id')
 
   if (!caseId) {
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await dynamics.createAnnotation(caseId, noteText, subject)
+    await client.createAnnotation(caseId, noteText, subject)
     return { success: true }
   } catch (error: unknown) {
     const err = error as Error

@@ -5,6 +5,7 @@ export interface ODataQueryOptions {
   orderby?: string
   top?: number
   skip?: number
+  skipToken?: string
   count?: boolean
 }
 
@@ -39,6 +40,10 @@ export function buildODataQuery(options: ODataQueryOptions): string {
     params.push('$count=true')
   }
 
+  if (options.skipToken) {
+    params.push(`$skiptoken=${encodeURIComponent(options.skipToken)}`)
+  }
+
   return params.length > 0 ? `?${params.join('&')}` : ''
 }
 
@@ -48,6 +53,7 @@ export function buildCaseFilter(filters: {
   search?: string
   dateFrom?: string
   dateTo?: string
+  ownerId?: string
 }): string {
   const conditions: string[] = []
 
@@ -90,6 +96,10 @@ export function buildCaseFilter(filters: {
 
   if (filters.dateTo) {
     conditions.push(`createdon le ${filters.dateTo}`)
+  }
+
+  if (filters.ownerId) {
+    conditions.push(`_ownerid_value eq ${filters.ownerId}`)
   }
 
   return conditions.join(' and ')

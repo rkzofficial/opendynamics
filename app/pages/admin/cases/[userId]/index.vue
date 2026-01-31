@@ -9,15 +9,16 @@ const userId = computed(() => route.params.userId as string)
 const {
   users,
   cases,
-  totalCases: total,
+  hasMore,
+  pageSize,
   loading: isLoading,
+  canGoBack,
+  resetPagination,
   fetchUsersWithDynamics,
   fetchUserCases,
+  fetchNextPage,
+  fetchPreviousPage,
 } = useAdminCases()
-
-// Pagination
-const page = ref(1)
-const pageSize = ref(20)
 
 // Filters
 const searchQuery = ref('')
@@ -38,22 +39,25 @@ const priorityOptions = [
   { value: 'low', label: 'Low' },
 ]
 
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
-
 // Get selected user info
 const selectedUser = computed(() => {
   return users.value.find(u => u._id === userId.value)
 })
 
+function getCurrentFilters() {
+  return {
+    status: statusFilter.value || undefined,
+    priority: priorityFilter.value || undefined,
+    search: searchQuery.value || undefined,
+  }
+}
+
 async function loadCases() {
   if (!userId.value) return
   
   await fetchUserCases(userId.value, {
-    page: page.value,
     pageSize: pageSize.value,
-    status: statusFilter.value || undefined,
-    priority: priorityFilter.value || undefined,
-    search: searchQuery.value || undefined,
+    ...getCurrentFilters(),
   })
 }
 
@@ -63,13 +67,8 @@ onMounted(async () => {
   await loadCases()
 })
 
-// Watch for page changes
-watch(page, () => {
-  loadCases()
-})
-
 function applyFilters() {
-  page.value = 1
+  resetPagination()
   loadCases()
 }
 
@@ -77,12 +76,18 @@ function handleClearFilters() {
   searchQuery.value = ''
   statusFilter.value = ''
   priorityFilter.value = ''
-  page.value = 1
+  resetPagination()
   loadCases()
 }
 
-function goToPage(newPage: number) {
-  page.value = newPage
+async function goToNextPage() {
+  if (!userId.value) return
+  await fetchNextPage(userId.value, getCurrentFilters())
+}
+
+async function goToPreviousPage() {
+  if (!userId.value) return
+  await fetchPreviousPage(userId.value, getCurrentFilters())
 }
 
 function goBack() {
@@ -281,24 +286,24 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 pt-4 border-t">
+        <div v-if="canGoBack() || hasMore" class="flex items-center justify-between mt-4 pt-4 border-t">
           <p class="text-sm text-muted-foreground">
-            Showing {{ (page - 1) * pageSize + 1 }} to {{ Math.min(page * pageSize, total) }} of {{ total }} cases
+            Showing {{ cases.length }} cases per page
           </p>
           <div class="flex gap-2">
             <UiButton
               variant="outline"
               size="sm"
-              :disabled="page === 1"
-              @click="goToPage(page - 1)"
+              :disabled="!canGoBack()"
+              @click="goToPreviousPage"
             >
               Previous
             </UiButton>
             <UiButton
               variant="outline"
               size="sm"
-              :disabled="page === totalPages"
-              @click="goToPage(page + 1)"
+              :disabled="!hasMore"
+              @click="goToNextPage"
             >
               Next
             </UiButton>

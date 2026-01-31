@@ -1,7 +1,7 @@
 import { getDynamicsClient } from '../../../utils/dynamics'
 
 export default defineEventHandler(async (event) => {
-  const dynamics = await getDynamicsClient(event)
+  const { client } = await getDynamicsClient(event)
   const caseId = getRouterParam(event, 'id')
 
   if (!caseId) {
@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
 
   try {
     const [activitiesResponse, annotationsResponse] = await Promise.all([
-      dynamics.getCaseActivities(caseId),
-      dynamics.getCaseAnnotations(caseId),
+      client.getCaseActivities(caseId),
+      client.getCaseAnnotations(caseId),
     ])
 
     return {

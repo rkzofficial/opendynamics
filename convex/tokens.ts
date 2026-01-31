@@ -24,6 +24,7 @@ export const getForUser = query({
       expiresAt: token.expiresAt,
       email: token.email,
       organizationId: token.organizationId,
+      dynamicsUserId: token.dynamicsUserId,
     };
   },
 });
@@ -37,6 +38,7 @@ export const save = mutation({
     expiresAt: v.number(),
     email: v.optional(v.string()),
     organizationId: v.optional(v.string()),
+    dynamicsUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -53,6 +55,7 @@ export const save = mutation({
         expiresAt: args.expiresAt,
         email: args.email,
         organizationId: args.organizationId,
+        dynamicsUserId: args.dynamicsUserId,
         updatedAt: now,
       });
       return existing._id;
@@ -64,6 +67,7 @@ export const save = mutation({
         expiresAt: args.expiresAt,
         email: args.email,
         organizationId: args.organizationId,
+        dynamicsUserId: args.dynamicsUserId,
         createdAt: now,
         updatedAt: now,
       });

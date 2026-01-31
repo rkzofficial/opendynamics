@@ -1,17 +1,9 @@
 <script setup lang="ts">
-import { Save, Link2, Unlink, AlertCircle, CheckCircle, Copy, Shield } from 'lucide-vue-next'
+import { Save, Link2, Unlink, AlertCircle, CheckCircle, Copy, Shield, User } from 'lucide-vue-next'
 import type { OIDCConfig, DynamicsConfig } from '~/types'
 
-const { isAdmin } = useAuth()
+const { user, isAdmin } = useAuth()
 const { connectionStatus, fetchConnectionStatus, startDeviceCodeFlow, pollForToken, disconnect, cancelConnect, deviceCode, isConnecting } = useDynamics()
-const router = useRouter()
-
-// Redirect non-admins
-onMounted(() => {
-  if (!isAdmin()) {
-    router.push('/')
-  }
-})
 
 // OIDC Config
 const oidcConfig = reactive<OIDCConfig>({
@@ -178,8 +170,10 @@ async function copyCode() {
 }
 
 onMounted(async () => {
-  await fetchOIDCConfig()
-  await fetchDynamicsConfig()
+  if (isAdmin()) {
+    await fetchOIDCConfig()
+    await fetchDynamicsConfig()
+  }
   await fetchConnectionStatus()
 })
 
@@ -199,8 +193,39 @@ onUnmounted(() => {
       </p>
     </div>
 
-    <!-- OIDC Configuration Section -->
-    <UiCard>
+    <!-- User Profile Section (for non-admins) -->
+    <UiCard v-if="!isAdmin()">
+      <UiCardHeader>
+        <div class="flex items-center gap-3">
+          <div class="rounded-lg bg-primary/10 p-2">
+            <User class="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <UiCardTitle>Profile</UiCardTitle>
+            <UiCardDescription>
+              Your account information
+            </UiCardDescription>
+          </div>
+        </div>
+      </UiCardHeader>
+      <UiCardContent class="space-y-4">
+        <div class="space-y-2">
+          <UiLabel>Username</UiLabel>
+          <p class="text-sm text-muted-foreground">{{ user?.username }}</p>
+        </div>
+        <div class="space-y-2">
+          <UiLabel>Email</UiLabel>
+          <p class="text-sm text-muted-foreground">{{ user?.email || 'Not set' }}</p>
+        </div>
+        <div class="space-y-2">
+          <UiLabel>Name</UiLabel>
+          <p class="text-sm text-muted-foreground">{{ user?.name || 'Not set' }}</p>
+        </div>
+      </UiCardContent>
+    </UiCard>
+
+    <!-- OIDC Configuration Section (admin only) -->
+    <UiCard v-if="isAdmin()">
       <UiCardHeader>
         <div class="flex items-center gap-3">
           <div class="rounded-lg bg-primary/10 p-2">
@@ -292,7 +317,7 @@ onUnmounted(() => {
       </UiCardContent>
     </UiCard>
 
-    <!-- Dynamics Configuration Section -->
+    <!-- Dynamics Connection Section (for all users) -->
     <UiCard>
       <UiCardHeader>
         <div class="flex items-center gap-3">
@@ -300,9 +325,9 @@ onUnmounted(() => {
             <Link2 class="h-5 w-5 text-primary" />
           </div>
           <div>
-            <UiCardTitle>Dynamics Configuration</UiCardTitle>
+            <UiCardTitle>Dynamics CRM Connection</UiCardTitle>
             <UiCardDescription>
-              Configure Microsoft Dynamics 365 CRM settings and manage connection
+              {{ isAdmin() ? 'Configure Microsoft Dynamics 365 CRM settings and manage connection' : 'Connect to Microsoft Dynamics 365 CRM' }}
             </UiCardDescription>
           </div>
         </div>
@@ -400,8 +425,8 @@ onUnmounted(() => {
           </UiButton>
         </div>
 
-        <!-- Configuration Form -->
-        <div class="border-t pt-6">
+        <!-- Dynamics Configuration Section (admin only) -->
+        <div v-if="isAdmin()" class="border-t pt-6">
           <h4 class="text-sm font-medium mb-4">Configuration</h4>
           
           <div v-if="dynamicsLoading" class="space-y-4">

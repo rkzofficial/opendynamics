@@ -1,15 +1,27 @@
 <script setup lang="ts">
 import { Search, Filter, RefreshCw, Link2 } from 'lucide-vue-next'
 
+const { isAdmin } = useAuth()
+const router = useRouter()
+
+// Redirect admins to admin cases page
+onMounted(() => {
+  if (isAdmin()) {
+    router.push('/admin/cases')
+  }
+})
+
 const { connectionStatus } = useDynamics()
 const {
   cases,
-  total,
-  page,
+  hasMore,
   pageSize,
   isLoading,
   filters,
+  canGoBack,
   fetchCases,
+  fetchNextPage,
+  fetchPreviousPage,
   setFilters,
   clearFilters,
 } = useCases()
@@ -32,7 +44,7 @@ const priorityOptions = [
   { value: 'low', label: 'Low' },
 ]
 
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
+
 
 watch(
   () => connectionStatus.value?.connected,
@@ -49,7 +61,7 @@ function applyFilters() {
     search: searchQuery.value,
     status: statusFilter.value as '' | 'active' | 'resolved' | 'cancelled',
     priority: priorityFilter.value as '' | 'high' | 'normal' | 'low',
-    page: 1,
+    skipToken: undefined,
   })
   fetchCases()
 }
@@ -62,10 +74,7 @@ function handleClearFilters() {
   fetchCases()
 }
 
-function goToPage(newPage: number) {
-  setFilters({ page: newPage })
-  fetchCases()
-}
+
 
 function getStatusLabel(statecode: number) {
   switch (statecode) {
@@ -241,24 +250,24 @@ function formatDate(dateString: string) {
           </div>
 
           <!-- Pagination -->
-          <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 pt-4 border-t">
+          <div v-if="canGoBack() || hasMore" class="flex items-center justify-between mt-4 pt-4 border-t">
             <p class="text-sm text-muted-foreground">
-              Showing {{ (page - 1) * pageSize + 1 }} to {{ Math.min(page * pageSize, total) }} of {{ total }} cases
+              Showing {{ cases.length }} cases per page
             </p>
             <div class="flex gap-2">
               <UiButton
                 variant="outline"
                 size="sm"
-                :disabled="page === 1"
-                @click="goToPage(page - 1)"
+                :disabled="!canGoBack()"
+                @click="fetchPreviousPage()"
               >
                 Previous
               </UiButton>
               <UiButton
                 variant="outline"
                 size="sm"
-                :disabled="page === totalPages"
-                @click="goToPage(page + 1)"
+                :disabled="!hasMore"
+                @click="fetchNextPage()"
               >
                 Next
               </UiButton>

@@ -147,7 +147,7 @@ onMounted(fetchUsers)
 <template>
   <div class="space-y-6">
     <div class="flex items-center gap-4">
-      <UiButton variant="ghost" size="icon" @click="router.push('/settings')">
+      <UiButton variant="ghost" size="icon" @click="router.push('/admin')">
         <ArrowLeft class="h-4 w-4" />
       </UiButton>
       <div>

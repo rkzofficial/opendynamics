@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Link2 } from 'lucide-vue-next'
+import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Link2, Users, ArrowLeft } from 'lucide-vue-next'
 import type { DashboardStats, DashboardKPIs, Case } from '~/types'
 
 const { connectionStatus } = useDynamics()
+const { isAdmin } = useAuth()
+const { users, loading: usersLoading, error: usersError, fetchUsersWithDynamics } = useAdminCases()
 
 const stats = ref<DashboardStats | null>(null)
 const kpis = ref<DashboardKPIs | null>(null)
@@ -10,20 +12,43 @@ const recentCases = ref<Case[]>([])
 const isLoading = ref(true)
 const error = ref('')
 
+// Admin-specific state
+const selectedUserId = ref<string | null>(null)
+const selectedUser = computed(() => {
+  if (!selectedUserId.value) return null
+  return users.value.find(u => u._id === selectedUserId.value) || null
+})
+
 async function fetchDashboardData() {
-  if (!connectionStatus.value?.connected) {
-    isLoading.value = false
-    return
+  // For admins, require user selection first
+  if (isAdmin()) {
+    if (!selectedUserId.value) {
+      isLoading.value = false
+      return
+    }
+  } else {
+    // For regular users, check connection status
+    if (!connectionStatus.value?.connected) {
+      isLoading.value = false
+      return
+    }
   }
 
   isLoading.value = true
   error.value = ''
 
   try {
+    const params: Record<string, string> = {}
+    if (isAdmin() && selectedUserId.value) {
+      params.userId = selectedUserId.value
+    }
+
     const [statsResponse, kpisResponse, casesResponse] = await Promise.all([
-      $fetch<DashboardStats>('/api/kpi/dashboard'),
-      $fetch<DashboardKPIs>('/api/kpi/dashboard?type=kpis'),
-      $fetch<{ cases: Case[] }>('/api/cases?pageSize=10&orderBy=createdon&orderDirection=desc'),
+      $fetch<DashboardStats>('/api/kpi/dashboard', { params }),
+      $fetch<DashboardKPIs>('/api/kpi/dashboard', { params: { ...params, type: 'kpis' } }),
+      $fetch<{ cases: Case[] }>('/api/cases', {
+        params: { ...params, pageSize: '10', orderBy: 'createdon', orderDirection: 'desc' },
+      }),
     ])
 
     stats.value = statsResponse
@@ -37,15 +62,37 @@ async function fetchDashboardData() {
   }
 }
 
+// Watch for user selection changes (admin only)
+watch(selectedUserId, () => {
+  if (isAdmin() && selectedUserId.value) {
+    fetchDashboardData()
+  }
+})
+
+// Watch connection status for regular users
 watch(
   () => connectionStatus.value?.connected,
   (connected) => {
-    if (connected) {
+    if (!isAdmin() && connected) {
       fetchDashboardData()
     }
   },
   { immediate: true }
 )
+
+// Fetch users list for admin on mount
+onMounted(() => {
+  if (isAdmin()) {
+    fetchUsersWithDynamics()
+  }
+})
+
+function clearUserSelection() {
+  selectedUserId.value = null
+  stats.value = null
+  kpis.value = null
+  recentCases.value = []
+}
 
 const statCards = computed(() => [
   {
@@ -124,12 +171,90 @@ function formatDate(dateString: string) {
     <div>
       <h1 class="text-3xl font-bold tracking-tight">Dashboard</h1>
       <p class="text-muted-foreground">
-        Overview of your Dynamics CRM cases and metrics
+        <template v-if="isAdmin()">
+          Overview of user Dynamics CRM cases and metrics
+        </template>
+        <template v-else>
+          Overview of your Dynamics CRM cases and metrics
+        </template>
       </p>
     </div>
 
-    <!-- Not connected state -->
-    <UiCard v-if="!connectionStatus?.connected" class="border-dashed">
+    <!-- Admin User Selection -->
+    <template v-if="isAdmin()">
+      <!-- User Selector Card -->
+      <UiCard v-if="!selectedUserId">
+        <UiCardHeader>
+          <div class="flex items-center gap-3">
+            <div class="rounded-full bg-primary/10 p-3">
+              <Users class="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <UiCardTitle>Select a User</UiCardTitle>
+              <UiCardDescription>
+                Choose a user to view their Dynamics CRM dashboard
+              </UiCardDescription>
+            </div>
+          </div>
+        </UiCardHeader>
+        <UiCardContent>
+          <div v-if="usersLoading" class="space-y-4">
+            <UiSkeleton class="h-10 w-full" />
+          </div>
+
+          <UiAlert v-else-if="usersError" variant="destructive">
+            <AlertTriangle class="h-4 w-4" />
+            <UiAlertDescription>{{ usersError }}</UiAlertDescription>
+          </UiAlert>
+
+          <template v-else-if="users.length > 0">
+            <AdminUserSelector
+              v-model="selectedUserId"
+              :users="users"
+              placeholder="Select a user to view their dashboard..."
+            />
+
+            <div class="mt-4 text-sm text-muted-foreground">
+              <p>
+                <strong>{{ users.length }}</strong>
+                {{ users.length === 1 ? 'user has' : 'users have' }} connected their Dynamics account
+              </p>
+            </div>
+          </template>
+
+          <div v-else class="text-center py-8 text-muted-foreground">
+            <Users class="mx-auto h-12 w-12 mb-4 opacity-50" />
+            <p class="text-lg font-medium mb-2">No Connected Users</p>
+            <p>No users have connected their Dynamics CRM account yet.</p>
+          </div>
+        </UiCardContent>
+      </UiCard>
+
+      <!-- Selected User Header -->
+      <UiCard v-else class="bg-muted/50">
+        <UiCardContent class="py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <UiButton variant="ghost" size="icon" @click="clearUserSelection">
+                <ArrowLeft class="h-4 w-4" />
+              </UiButton>
+              <div>
+                <p class="text-sm text-muted-foreground">Viewing dashboard for</p>
+                <p class="font-medium">
+                  {{ selectedUser?.name || selectedUser?.username }}
+                  <span v-if="selectedUser?.email" class="text-muted-foreground">
+                    ({{ selectedUser.email }})
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </UiCardContent>
+      </UiCard>
+    </template>
+
+    <!-- Regular User Not Connected State -->
+    <UiCard v-else-if="!connectionStatus?.connected" class="border-dashed">
       <UiCardContent class="flex flex-col items-center justify-center py-12 text-center">
         <div class="rounded-full bg-muted p-3 mb-4">
           <Link2 class="h-8 w-8 text-muted-foreground" />
@@ -148,7 +273,7 @@ function formatDate(dateString: string) {
     </UiCard>
 
     <!-- Loading state -->
-    <div v-else-if="isLoading" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div v-if="isLoading && (isAdmin() ? selectedUserId : connectionStatus?.connected)" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <UiCard v-for="i in 4" :key="i">
         <UiCardContent class="pt-6">
           <UiSkeleton class="h-4 w-24 mb-2" />
@@ -157,16 +282,23 @@ function formatDate(dateString: string) {
       </UiCard>
     </div>
 
-    <!-- Connected state -->
-    <template v-else>
+    <!-- Dashboard Content -->
+    <template v-if="(isAdmin() && selectedUserId) || (!isAdmin() && connectionStatus?.connected)">
       <!-- Error alert -->
       <UiAlert v-if="error" variant="destructive">
         <AlertTriangle class="h-4 w-4" />
         <UiAlertDescription>{{ error }}</UiAlertDescription>
       </UiAlert>
 
+      <!-- No data state -->
+      <UiCard v-if="!isLoading && !error && !stats && !isAdmin()">
+        <UiCardContent class="py-12 text-center">
+          <p class="text-muted-foreground">No dashboard data available</p>
+        </UiCardContent>
+      </UiCard>
+
       <!-- Stat cards -->
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div v-if="stats" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <UiCard v-for="stat in statCards" :key="stat.title">
           <UiCardContent class="pt-6">
             <div class="flex items-center justify-between">
@@ -183,25 +315,30 @@ function formatDate(dateString: string) {
       </div>
 
       <!-- Charts section -->
-      <div class="grid gap-4 md:grid-cols-2">
+      <div v-if="kpis" class="grid gap-4 md:grid-cols-2">
         <DashboardCasesByStatusChart :data="kpis?.casesByStatus ?? []" />
         <DashboardCasesByPriorityChart :data="kpis?.casesByPriority ?? []" />
       </div>
 
-      <div class="grid gap-4 md:grid-cols-2">
+      <div v-if="kpis" class="grid gap-4 md:grid-cols-2">
         <DashboardResolutionTrendChart :data="kpis?.resolutionTimeTrend ?? []" />
         <DashboardSlaComplianceChart :value="kpis?.slaCompliancePercent ?? 0" />
       </div>
 
       <!-- Recent Cases -->
-      <UiCard>
+      <UiCard v-if="recentCases.length > 0 || !isLoading">
         <UiCardHeader>
           <UiCardTitle class="flex items-center gap-2">
             <TrendingUp class="h-5 w-5" />
             Recent Cases
           </UiCardTitle>
           <UiCardDescription>
-            Latest 10 cases from your Dynamics CRM
+            <template v-if="isAdmin()">
+              Latest 10 cases from the selected user's Dynamics CRM
+            </template>
+            <template v-else>
+              Latest 10 cases from your Dynamics CRM
+            </template>
           </UiCardDescription>
         </UiCardHeader>
         <UiCardContent>
@@ -218,7 +355,7 @@ function formatDate(dateString: string) {
             <UiTableBody>
               <UiTableRow v-for="c in recentCases" :key="c.incidentid">
                 <UiTableCell class="font-medium">
-                  <NuxtLink :to="`/cases/${c.incidentid}`" class="hover:underline text-primary">
+                  <NuxtLink :to="isAdmin() ? `/admin/cases/${selectedUserId}/${c.incidentid}` : `/cases/${c.incidentid}`" class="hover:underline text-primary">
                     {{ c.ticketnumber }}
                   </NuxtLink>
                 </UiTableCell>

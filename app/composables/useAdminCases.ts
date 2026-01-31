@@ -10,15 +10,18 @@ interface UserWithDynamics {
 
 interface CasesResponse {
   cases: any[]
-  total: number
-  page: number
+  skipToken?: string
+  hasMore: boolean
   pageSize: number
 }
 
 export function useAdminCases() {
   const users = ref<UserWithDynamics[]>([])
   const cases = ref<any[]>([])
-  const totalCases = ref(0)
+  const skipToken = ref<string | null>(null)
+  const skipTokenHistory = ref<string[]>([])
+  const hasMore = ref(false)
+  const pageSize = ref(20)
   const loading = ref(false)
   const error = ref('')
 
@@ -38,7 +41,7 @@ export function useAdminCases() {
   }
 
   async function fetchUserCases(userId: string, params?: {
-    page?: number
+    skipToken?: string
     pageSize?: number
     status?: string
     priority?: string
@@ -57,7 +60,9 @@ export function useAdminCases() {
         },
       })
       cases.value = response.cases
-      totalCases.value = response.total
+      skipToken.value = response.skipToken || null
+      hasMore.value = response.hasMore
+      pageSize.value = response.pageSize
       return response
     } catch (e: unknown) {
       const err = e as { data?: { message?: string } }
@@ -66,6 +71,60 @@ export function useAdminCases() {
     } finally {
       loading.value = false
     }
+  }
+
+  async function fetchNextPage(userId: string, filters?: {
+    status?: string
+    priority?: string
+    search?: string
+    orderBy?: string
+    orderDirection?: string
+  }) {
+    if (!skipToken.value) return
+
+    // Save current skip token to history before navigating
+    skipTokenHistory.value.push(skipToken.value)
+
+    await fetchUserCases(userId, {
+      skipToken: skipToken.value,
+      pageSize: pageSize.value,
+      ...filters,
+    })
+  }
+
+  async function fetchPreviousPage(userId: string, filters?: {
+    status?: string
+    priority?: string
+    search?: string
+    orderBy?: string
+    orderDirection?: string
+  }) {
+    if (skipTokenHistory.value.length === 0) {
+      // Go back to first page
+      skipToken.value = null
+      await fetchUserCases(userId, {
+        pageSize: pageSize.value,
+        ...filters,
+      })
+      return
+    }
+
+    // Pop the previous skip token from history
+    const previousSkipToken = skipTokenHistory.value.pop()
+    await fetchUserCases(userId, {
+      skipToken: previousSkipToken,
+      pageSize: pageSize.value,
+      ...filters,
+    })
+  }
+
+  function canGoBack() {
+    return skipTokenHistory.value.length > 0
+  }
+
+  function resetPagination() {
+    skipToken.value = null
+    skipTokenHistory.value = []
   }
 
   async function fetchCaseDetails(userId: string, caseId: string) {
@@ -89,11 +148,16 @@ export function useAdminCases() {
   return {
     users: readonly(users),
     cases: readonly(cases),
-    totalCases: readonly(totalCases),
+    hasMore: readonly(hasMore),
+    pageSize: readonly(pageSize),
     loading: readonly(loading),
     error: readonly(error),
+    canGoBack,
+    resetPagination,
     fetchUsersWithDynamics,
     fetchUserCases,
+    fetchNextPage,
+    fetchPreviousPage,
     fetchCaseDetails,
   }
 }

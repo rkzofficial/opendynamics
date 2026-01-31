@@ -41,6 +41,7 @@ export default defineSchema({
     expiresAt: v.number(),
     email: v.optional(v.string()),
     organizationId: v.optional(v.string()),
+    dynamicsUserId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),

@@ -87,8 +87,8 @@ export interface Annotation {
 // API Response types
 export interface CasesResponse {
   cases: Case[]
-  total: number
-  page: number
+  skipToken?: string
+  hasMore: boolean
   pageSize: number
 }
 
@@ -151,7 +151,8 @@ export interface CaseFilters {
   search?: string
   dateFrom?: string
   dateTo?: string
-  page?: number
+  ownerId?: string
+  skipToken?: string
   pageSize?: number
   orderBy?: string
   orderDirection?: 'asc' | 'desc'

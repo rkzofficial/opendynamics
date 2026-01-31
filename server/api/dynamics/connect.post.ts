@@ -47,7 +47,8 @@ export default defineEventHandler(async (event) => {
   try {
     const deviceCodeResponse = await startDeviceCodeFlow(
       dynamicsConfig.clientId,
-      dynamicsConfig.tenantId
+      dynamicsConfig.tenantId,
+      dynamicsConfig.orgUrl
     )
 
     return deviceCodeResponse

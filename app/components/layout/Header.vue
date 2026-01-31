@@ -4,8 +4,6 @@ import { Menu, Bell, Settings } from 'lucide-vue-next'
 const emit = defineEmits<{
   toggleSidebar: []
 }>()
-
-const { user, isAdmin } = useAuth()
 </script>
 
 <template>
@@ -33,8 +31,8 @@ const { user, isAdmin } = useAuth()
         <span class="sr-only">Notifications</span>
       </UiButton>
 
+      <!-- Settings Button - Navigates directly to /settings -->
       <UiButton
-        v-if="isAdmin()"
         variant="ghost"
         size="icon"
         as-child
