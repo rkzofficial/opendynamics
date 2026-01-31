@@ -14,7 +14,7 @@ export const seed = mutation({
 
     // Create admin user with default password "admin"
     // Password hash for "admin" (bcrypt)
-    const passwordHash = "$2a$10$5q0cEXXqL5g0C5z4zR1DXuZ0KHQWr5J5V5S5J5Z5X5V5T5S5R5Q5O";
+    const passwordHash = "$2b$10$/u.Pe/jpQEdhSYAZ7FuVMeKk0OSaJ/c81x0qHLKStpmkxOnHZkLtG";
 
     const now = Date.now();
     const userId = await ctx.db.insert("users", {

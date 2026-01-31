@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   srcDir: 'app',
+  serverDir: 'server',
 
   modules: [
     '@nuxtjs/tailwindcss',
