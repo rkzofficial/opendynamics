@@ -97,6 +97,19 @@ export class DynamicsApiClient {
     return this.fetch(`/incidents(${incidentId})${query}`)
   }
 
+  async getCaseSLAKPIs(incidentId: string): Promise<{ value: unknown[] }> {
+    const query = buildODataQuery({
+      select: [
+        'slakpiinstanceid', 'name', 'failuretime', 'warningtime', 'status',
+        'succeededon', 'computedfailuretime', 'computedwarningtime', 'description'
+      ],
+      filter: `_regarding_value eq ${incidentId}`,
+      orderby: 'createdon desc',
+    })
+
+    return this.fetch(`/slakpiinstances${query}`)
+  }
+
   async getCaseActivities(incidentId: string): Promise<{ value: unknown[] }> {
     // First get all activities
     const query = buildODataQuery({

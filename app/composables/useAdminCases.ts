@@ -15,6 +15,10 @@ interface CasesResponse {
   pageSize: number
 }
 
+interface SLAKPIsResponse {
+  slakpis: any[]
+}
+
 export function useAdminCases() {
   const users = ref<UserWithDynamics[]>([])
   const cases = ref<any[]>([])
@@ -24,6 +28,8 @@ export function useAdminCases() {
   const pageSize = ref(20)
   const loading = ref(false)
   const error = ref('')
+  const slaKPIs = ref<SLAKPIsResponse | null>(null)
+  const isLoadingSLAKPIs = ref(false)
 
   async function fetchUsersWithDynamics() {
     loading.value = true
@@ -145,12 +151,31 @@ export function useAdminCases() {
     }
   }
 
+  async function fetchSLAKPIs(userId: string, caseId: string) {
+    isLoadingSLAKPIs.value = true
+    try {
+      const response = await $fetch<SLAKPIsResponse>(`/api/cases/${caseId}/sla-kpis`, {
+        params: { userId },
+      })
+      slaKPIs.value = response
+      return response
+    } catch (e: unknown) {
+      console.error('Failed to fetch SLA KPIs:', e)
+      slaKPIs.value = null
+      return null
+    } finally {
+      isLoadingSLAKPIs.value = false
+    }
+  }
+
   return {
     users: readonly(users),
     cases: readonly(cases),
+    slaKPIs: readonly(slaKPIs),
     hasMore: readonly(hasMore),
     pageSize: readonly(pageSize),
     loading: readonly(loading),
+    isLoadingSLAKPIs: readonly(isLoadingSLAKPIs),
     error: readonly(error),
     canGoBack,
     resetPagination,
@@ -159,5 +184,6 @@ export function useAdminCases() {
     fetchNextPage,
     fetchPreviousPage,
     fetchCaseDetails,
+    fetchSLAKPIs,
   }
 }

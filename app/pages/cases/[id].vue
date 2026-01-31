@@ -10,10 +10,13 @@ const caseId = route.params.id as string
 const {
   currentCase,
   activities,
+  slaKPIs,
   isLoading,
   isLoadingActivities,
+  isLoadingSLAKPIs,
   fetchCase,
   fetchActivities,
+  fetchSLAKPIs,
   addReply,
 } = useCases()
 
@@ -24,6 +27,7 @@ const isSubmitting = ref(false)
 onMounted(async () => {
   await fetchCase(caseId)
   await fetchActivities(caseId)
+  await fetchSLAKPIs(caseId)
 })
 
 async function handleSubmitReply() {
@@ -79,6 +83,58 @@ function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | '
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleString()
+}
+
+function getSLAKPIByName(name: string) {
+  return slaKPIs.value?.slakpis?.find((kpi) => kpi.name?.toLowerCase().includes(name.toLowerCase()))
+}
+
+function getFirstResponseSLA() {
+  const kpi = getSLAKPIByName('first response')
+  if (kpi) {
+    return {
+      deadline: kpi.failuretime || kpi.computedfailuretime,
+      status: kpi.status,
+      succeeded: kpi.succeededon,
+    }
+  }
+  return null
+}
+
+function getCustomerUpdateSLA() {
+  const kpi = getSLAKPIByName('resolve') || getSLAKPIByName('resolution')
+  if (kpi) {
+    return {
+      deadline: kpi.failuretime || kpi.computedfailuretime,
+      status: kpi.status,
+      succeeded: kpi.succeededon,
+    }
+  }
+  return null
+}
+
+function getSLAStatusLabel(status: number): string {
+  switch (status) {
+    case 0: return 'In Progress'
+    case 1: return 'Noncompliant'
+    case 2: return 'Nearing Noncompliance'
+    case 3: return 'Paused'
+    case 4: return 'Succeeded'
+    case 5: return 'Canceled'
+    default: return 'Unknown'
+  }
+}
+
+function getSLAStatusVariant(status: number): 'default' | 'destructive' | 'warning' | 'success' | 'secondary' {
+  switch (status) {
+    case 0: return 'default'
+    case 1: return 'destructive'
+    case 2: return 'warning'
+    case 3: return 'secondary'
+    case 4: return 'success'
+    case 5: return 'secondary'
+    default: return 'secondary'
+  }
 }
 
 function getActivityIcon(activityType: string) {
@@ -293,63 +349,81 @@ const timelineItems = computed<TimelineItem[]>(() => {
               <UiCardTitle>Case Information</UiCardTitle>
             </UiCardHeader>
             <UiCardContent class="space-y-4">
-              <div>
-                <p class="text-sm text-muted-foreground">Ticket Number</p>
-                <p class="font-medium">{{ currentCase.ticketnumber }}</p>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-muted-foreground">Ticket Number</p>
+                  <p class="font-medium">{{ currentCase.ticketnumber }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-muted-foreground">Status</p>
+                  <UiBadge :variant="getStatusVariant(currentCase.statecode)">
+                    {{ getStatusLabel(currentCase.statecode) }}
+                  </UiBadge>
+                </div>
               </div>
               <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">Status</p>
-                <UiBadge :variant="getStatusVariant(currentCase.statecode)">
-                  {{ getStatusLabel(currentCase.statecode) }}
-                </UiBadge>
-              </div>
-              <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">Priority</p>
-                <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
-                  {{ getPriorityLabel(currentCase.prioritycode) }}
-                </UiBadge>
-              </div>
-              <UiSeparator />
-              <div class="flex items-center gap-2">
-                <Calendar class="h-4 w-4 text-muted-foreground" />
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-muted-foreground">Priority</p>
+                  <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
+                    {{ getPriorityLabel(currentCase.prioritycode) }}
+                  </UiBadge>
+                </div>
                 <div>
                   <p class="text-sm text-muted-foreground">Created</p>
                   <p class="text-sm">{{ formatDate(currentCase.createdon) }}</p>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                <Calendar class="h-4 w-4 text-muted-foreground" />
+              <UiSeparator />
+              <div class="grid grid-cols-2 gap-4">
                 <div>
                   <p class="text-sm text-muted-foreground">Modified</p>
                   <p class="text-sm">{{ formatDate(currentCase.modifiedon) }}</p>
                 </div>
+                <div>
+                  <p class="text-sm text-muted-foreground">First Response SLA</p>
+                  <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
+                  <template v-else>
+                    <p v-if="getFirstResponseSLA()?.succeeded" class="text-sm text-green-600">
+                      Completed {{ formatDate(getFirstResponseSLA()?.succeeded) }}
+                    </p>
+                    <p v-else-if="getFirstResponseSLA()?.deadline" class="text-sm">
+                      Due {{ formatDate(getFirstResponseSLA()?.deadline) }}
+                    </p>
+                    <p v-else class="text-sm">Not set</p>
+                  </template>
+                </div>
               </div>
               <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">First Response SLA</p>
-                <p class="text-sm">{{ currentCase.responseby ? formatDate(currentCase.responseby) : 'Not set' }}</p>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-muted-foreground">Customer Update SLA</p>
+                  <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
+                  <template v-else>
+                    <p v-if="getCustomerUpdateSLA()?.succeeded" class="text-sm text-green-600">
+                      Completed {{ formatDate(getCustomerUpdateSLA()?.succeeded) }}
+                    </p>
+                    <p v-else-if="getCustomerUpdateSLA()?.deadline" class="text-sm">
+                      Due {{ formatDate(getCustomerUpdateSLA()?.deadline) }}
+                    </p>
+                    <p v-else class="text-sm">Not set</p>
+                  </template>
+                </div>
+                <div>
+                  <p class="text-sm text-muted-foreground">Support Plan</p>
+                  <p class="text-sm">{{ currentCase.entitlementid?.name || 'Not set' }}</p>
+                </div>
               </div>
               <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">Customer Update SLA</p>
-                <p class="text-sm">{{ currentCase.followupby ? formatDate(currentCase.followupby) : 'Not set' }}</p>
-              </div>
-              <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">Support Plan</p>
-                <p class="text-sm">{{ currentCase.entitlementid?.name || 'Not set' }}</p>
-              </div>
-              <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">Primary Contact</p>
-                <p class="text-sm">{{ currentCase.primarycontactid?.fullname || 'Not set' }}</p>
-              </div>
-              <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">Org</p>
-                <p class="text-sm">{{ currentCase.customerid_account?.name || 'Not set' }}</p>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-muted-foreground">Primary Contact</p>
+                  <p class="text-sm">{{ currentCase.primarycontactid?.fullname || 'Not set' }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-muted-foreground">Org</p>
+                  <p class="text-sm">{{ currentCase.customerid_account?.name || 'Not set' }}</p>
+                </div>
               </div>
               <UiSeparator />
               <div>

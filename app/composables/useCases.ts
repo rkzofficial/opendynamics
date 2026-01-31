@@ -1,15 +1,17 @@
-import type { Case, CasesResponse, CaseFilters, ActivitiesResponse } from '~/types'
+import type { Case, CasesResponse, CaseFilters, ActivitiesResponse, SLAKPIsResponse } from '~/types'
 
 interface CasesState {
   cases: Case[]
   currentCase: Case | null
   activities: ActivitiesResponse | null
+  slaKPIs: SLAKPIsResponse | null
   skipToken: string | null
   skipTokenHistory: string[]
   hasMore: boolean
   pageSize: number
   isLoading: boolean
   isLoadingActivities: boolean
+  isLoadingSLAKPIs: boolean
   filters: CaseFilters
 }
 
@@ -17,12 +19,14 @@ const casesState = reactive<CasesState>({
   cases: [],
   currentCase: null,
   activities: null,
+  slaKPIs: null,
   skipToken: null,
   skipTokenHistory: [],
   hasMore: false,
   pageSize: 20,
   isLoading: false,
   isLoadingActivities: false,
+  isLoadingSLAKPIs: false,
   filters: {},
 })
 
@@ -113,6 +117,20 @@ export function useCases() {
     }
   }
 
+  async function fetchSLAKPIs(caseId: string) {
+    casesState.isLoadingSLAKPIs = true
+    try {
+      const response = await $fetch<SLAKPIsResponse>(`/api/cases/${caseId}/sla-kpis`)
+      casesState.slaKPIs = response
+      return response
+    } catch (error) {
+      console.error('Failed to fetch SLA KPIs:', error)
+      return null
+    } finally {
+      casesState.isLoadingSLAKPIs = false
+    }
+  }
+
   async function addReply(caseId: string, noteText: string, subject?: string) {
     try {
       await $fetch(`/api/cases/${caseId}/reply`, {
@@ -146,11 +164,13 @@ export function useCases() {
     cases: computed(() => casesState.cases),
     currentCase: computed(() => casesState.currentCase),
     activities: computed(() => casesState.activities),
+    slaKPIs: computed(() => casesState.slaKPIs),
     skipToken: computed(() => casesState.skipToken),
     hasMore: computed(() => casesState.hasMore),
     pageSize: computed(() => casesState.pageSize),
     isLoading: computed(() => casesState.isLoading),
     isLoadingActivities: computed(() => casesState.isLoadingActivities),
+    isLoadingSLAKPIs: computed(() => casesState.isLoadingSLAKPIs),
     filters: computed(() => casesState.filters),
     canGoBack,
     fetchCases,
@@ -158,6 +178,7 @@ export function useCases() {
     fetchPreviousPage,
     fetchCase,
     fetchActivities,
+    fetchSLAKPIs,
     addReply,
     setFilters,
     clearFilters,

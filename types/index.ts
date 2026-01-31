@@ -125,6 +125,22 @@ export interface ActivitiesResponse {
   annotations: Annotation[]
 }
 
+export interface SLAKPIInstance {
+  slakpiinstanceid: string
+  name: string
+  failuretime?: string
+  warningtime?: string
+  status: 0 | 1 | 2 | 3 | 4 | 5 // In Progress, Noncompliant, Nearing Noncompliance, Paused, Succeeded, Canceled
+  succeededon?: string
+  computedfailuretime?: string
+  computedwarningtime?: string
+  description?: string
+}
+
+export interface SLAKPIsResponse {
+  slakpis: SLAKPIInstance[]
+}
+
 // Dashboard KPI types
 export interface DashboardStats {
   totalCases: number
