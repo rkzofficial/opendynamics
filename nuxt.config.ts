@@ -46,6 +46,7 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    preset: 'bun',
     alias: {
       '@convex': join(currentDir, 'convex'),
     },

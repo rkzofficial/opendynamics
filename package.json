@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "opendynamics",
   "private": true,
   "type": "module",
   "scripts": {
@@ -7,7 +7,8 @@
     "dev": "nuxt dev --dotenv .env.local",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "start": "bun run .output/server/index.mjs"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.14.0",
