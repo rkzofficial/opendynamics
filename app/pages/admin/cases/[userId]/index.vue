@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Search, Filter, RefreshCw, ArrowLeft, Users, ArrowLeftCircle } from 'lucide-vue-next'
+import { formatTimeAgo } from '~/utils/timeAgo'
 
 const router = useRouter()
 const route = useRoute()
@@ -130,8 +131,8 @@ function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | '
   }
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString()
+function formatDate(dateString: string | null | undefined) {
+  return formatTimeAgo(dateString)
 }
 
 function getUserDisplayName(user: typeof selectedUser.value): string {
@@ -275,8 +276,8 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
                   {{ getPriorityLabel(c.prioritycode) }}
                 </UiBadge>
               </UiTableCell>
-              <UiTableCell>{{ formatDate(c.createdon) }}</UiTableCell>
-              <UiTableCell>{{ formatDate(c.modifiedon) }}</UiTableCell>
+              <UiTableCell :title="formatDate(c.createdon).tooltip">{{ formatDate(c.createdon).text }}</UiTableCell>
+              <UiTableCell :title="formatDate(c.modifiedon).tooltip">{{ formatDate(c.modifiedon).text }}</UiTableCell>
             </UiTableRow>
           </UiTableBody>
         </UiTable>

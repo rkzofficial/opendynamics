@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Link2, Users, ArrowLeft } from 'lucide-vue-next'
 import type { DashboardStats, DashboardKPIs, Case } from '~/types'
+import { formatTimeAgo } from '~/utils/timeAgo'
 
 const { connectionStatus } = useDynamics()
 const { isAdmin } = useAuth()
@@ -161,8 +162,8 @@ function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | '
   }
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString()
+function formatDate(dateString: string | null | undefined) {
+  return formatTimeAgo(dateString)
 }
 </script>
 
@@ -370,7 +371,7 @@ function formatDate(dateString: string) {
                     {{ getPriorityLabel(c.prioritycode) }}
                   </UiBadge>
                 </UiTableCell>
-                <UiTableCell>{{ formatDate(c.createdon) }}</UiTableCell>
+                <UiTableCell :title="formatDate(c.createdon).tooltip">{{ formatDate(c.createdon).text }}</UiTableCell>
               </UiTableRow>
             </UiTableBody>
           </UiTable>

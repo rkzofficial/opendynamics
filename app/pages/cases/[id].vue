@@ -3,6 +3,7 @@ import { onUnmounted } from 'vue'
 import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
+import { formatTimeAgo } from '~/utils/timeAgo'
 
 const route = useRoute()
 const router = useRouter()
@@ -83,8 +84,8 @@ function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | '
   }
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleString()
+function formatDate(dateString: string | null | undefined) {
+  return formatTimeAgo(dateString)
 }
 
 function getSLAKPIByName(name: string) {
@@ -370,8 +371,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
                           : ((item.data as Activity).subject || (item.data as Activity).activitytypecode)
                         }}
                       </span>
-                      <span class="text-xs text-muted-foreground">
-                        {{ formatDate(item.date) }}
+                      <span :title="formatDate(item.date).tooltip" class="text-xs text-muted-foreground">
+                        {{ formatDate(item.date).text }}
                       </span>
                     </div>
                     <div
@@ -430,24 +431,24 @@ const timelineItems = computed<TimelineItem[]>(() => {
                 </div>
                 <div>
                   <p class="text-sm text-muted-foreground">Created</p>
-                  <p class="text-sm">{{ formatDate(currentCase.createdon) }}</p>
+                  <p :title="formatDate(currentCase.createdon).tooltip" class="text-sm">{{ formatDate(currentCase.createdon).text }}</p>
                 </div>
               </div>
               <UiSeparator />
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <p class="text-sm text-muted-foreground">Modified</p>
-                  <p class="text-sm">{{ formatDate(currentCase.modifiedon) }}</p>
+                  <p :title="formatDate(currentCase.modifiedon).tooltip" class="text-sm">{{ formatDate(currentCase.modifiedon).text }}</p>
                 </div>
                 <div>
                   <p class="text-sm text-muted-foreground">First Response SLA</p>
                   <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
                   <template v-else>
-                    <p v-if="getFirstResponseSLA()?.succeeded" class="text-sm text-green-600">
-                      Completed {{ formatDate(getFirstResponseSLA()?.succeeded) }}
+                    <p v-if="getFirstResponseSLA()?.succeeded" :title="formatDate(getFirstResponseSLA()?.succeeded).tooltip" class="text-sm text-green-600">
+                      Completed {{ formatDate(getFirstResponseSLA()?.succeeded).text }}
                     </p>
                     <p v-else-if="getFirstResponseSLA()?.deadline" class="text-sm font-mono">
-                      {{ firstResponseCountdown || formatDate(getFirstResponseSLA()?.deadline) }}
+                      {{ firstResponseCountdown || formatDate(getFirstResponseSLA()?.deadline).text }}
                     </p>
                     <p v-else class="text-sm">Not set</p>
                   </template>
@@ -459,11 +460,11 @@ const timelineItems = computed<TimelineItem[]>(() => {
                   <p class="text-sm text-muted-foreground">Customer Update SLA</p>
                   <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
                   <template v-else>
-                    <p v-if="getCustomerUpdateSLA()?.succeeded" class="text-sm text-green-600">
-                      Completed {{ formatDate(getCustomerUpdateSLA()?.succeeded) }}
+                    <p v-if="getCustomerUpdateSLA()?.succeeded" :title="formatDate(getCustomerUpdateSLA()?.succeeded).tooltip" class="text-sm text-green-600">
+                      Completed {{ formatDate(getCustomerUpdateSLA()?.succeeded).text }}
                     </p>
                     <p v-else-if="getCustomerUpdateSLA()?.deadline" class="text-sm font-mono">
-                      {{ customerUpdateCountdown || formatDate(getCustomerUpdateSLA()?.deadline) }}
+                      {{ customerUpdateCountdown || formatDate(getCustomerUpdateSLA()?.deadline).text }}
                     </p>
                     <p v-else class="text-sm">Not set</p>
                   </template>
