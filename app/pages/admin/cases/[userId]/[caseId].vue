@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onUnmounted } from 'vue'
 import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
@@ -22,6 +23,63 @@ const isLoading = ref(true)
 const isLoadingActivities = ref(false)
 const isLoadingSLAKPIs = ref(false)
 const error = ref('')
+
+// Countdown timer for SLA deadlines
+const firstResponseCountdown = ref('')
+const customerUpdateCountdown = ref('')
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+function formatCountdown(targetDate: string): string {
+  const now = new Date().getTime()
+  const target = new Date(targetDate).getTime()
+  const diff = target - now
+
+  if (diff <= 0) {
+    return 'Overdue'
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`
+  } else if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`
+  } else {
+    return `${minutes}m ${seconds}s`
+  }
+}
+
+function updateCountdowns() {
+  const firstResponse = getFirstResponseSLA()
+  const customerUpdate = getCustomerUpdateSLA()
+
+  if (firstResponse?.deadline && !firstResponse.succeeded) {
+    firstResponseCountdown.value = formatCountdown(firstResponse.deadline)
+  }
+
+  if (customerUpdate?.deadline && !customerUpdate.succeeded) {
+    customerUpdateCountdown.value = formatCountdown(customerUpdate.deadline)
+  }
+}
+
+function startCountdownTimer() {
+  updateCountdowns()
+  countdownInterval = setInterval(updateCountdowns, 1000)
+}
+
+function stopCountdownTimer() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+    countdownInterval = null
+  }
+}
+
+onUnmounted(() => {
+  stopCountdownTimer()
+})
 
 const replyText = ref('')
 const replySubject = ref('')
@@ -77,6 +135,7 @@ async function loadSLAKPIs() {
   isLoadingSLAKPIs.value = true
   try {
     await fetchSLAKPIs(userId.value, caseId.value)
+    startCountdownTimer()
   } catch (e) {
     console.error('Failed to load SLA KPIs:', e)
   } finally {
@@ -101,7 +160,7 @@ function getFirstResponseSLA() {
 }
 
 function getCustomerUpdateSLA() {
-  const kpi = getSLAKPIByName('resolve') || getSLAKPIByName('resolution')
+  const kpi = getSLAKPIByName('customer update')
   if (kpi) {
     return {
       deadline: kpi.failuretime || kpi.computedfailuretime,
@@ -485,8 +544,8 @@ function goBack() {
                     <p v-if="getFirstResponseSLA()?.succeeded" class="text-sm text-green-600">
                       Completed {{ formatDate(getFirstResponseSLA()?.succeeded) }}
                     </p>
-                    <p v-else-if="getFirstResponseSLA()?.deadline" class="text-sm">
-                      Due {{ formatDate(getFirstResponseSLA()?.deadline) }}
+                    <p v-else-if="getFirstResponseSLA()?.deadline" class="text-sm font-mono">
+                      {{ firstResponseCountdown || formatDate(getFirstResponseSLA()?.deadline) }}
                     </p>
                     <p v-else class="text-sm">Not set</p>
                   </template>
@@ -501,8 +560,8 @@ function goBack() {
                     <p v-if="getCustomerUpdateSLA()?.succeeded" class="text-sm text-green-600">
                       Completed {{ formatDate(getCustomerUpdateSLA()?.succeeded) }}
                     </p>
-                    <p v-else-if="getCustomerUpdateSLA()?.deadline" class="text-sm">
-                      Due {{ formatDate(getCustomerUpdateSLA()?.deadline) }}
+                    <p v-else-if="getCustomerUpdateSLA()?.deadline" class="text-sm font-mono">
+                      {{ customerUpdateCountdown || formatDate(getCustomerUpdateSLA()?.deadline) }}
                     </p>
                     <p v-else class="text-sm">Not set</p>
                   </template>
