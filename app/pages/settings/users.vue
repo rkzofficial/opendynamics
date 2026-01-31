@@ -220,13 +220,12 @@ onMounted(fetchUsers)
       title="Create User"
       description="Add a new user to the system"
     >
-      <form class="space-y-4" @submit.prevent="handleCreateUser">
+      <div class="space-y-4">
         <div class="space-y-2">
           <UiLabel for="create-username">Username</UiLabel>
           <UiInput
             id="create-username"
             v-model="createForm.username"
-            required
           />
         </div>
         <div class="space-y-2">
@@ -235,7 +234,6 @@ onMounted(fetchUsers)
             id="create-password"
             v-model="createForm.password"
             type="password"
-            required
           />
         </div>
         <div class="space-y-2">
@@ -261,16 +259,16 @@ onMounted(fetchUsers)
             :options="roleOptions"
           />
         </div>
-        <template #footer>
-          <UiButton variant="outline" type="button" @click="showCreateDialog = false">
+        <div class="flex justify-end gap-2 pt-4">
+          <UiButton variant="outline" @click="showCreateDialog = false">
             Cancel
           </UiButton>
-          <UiButton type="submit" :disabled="isSubmitting">
+          <UiButton :disabled="isSubmitting" @click="handleCreateUser">
             <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
             Create
           </UiButton>
-        </template>
-      </form>
+        </div>
+      </div>
     </UiDialog>
 
     <!-- Edit User Dialog -->
@@ -279,7 +277,7 @@ onMounted(fetchUsers)
       title="Edit User"
       description="Update user information"
     >
-      <form class="space-y-4" @submit.prevent="handleUpdateUser">
+      <div class="space-y-4">
         <div class="space-y-2">
           <UiLabel for="edit-name">Name</UiLabel>
           <UiInput
@@ -311,16 +309,16 @@ onMounted(fetchUsers)
             type="password"
           />
         </div>
-        <template #footer>
-          <UiButton variant="outline" type="button" @click="showEditDialog = false">
+        <div class="flex justify-end gap-2 pt-4">
+          <UiButton variant="outline" @click="showEditDialog = false">
             Cancel
           </UiButton>
-          <UiButton type="submit" :disabled="isSubmitting">
+          <UiButton :disabled="isSubmitting" @click="handleUpdateUser">
             <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
             Save
           </UiButton>
-        </template>
-      </form>
+        </div>
+      </div>
     </UiDialog>
 
     <!-- Delete User Dialog -->
@@ -329,18 +327,20 @@ onMounted(fetchUsers)
       title="Delete User"
       description="Are you sure you want to delete this user? This action cannot be undone."
     >
-      <p class="text-sm text-muted-foreground">
-        User <strong>{{ selectedUser?.username }}</strong> will be permanently deleted.
-      </p>
-      <template #footer>
-        <UiButton variant="outline" @click="showDeleteDialog = false">
-          Cancel
-        </UiButton>
-        <UiButton variant="destructive" :disabled="isSubmitting" @click="handleDeleteUser">
-          <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
-          Delete
-        </UiButton>
-      </template>
+      <div class="space-y-4">
+        <p class="text-sm text-muted-foreground">
+          User <strong>{{ selectedUser?.username }}</strong> will be permanently deleted.
+        </p>
+        <div class="flex justify-end gap-2 pt-4">
+          <UiButton variant="outline" @click="showDeleteDialog = false">
+            Cancel
+          </UiButton>
+          <UiButton variant="destructive" :disabled="isSubmitting" @click="handleDeleteUser">
+            <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
+            Delete
+          </UiButton>
+        </div>
+      </div>
     </UiDialog>
   </div>
 </template>
