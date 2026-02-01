@@ -255,10 +255,10 @@ function formatDate(dateString: string | null | undefined) {
       <UiCard v-else class="overflow-hidden">
         <UiCardContent class="p-0">
           <div v-if="cases.length > 0" class="overflow-x-auto">
-            <table class="w-full">
+            <table class="w-full table-fixed">
               <thead>
                 <tr class="border-b bg-muted/50">
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-32">
                     <span class="flex items-center gap-2">
                       <Hash class="h-4 w-4" />
                       Ticket
@@ -270,25 +270,25 @@ function formatDate(dateString: string | null | undefined) {
                       Title
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-28">
                     <span class="flex items-center gap-2">
                       <CircleDot class="h-4 w-4" />
                       Status
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-28">
                     <span class="flex items-center gap-2">
                       <Flag class="h-4 w-4" />
                       Priority
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-44">
                     <span class="flex items-center gap-2">
                       <Calendar class="h-4 w-4" />
                       Created
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-44">
                     <span class="flex items-center gap-2">
                       <Clock class="h-4 w-4" />
                       Modified
@@ -308,14 +308,21 @@ function formatDate(dateString: string | null | undefined) {
                       {{ c.ticketnumber }}
                     </span>
                   </td>
-                  <td class="h-14 px-4 align-middle max-w-[300px]">
-                    <p class="truncate font-medium">{{ c.title }}</p>
+                  <td class="px-4 py-3 align-middle overflow-hidden">
+                    <UiTooltip :content="c.description" position="bottom" max-width="450px">
+                      <div class="overflow-hidden">
+                        <p class="truncate font-medium">{{ c.title }}</p>
+                        <p v-if="c.description" class="truncate text-sm text-muted-foreground mt-0.5">
+                          {{ c.description }}
+                        </p>
+                      </div>
+                    </UiTooltip>
                   </td>
-                  <td class="h-14 px-4 align-middle">
+                  <td class="h-14 px-4 align-middle whitespace-nowrap">
                     <div class="flex items-center gap-2">
                       <span
                         :class="[
-                          'h-2 w-2 rounded-full',
+                          'h-2 w-2 rounded-full flex-shrink-0',
                           c.statecode === 0 ? 'bg-blue-500' :
                           c.statecode === 1 ? 'bg-green-500' :
                           c.statecode === 2 ? 'bg-gray-400' : 'bg-gray-400'
@@ -324,12 +331,12 @@ function formatDate(dateString: string | null | undefined) {
                       <span class="text-sm">{{ getStatusLabel(c.statecode) }}</span>
                     </div>
                   </td>
-                  <td class="h-14 px-4 align-middle">
+                  <td class="h-14 px-4 align-middle whitespace-nowrap">
                     <div class="flex items-center gap-2">
                       <component
                         :is="getPriorityIcon(c.prioritycode)"
                         :class="[
-                          'h-4 w-4',
+                          'h-4 w-4 flex-shrink-0',
                           c.prioritycode === 1 ? 'text-red-500' :
                           c.prioritycode === 2 ? 'text-amber-500' :
                           c.prioritycode === 3 ? 'text-gray-400' : 'text-gray-400'
@@ -338,12 +345,12 @@ function formatDate(dateString: string | null | undefined) {
                       <span class="text-sm">{{ getPriorityLabel(c.prioritycode) }}</span>
                     </div>
                   </td>
-                  <td class="h-14 px-4 align-middle">
+                  <td class="h-14 px-4 align-middle whitespace-nowrap">
                     <span :title="formatDate(c.createdon).tooltip" class="text-sm text-muted-foreground">
                       {{ formatDate(c.createdon).text }}
                     </span>
                   </td>
-                  <td class="h-14 px-4 align-middle">
+                  <td class="h-14 px-4 align-middle whitespace-nowrap">
                     <span :title="formatDate(c.modifiedon).tooltip" class="text-sm text-muted-foreground">
                       {{ formatDate(c.modifiedon).text }}
                     </span>
