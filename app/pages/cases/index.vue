@@ -393,7 +393,7 @@ function formatDate(dateString: string | null | undefined) {
           </div>
 
           <!-- Pagination -->
-          <div v-if="cases.length > 0 && (canGoBack || hasMore)" class="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
+          <div v-if="cases.length > 0" class="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
             <p class="text-sm text-muted-foreground">
               Showing <span class="font-medium text-foreground">{{ cases.length }}</span> cases
             </p>

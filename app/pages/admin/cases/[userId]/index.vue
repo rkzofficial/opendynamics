@@ -342,7 +342,7 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
         </div>
 
         <!-- Pagination -->
-        <div v-if="canGoBack || hasMore" class="flex items-center justify-between mt-4 pt-4 border-t">
+        <div v-if="cases.length > 0" class="flex items-center justify-between mt-4 pt-4 border-t">
           <p class="text-sm text-muted-foreground">
             Showing {{ cases.length }} cases per page
           </p>

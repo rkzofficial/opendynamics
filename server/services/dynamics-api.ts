@@ -57,13 +57,22 @@ export class DynamicsApiClient {
       filter = filter ? `${filter} and ${ownerFilter}` : ownerFilter
     }
 
+    // Extract pageSize for Prefer header, don't pass top to query builder
+    const pageSize = queryOptions?.top || 20
+    const { top, ...restOptions } = queryOptions || {}
+
     const query = buildODataQuery({
       select: ['incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode', 'createdon', 'modifiedon', '_customerid_value', '_ownerid_value'],
-      ...queryOptions,
+      ...restOptions,
       filter,
     })
 
-    const response = await this.fetch<{ value: unknown[]; '@odata.nextLink'?: string }>(`/incidents${query}`)
+    // Use Prefer header for server-side pagination instead of $top
+    const response = await this.fetch<{ value: unknown[]; '@odata.nextLink'?: string }>(`/incidents${query}`, {
+      headers: {
+        'Prefer': `odata.include-annotations="*",odata.maxpagesize=${pageSize}`,
+      },
+    })
 
     // Extract skip token from nextLink if present
     let nextSkipToken: string | undefined
