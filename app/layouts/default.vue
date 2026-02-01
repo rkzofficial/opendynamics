@@ -1,6 +1,4 @@
 <script setup lang="ts">
-const sidebarOpen = ref(false)
-
 const { fetchSession, isLoading, isAuthenticated } = useAuth()
 const { fetchConnectionStatus } = useDynamics()
 const { initTheme } = useTheme()
@@ -30,15 +28,11 @@ watch(isAuthenticated, (value) => {
     <UiSpinner size="lg" />
   </div>
 
-  <div v-else-if="isAuthenticated" class="flex min-h-screen">
-    <LayoutSidebar :is-open="sidebarOpen" @close="sidebarOpen = false" />
+  <div v-else-if="isAuthenticated" class="min-h-screen flex flex-col">
+    <LayoutHeader />
 
-    <div class="flex flex-1 flex-col">
-      <LayoutHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
-
-      <main class="flex-1 p-4 md:p-6">
-        <slot />
-      </main>
-    </div>
+    <main class="flex-1 p-4 md:p-6">
+      <slot />
+    </main>
   </div>
 </template>

@@ -1,49 +1,124 @@
 <script setup lang="ts">
-import { Menu, Bell, Settings } from 'lucide-vue-next'
+import { Menu, Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, X } from 'lucide-vue-next'
 
-const emit = defineEmits<{
-  toggleSidebar: []
-}>()
+const { isAdmin } = useAuth()
+const route = useRoute()
+
+const mobileMenuOpen = ref(false)
+
+const navigation = computed(() => {
+  const items = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  ]
+
+  if (!isAdmin()) {
+    items.push({ name: 'Cases', href: '/cases', icon: FolderOpen })
+  }
+
+  if (isAdmin()) {
+    items.push(
+      { name: 'User Cases', href: '/admin/cases', icon: Eye },
+      { name: 'Users', href: '/admin/users', icon: Users }
+    )
+  }
+
+  return items
+})
+
+function isActive(href: string) {
+  if (href === '/') {
+    return route.path === '/'
+  }
+  return route.path.startsWith(href)
+}
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-    <UiButton
-      variant="ghost"
-      size="icon"
-      class="md:hidden"
-      @click="emit('toggleSidebar')"
-    >
-      <Menu class="h-5 w-5" />
-      <span class="sr-only">Toggle Menu</span>
-    </UiButton>
+  <header class="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div class="flex h-14 items-center px-4 md:px-6">
+      <!-- Logo -->
+      <NuxtLink to="/" class="flex items-center gap-2 mr-6">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm">
+          <Zap class="h-4 w-4" />
+        </div>
+        <span class="font-semibold text-sm tracking-tight hidden sm:block">OpenDynamics</span>
+      </NuxtLink>
 
-    <div class="flex-1" />
-
-    <div class="flex items-center gap-4">
-      <LayoutThemeToggle />
-
-      <UiButton
-        variant="ghost"
-        size="icon"
-      >
-        <Bell class="h-5 w-5" />
-        <span class="sr-only">Notifications</span>
-      </UiButton>
-
-      <!-- Settings Button - Navigates directly to /settings -->
-      <UiButton
-        variant="ghost"
-        size="icon"
-        as-child
-      >
-        <NuxtLink to="/settings">
-          <Settings class="h-5 w-5" />
-          <span class="sr-only">Settings</span>
+      <!-- Desktop Navigation -->
+      <nav class="hidden md:flex items-center gap-1">
+        <NuxtLink
+          v-for="item in navigation"
+          :key="item.name"
+          :to="item.href"
+          :class="[
+            'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+            isActive(item.href)
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          ]"
+        >
+          <component :is="item.icon" class="h-4 w-4" />
+          {{ item.name }}
         </NuxtLink>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <UiButton
+        variant="ghost"
+        size="icon"
+        class="md:hidden h-8 w-8"
+        @click="mobileMenuOpen = !mobileMenuOpen"
+      >
+        <Menu v-if="!mobileMenuOpen" class="h-4 w-4" />
+        <X v-else class="h-4 w-4" />
       </UiButton>
 
-      <LayoutUserMenu />
+      <div class="flex-1" />
+
+      <!-- Right Side Actions -->
+      <div class="flex items-center gap-1">
+        <LayoutThemeToggle />
+
+        <UiButton variant="ghost" size="icon" class="h-8 w-8">
+          <Bell class="h-4 w-4" />
+          <span class="sr-only">Notifications</span>
+        </UiButton>
+
+        <UiButton variant="ghost" size="icon" class="h-8 w-8" as-child>
+          <NuxtLink to="/settings">
+            <Settings class="h-4 w-4" />
+            <span class="sr-only">Settings</span>
+          </NuxtLink>
+        </UiButton>
+
+        <div class="hidden sm:block w-px h-6 bg-border mx-2" />
+
+        <LayoutUserMenu />
+      </div>
     </div>
+
+    <!-- Mobile Navigation -->
+    <nav
+      v-if="mobileMenuOpen"
+      class="md:hidden border-t bg-background px-4 py-2"
+    >
+      <div class="flex flex-col gap-1">
+        <NuxtLink
+          v-for="item in navigation"
+          :key="item.name"
+          :to="item.href"
+          :class="[
+            'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+            isActive(item.href)
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          ]"
+          @click="mobileMenuOpen = false"
+        >
+          <component :is="item.icon" class="h-4 w-4" />
+          {{ item.name }}
+        </NuxtLink>
+      </div>
+    </nav>
   </header>
 </template>
