@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Search, Filter, RefreshCw, Link2, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, FileText, CircleDot, Flag, Calendar, Clock, ChevronLeft, ChevronRight, FolderOpen, X } from 'lucide-vue-next'
+import { Search, RefreshCw, Link2, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, FileText, CircleDot, Flag, Calendar, Clock, ChevronLeft, ChevronRight, FolderOpen, X } from 'lucide-vue-next'
+import { useDebounceFn } from '@vueuse/core'
 import { formatTimeAgo } from '~/utils/timeAgo'
 
 const { isAdmin } = useAuth()
@@ -45,7 +46,20 @@ const priorityOptions = [
   { value: 'low', label: 'Low', icon: ArrowDown },
 ]
 
+// Debounced search function
+const debouncedSearch = useDebounceFn(() => {
+  applyFilters()
+}, 400)
 
+// Watch search input with debounce
+watch(searchQuery, () => {
+  debouncedSearch()
+})
+
+// Watch dropdowns for immediate filter application
+watch([statusFilter, priorityFilter], () => {
+  applyFilters()
+})
 
 watch(
   () => connectionStatus.value?.connected,
@@ -192,7 +206,6 @@ function formatDate(dateString: string | null | undefined) {
             v-model="searchQuery"
             placeholder="Search cases..."
             class="pl-9 h-9 bg-background"
-            @keyup.enter="applyFilters"
           />
         </div>
 
@@ -245,11 +258,7 @@ function formatDate(dateString: string | null | undefined) {
           <!-- Divider -->
           <div class="hidden sm:block h-6 w-px bg-border" />
 
-          <!-- Action Buttons -->
-          <UiButton size="sm" class="h-9" @click="applyFilters">
-            <Filter class="mr-1.5 h-3.5 w-3.5" />
-            Apply
-          </UiButton>
+          <!-- Clear Button -->
           <UiButton variant="ghost" size="sm" class="h-9 text-muted-foreground" @click="handleClearFilters">
             <X class="mr-1.5 h-3.5 w-3.5" />
             Clear
