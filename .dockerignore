@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+.output
+.nuxt
+dist
+
+# Environment files (pass as build args or runtime env)
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Documentation (not needed in container)
+*.md
+!README.md
+docs
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Misc
+.editorconfig
+.eslintrc*
+.prettierrc*
+tsconfig.tsbuildinfo
+
+# Cloudflare specific (not needed for Docker)
+wrangler.toml
+.wrangler

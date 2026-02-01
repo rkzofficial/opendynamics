@@ -27,5 +27,5 @@ logs
 # Bun
 bun.lockb
 
-# Convex
-convex/_generated
+# Convex local env (generated code SHOULD be committed per Convex docs)
+# convex/_generated  # DO NOT ignore - required for typecheck and CI/CD builds
