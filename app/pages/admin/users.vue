@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Pencil, Trash2, ArrowLeft, AlertCircle } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, ArrowLeft, AlertCircle, User as UserIcon, Mail, Shield, Settings, Lock, Users } from 'lucide-vue-next'
 import type { User } from '~/types'
 
 const { isAdmin } = useAuth()
@@ -177,11 +177,11 @@ onMounted(fetchUsers)
         <UiTable v-else-if="users.length > 0">
           <UiTableHeader>
             <UiTableRow>
-              <UiTableHead>Username</UiTableHead>
-              <UiTableHead>Name</UiTableHead>
-              <UiTableHead>Email</UiTableHead>
-              <UiTableHead>Role</UiTableHead>
-              <UiTableHead class="w-24">Actions</UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><UserIcon class="h-3.5 w-3.5 text-muted-foreground" />Username</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><Users class="h-3.5 w-3.5 text-muted-foreground" />Name</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><Mail class="h-3.5 w-3.5 text-muted-foreground" />Email</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><Shield class="h-3.5 w-3.5 text-muted-foreground" />Role</span></UiTableHead>
+              <UiTableHead class="w-24"><span class="flex items-center gap-1.5"><Settings class="h-3.5 w-3.5 text-muted-foreground" />Actions</span></UiTableHead>
             </UiTableRow>
           </UiTableHeader>
           <UiTableBody>
@@ -209,7 +209,8 @@ onMounted(fetchUsers)
         </UiTable>
 
         <div v-else class="text-center py-8 text-muted-foreground">
-          No users found
+          <Users class="mx-auto h-12 w-12 mb-4 opacity-50" />
+          <p>No users found</p>
         </div>
       </UiCardContent>
     </UiCard>
@@ -222,14 +223,20 @@ onMounted(fetchUsers)
     >
       <div class="space-y-4">
         <div class="space-y-2">
-          <UiLabel for="create-username">Username</UiLabel>
+          <UiLabel for="create-username" class="flex items-center gap-1.5">
+            <UserIcon class="h-3.5 w-3.5 text-muted-foreground" />
+            Username
+          </UiLabel>
           <UiInput
             id="create-username"
             v-model="createForm.username"
           />
         </div>
         <div class="space-y-2">
-          <UiLabel for="create-password">Password</UiLabel>
+          <UiLabel for="create-password" class="flex items-center gap-1.5">
+            <Lock class="h-3.5 w-3.5 text-muted-foreground" />
+            Password
+          </UiLabel>
           <UiInput
             id="create-password"
             v-model="createForm.password"
@@ -237,14 +244,20 @@ onMounted(fetchUsers)
           />
         </div>
         <div class="space-y-2">
-          <UiLabel for="create-name">Name</UiLabel>
+          <UiLabel for="create-name" class="flex items-center gap-1.5">
+            <Users class="h-3.5 w-3.5 text-muted-foreground" />
+            Name
+          </UiLabel>
           <UiInput
             id="create-name"
             v-model="createForm.name"
           />
         </div>
         <div class="space-y-2">
-          <UiLabel for="create-email">Email</UiLabel>
+          <UiLabel for="create-email" class="flex items-center gap-1.5">
+            <Mail class="h-3.5 w-3.5 text-muted-foreground" />
+            Email
+          </UiLabel>
           <UiInput
             id="create-email"
             v-model="createForm.email"
@@ -252,7 +265,10 @@ onMounted(fetchUsers)
           />
         </div>
         <div class="space-y-2">
-          <UiLabel for="create-role">Role</UiLabel>
+          <UiLabel for="create-role" class="flex items-center gap-1.5">
+            <Shield class="h-3.5 w-3.5 text-muted-foreground" />
+            Role
+          </UiLabel>
           <UiSelect v-model="createForm.role">
             <UiSelectTrigger id="create-role">
               <UiSelectValue placeholder="Select role" />
@@ -288,14 +304,20 @@ onMounted(fetchUsers)
     >
       <div class="space-y-4">
         <div class="space-y-2">
-          <UiLabel for="edit-name">Name</UiLabel>
+          <UiLabel for="edit-name" class="flex items-center gap-1.5">
+            <Users class="h-3.5 w-3.5 text-muted-foreground" />
+            Name
+          </UiLabel>
           <UiInput
             id="edit-name"
             v-model="editForm.name"
           />
         </div>
         <div class="space-y-2">
-          <UiLabel for="edit-email">Email</UiLabel>
+          <UiLabel for="edit-email" class="flex items-center gap-1.5">
+            <Mail class="h-3.5 w-3.5 text-muted-foreground" />
+            Email
+          </UiLabel>
           <UiInput
             id="edit-email"
             v-model="editForm.email"
@@ -303,7 +325,10 @@ onMounted(fetchUsers)
           />
         </div>
         <div class="space-y-2">
-          <UiLabel for="edit-role">Role</UiLabel>
+          <UiLabel for="edit-role" class="flex items-center gap-1.5">
+            <Shield class="h-3.5 w-3.5 text-muted-foreground" />
+            Role
+          </UiLabel>
           <UiSelect v-model="editForm.role">
             <UiSelectTrigger id="edit-role">
               <UiSelectValue placeholder="Select role" />
@@ -320,7 +345,10 @@ onMounted(fetchUsers)
           </UiSelect>
         </div>
         <div class="space-y-2">
-          <UiLabel for="edit-password">New Password (leave empty to keep current)</UiLabel>
+          <UiLabel for="edit-password" class="flex items-center gap-1.5">
+            <Lock class="h-3.5 w-3.5 text-muted-foreground" />
+            New Password (leave empty to keep current)
+          </UiLabel>
           <UiInput
             id="edit-password"
             v-model="editForm.password"

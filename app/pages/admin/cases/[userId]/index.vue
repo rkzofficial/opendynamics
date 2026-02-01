@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, Filter, RefreshCw, ArrowLeft, Users, ArrowLeftCircle } from 'lucide-vue-next'
+import { Search, Filter, RefreshCw, ArrowLeft, Users, ArrowLeftCircle, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, FileText, CircleDot, Flag, Calendar, Clock, ChevronLeft, ChevronRight, FolderOpen, X } from 'lucide-vue-next'
 import { formatTimeAgo } from '~/utils/timeAgo'
 
 const router = useRouter()
@@ -27,17 +27,17 @@ const statusFilter = ref('all')
 const priorityFilter = ref('all')
 
 const statusOptions = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'all', label: 'All Statuses', icon: CircleDot },
+  { value: 'active', label: 'Active', icon: AlertCircle },
+  { value: 'resolved', label: 'Resolved', icon: CheckCircle },
+  { value: 'cancelled', label: 'Cancelled', icon: XCircle },
 ]
 
 const priorityOptions = [
-  { value: 'all', label: 'All Priorities' },
-  { value: 'high', label: 'High' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'low', label: 'Low' },
+  { value: 'all', label: 'All Priorities', icon: Flag },
+  { value: 'high', label: 'High', icon: ArrowUp },
+  { value: 'normal', label: 'Normal', icon: Minus },
+  { value: 'low', label: 'Low', icon: ArrowDown },
 ]
 
 // Get selected user info
@@ -131,6 +131,24 @@ function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | '
   }
 }
 
+function getStatusIcon(statecode: number) {
+  switch (statecode) {
+    case 0: return AlertCircle
+    case 1: return CheckCircle
+    case 2: return XCircle
+    default: return AlertCircle
+  }
+}
+
+function getPriorityIcon(prioritycode: number) {
+  switch (prioritycode) {
+    case 1: return ArrowUp
+    case 2: return Minus
+    case 3: return ArrowDown
+    default: return Minus
+  }
+}
+
 function formatDate(dateString: string | null | undefined) {
   return formatTimeAgo(dateString)
 }
@@ -215,7 +233,10 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
                   :key="option.value"
                   :value="option.value"
                 >
-                  {{ option.label }}
+                  <span class="flex items-center gap-2">
+                    <component :is="option.icon" class="h-3.5 w-3.5" />
+                    {{ option.label }}
+                  </span>
                 </UiSelectItem>
               </UiSelectContent>
             </UiSelect>
@@ -232,7 +253,10 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
                   :key="option.value"
                   :value="option.value"
                 >
-                  {{ option.label }}
+                  <span class="flex items-center gap-2">
+                    <component :is="option.icon" class="h-3.5 w-3.5" />
+                    {{ option.label }}
+                  </span>
                 </UiSelectItem>
               </UiSelectContent>
             </UiSelect>
@@ -243,6 +267,7 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
               Apply
             </UiButton>
             <UiButton variant="outline" @click="handleClearFilters">
+              <X class="mr-2 h-4 w-4" />
               Clear
             </UiButton>
           </div>
@@ -265,12 +290,12 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
         <UiTable v-if="cases.length > 0">
           <UiTableHeader>
             <UiTableRow>
-              <UiTableHead>Ticket #</UiTableHead>
-              <UiTableHead>Title</UiTableHead>
-              <UiTableHead>Status</UiTableHead>
-              <UiTableHead>Priority</UiTableHead>
-              <UiTableHead>Created</UiTableHead>
-              <UiTableHead>Modified</UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><Hash class="h-3.5 w-3.5 text-muted-foreground" />Ticket #</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><FileText class="h-3.5 w-3.5 text-muted-foreground" />Title</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><CircleDot class="h-3.5 w-3.5 text-muted-foreground" />Status</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><Flag class="h-3.5 w-3.5 text-muted-foreground" />Priority</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><Calendar class="h-3.5 w-3.5 text-muted-foreground" />Created</span></UiTableHead>
+              <UiTableHead><span class="flex items-center gap-1.5"><Clock class="h-3.5 w-3.5 text-muted-foreground" />Modified</span></UiTableHead>
             </UiTableRow>
           </UiTableHeader>
           <UiTableBody>
@@ -285,12 +310,14 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
               </UiTableCell>
               <UiTableCell class="max-w-[300px] truncate">{{ c.title }}</UiTableCell>
               <UiTableCell>
-                <UiBadge :variant="getStatusVariant(c.statecode)">
+                <UiBadge :variant="getStatusVariant(c.statecode)" class="gap-1">
+                  <component :is="getStatusIcon(c.statecode)" class="h-3 w-3" />
                   {{ getStatusLabel(c.statecode) }}
                 </UiBadge>
               </UiTableCell>
               <UiTableCell>
-                <UiBadge :variant="getPriorityVariant(c.prioritycode)">
+                <UiBadge :variant="getPriorityVariant(c.prioritycode)" class="gap-1">
+                  <component :is="getPriorityIcon(c.prioritycode)" class="h-3 w-3" />
                   {{ getPriorityLabel(c.prioritycode) }}
                 </UiBadge>
               </UiTableCell>
@@ -301,7 +328,8 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
         </UiTable>
 
         <div v-else class="text-center py-12 text-muted-foreground">
-          No cases found for this user
+          <FolderOpen class="mx-auto h-12 w-12 mb-4 opacity-50" />
+          <p>No cases found for this user</p>
         </div>
 
         <!-- Pagination -->
@@ -316,6 +344,7 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
               :disabled="!canGoBack()"
               @click="goToPreviousPage"
             >
+              <ChevronLeft class="mr-1 h-4 w-4" />
               Previous
             </UiButton>
             <UiButton
@@ -325,6 +354,7 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
               @click="goToNextPage"
             >
               Next
+              <ChevronRight class="ml-1 h-4 w-4" />
             </UiButton>
           </div>
         </div>

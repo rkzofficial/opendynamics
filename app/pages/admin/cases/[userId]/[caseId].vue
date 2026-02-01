@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onUnmounted } from 'vue'
-import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users } from 'lucide-vue-next'
+import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, CircleDot, Flag, Clock, Timer, User, Building, Shield, Info, AlertTriangle, FolderOpen } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
 import { formatTimeAgo } from '~/utils/timeAgo'
@@ -255,6 +255,24 @@ function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | '
   }
 }
 
+function getStatusIcon(statecode: number) {
+  switch (statecode) {
+    case 0: return AlertCircle
+    case 1: return CheckCircle
+    case 2: return XCircle
+    default: return AlertCircle
+  }
+}
+
+function getPriorityIcon(prioritycode: number) {
+  switch (prioritycode) {
+    case 1: return ArrowUp
+    case 2: return Minus
+    case 3: return ArrowDown
+    default: return Minus
+  }
+}
+
 function formatDate(dateString: string | null | undefined) {
   return formatTimeAgo(dateString)
 }
@@ -371,10 +389,12 @@ function goBack() {
               <span class="text-sm font-medium text-muted-foreground">
                 {{ currentCase.ticketnumber }}
               </span>
-              <UiBadge :variant="getStatusVariant(currentCase.statecode)">
+              <UiBadge :variant="getStatusVariant(currentCase.statecode)" class="gap-1">
+                <component :is="getStatusIcon(currentCase.statecode)" class="h-3 w-3" />
                 {{ getStatusLabel(currentCase.statecode) }}
               </UiBadge>
-              <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
+              <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)" class="gap-1">
+                <component :is="getPriorityIcon(currentCase.prioritycode)" class="h-3 w-3" />
                 {{ getPriorityLabel(currentCase.prioritycode) }}
               </UiBadge>
             </div>
@@ -444,7 +464,8 @@ function goBack() {
               </div>
 
               <div v-else-if="timelineItems.length === 0" class="text-center py-8 text-muted-foreground">
-                No activities yet
+                <MessageSquare class="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>No activities yet</p>
               </div>
 
               <div v-else class="space-y-4">
@@ -503,90 +524,117 @@ function goBack() {
         <div class="space-y-6 lg:sticky lg:top-48 lg:self-start">
           <!-- Case info -->
           <UiCard>
-            <UiCardHeader>
-              <UiCardTitle>Case Information</UiCardTitle>
+            <UiCardHeader class="pb-3">
+              <UiCardTitle class="flex items-center gap-2">
+                <Info class="h-4 w-4 text-muted-foreground" />
+                Case Information
+              </UiCardTitle>
             </UiCardHeader>
             <UiCardContent class="space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-muted-foreground">Ticket Number</p>
-                  <p class="font-medium">{{ currentCase.ticketnumber }}</p>
+              <!-- Status & Priority -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <UiBadge :variant="getStatusVariant(currentCase.statecode)" class="gap-1">
+                  <component :is="getStatusIcon(currentCase.statecode)" class="h-3 w-3" />
+                  {{ getStatusLabel(currentCase.statecode) }}
+                </UiBadge>
+                <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)" class="gap-1">
+                  <component :is="getPriorityIcon(currentCase.prioritycode)" class="h-3 w-3" />
+                  {{ getPriorityLabel(currentCase.prioritycode) }}
+                </UiBadge>
+              </div>
+
+              <!-- Basic Info -->
+              <div class="space-y-3 rounded-md bg-muted/50 p-3">
+                <div class="flex items-center gap-3">
+                  <Hash class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div class="min-w-0">
+                    <p class="text-xs text-muted-foreground">Ticket Number</p>
+                    <p class="text-sm font-medium">{{ currentCase.ticketnumber }}</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="text-sm text-muted-foreground">Status</p>
-                  <UiBadge :variant="getStatusVariant(currentCase.statecode)">
-                    {{ getStatusLabel(currentCase.statecode) }}
-                  </UiBadge>
+                <div class="flex items-center gap-3">
+                  <Clock class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs text-muted-foreground">Created</p>
+                    <p :title="formatDate(currentCase.createdon).tooltip" class="text-sm">{{ formatDate(currentCase.createdon).text }}</p>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-xs text-muted-foreground">Modified</p>
+                    <p :title="formatDate(currentCase.modifiedon).tooltip" class="text-sm">{{ formatDate(currentCase.modifiedon).text }}</p>
+                  </div>
                 </div>
               </div>
-              <UiSeparator />
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-muted-foreground">Priority</p>
-                  <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
-                    {{ getPriorityLabel(currentCase.prioritycode) }}
-                  </UiBadge>
+
+              <!-- SLA Section -->
+              <div class="space-y-3 rounded-md bg-muted/50 p-3">
+                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">SLA Status</p>
+                <div class="flex items-start gap-3">
+                  <Timer class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs text-muted-foreground">First Response</p>
+                    <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
+                    <template v-else>
+                      <p v-if="getFirstResponseSLA()?.succeeded" :title="formatDate(getFirstResponseSLA()?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
+                        Completed {{ formatDate(getFirstResponseSLA()?.succeeded).text }}
+                      </p>
+                      <p v-else-if="getFirstResponseSLA()?.deadline" class="text-sm font-mono font-medium">
+                        {{ firstResponseCountdown || formatDate(getFirstResponseSLA()?.deadline).text }}
+                      </p>
+                      <p v-else class="text-sm text-muted-foreground">Not set</p>
+                    </template>
+                  </div>
                 </div>
-                <div>
-                  <p class="text-sm text-muted-foreground">Created</p>
-                  <p :title="formatDate(currentCase.createdon).tooltip" class="text-sm">{{ formatDate(currentCase.createdon).text }}</p>
+                <div class="flex items-start gap-3">
+                  <Clock class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs text-muted-foreground">Customer Update</p>
+                    <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
+                    <template v-else>
+                      <p v-if="getCustomerUpdateSLA()?.succeeded" :title="formatDate(getCustomerUpdateSLA()?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
+                        Completed {{ formatDate(getCustomerUpdateSLA()?.succeeded).text }}
+                      </p>
+                      <p v-else-if="getCustomerUpdateSLA()?.deadline" class="text-sm font-mono font-medium">
+                        {{ customerUpdateCountdown || formatDate(getCustomerUpdateSLA()?.deadline).text }}
+                      </p>
+                      <p v-else class="text-sm text-muted-foreground">Not set</p>
+                    </template>
+                  </div>
                 </div>
               </div>
-              <UiSeparator />
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-muted-foreground">Modified</p>
-                  <p :title="formatDate(currentCase.modifiedon).tooltip" class="text-sm">{{ formatDate(currentCase.modifiedon).text }}</p>
+
+              <!-- Contact & Organization -->
+              <div class="space-y-3 rounded-md bg-muted/50 p-3">
+                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Contact Info</p>
+                <div class="flex items-center gap-3">
+                  <User class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div class="min-w-0">
+                    <p class="text-xs text-muted-foreground">Primary Contact</p>
+                    <p class="text-sm">{{ currentCase.primarycontactid?.fullname || 'Not set' }}</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="text-sm text-muted-foreground">First Response SLA</p>
-                  <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
-                  <template v-else>
-                    <p v-if="getFirstResponseSLA()?.succeeded" :title="formatDate(getFirstResponseSLA()?.succeeded).tooltip" class="text-sm text-green-600">
-                      Completed {{ formatDate(getFirstResponseSLA()?.succeeded).text }}
-                    </p>
-                    <p v-else-if="getFirstResponseSLA()?.deadline" class="text-sm font-mono">
-                      {{ firstResponseCountdown || formatDate(getFirstResponseSLA()?.deadline).text }}
-                    </p>
-                    <p v-else class="text-sm">Not set</p>
-                  </template>
+                <div class="flex items-center gap-3">
+                  <Building class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div class="min-w-0">
+                    <p class="text-xs text-muted-foreground">Organization</p>
+                    <p class="text-sm">{{ currentCase.customerid_account?.name || 'Not set' }}</p>
+                  </div>
+                </div>
+                <div v-if="currentCase.additionalContactName" class="flex items-center gap-3">
+                  <User class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div class="min-w-0">
+                    <p class="text-xs text-muted-foreground">Additional Contact</p>
+                    <p class="text-sm">{{ currentCase.additionalContactName }}</p>
+                  </div>
                 </div>
               </div>
-              <UiSeparator />
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-muted-foreground">Customer Update SLA</p>
-                  <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
-                  <template v-else>
-                    <p v-if="getCustomerUpdateSLA()?.succeeded" :title="formatDate(getCustomerUpdateSLA()?.succeeded).tooltip" class="text-sm text-green-600">
-                      Completed {{ formatDate(getCustomerUpdateSLA()?.succeeded).text }}
-                    </p>
-                    <p v-else-if="getCustomerUpdateSLA()?.deadline" class="text-sm font-mono">
-                      {{ customerUpdateCountdown || formatDate(getCustomerUpdateSLA()?.deadline).text }}
-                    </p>
-                    <p v-else class="text-sm">Not set</p>
-                  </template>
-                </div>
-                <div>
-                  <p class="text-sm text-muted-foreground">Support Plan</p>
+
+              <!-- Support Plan -->
+              <div class="flex items-center gap-3 rounded-md bg-muted/50 p-3">
+                <Shield class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Support Plan</p>
                   <p class="text-sm">{{ currentCase.entitlementid?.name || 'Not set' }}</p>
                 </div>
-              </div>
-              <UiSeparator />
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-muted-foreground">Primary Contact</p>
-                  <p class="text-sm">{{ currentCase.primarycontactid?.fullname || 'Not set' }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-muted-foreground">Org</p>
-                  <p class="text-sm">{{ currentCase.customerid_account?.name || 'Not set' }}</p>
-                </div>
-              </div>
-              <UiSeparator />
-              <div>
-                <p class="text-sm text-muted-foreground">Additional Contact Name</p>
-                <p class="text-sm">{{ currentCase.additionalContactName || 'Not set' }}</p>
               </div>
             </UiCardContent>
           </UiCard>
@@ -620,6 +668,7 @@ function goBack() {
     <!-- Not found -->
     <UiCard v-else>
       <UiCardContent class="py-12 text-center">
+        <AlertTriangle class="mx-auto h-12 w-12 mb-4 text-muted-foreground opacity-50" />
         <p class="text-muted-foreground">Case not found</p>
         <UiButton variant="outline" class="mt-4" @click="goBack">
           Go Back

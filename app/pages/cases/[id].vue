@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onUnmounted } from 'vue'
-import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Copy, Check, Info, Clock, User, Building, Shield, Hash, AlertCircle } from 'lucide-vue-next'
+import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Copy, Check, Info, Clock, User, Building, Shield, Hash, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Flag, FolderOpen, AlertTriangle, Timer } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
 import { formatTimeAgo } from '~/utils/timeAgo'
@@ -91,6 +91,24 @@ function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | '
     case 2: return 'warning'
     case 3: return 'secondary'
     default: return 'secondary'
+  }
+}
+
+function getStatusIcon(statecode: number) {
+  switch (statecode) {
+    case 0: return AlertCircle
+    case 1: return CheckCircle
+    case 2: return XCircle
+    default: return AlertCircle
+  }
+}
+
+function getPriorityIcon(prioritycode: number) {
+  switch (prioritycode) {
+    case 1: return ArrowUp
+    case 2: return Minus
+    case 3: return ArrowDown
+    default: return Minus
   }
 }
 
@@ -283,10 +301,12 @@ const timelineItems = computed<TimelineItem[]>(() => {
               <span class="text-sm font-medium text-muted-foreground">
                 {{ currentCase.ticketnumber }}
               </span>
-              <UiBadge :variant="getStatusVariant(currentCase.statecode)">
+              <UiBadge :variant="getStatusVariant(currentCase.statecode)" class="gap-1">
+                <component :is="getStatusIcon(currentCase.statecode)" class="h-3 w-3" />
                 {{ getStatusLabel(currentCase.statecode) }}
               </UiBadge>
-              <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
+              <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)" class="gap-1">
+                <component :is="getPriorityIcon(currentCase.prioritycode)" class="h-3 w-3" />
                 {{ getPriorityLabel(currentCase.prioritycode) }}
               </UiBadge>
             </div>
@@ -376,7 +396,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
               </div>
 
               <div v-else-if="timelineItems.length === 0" class="text-center py-8 text-muted-foreground">
-                No activities yet
+                <MessageSquare class="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>No activities yet</p>
               </div>
 
               <div v-else class="space-y-4">
@@ -444,10 +465,12 @@ const timelineItems = computed<TimelineItem[]>(() => {
             <UiCardContent class="space-y-4">
               <!-- Status & Priority -->
               <div class="flex items-center gap-2 flex-wrap">
-                <UiBadge :variant="getStatusVariant(currentCase.statecode)">
+                <UiBadge :variant="getStatusVariant(currentCase.statecode)" class="gap-1">
+                  <component :is="getStatusIcon(currentCase.statecode)" class="h-3 w-3" />
                   {{ getStatusLabel(currentCase.statecode) }}
                 </UiBadge>
-                <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)">
+                <UiBadge :variant="getPriorityVariant(currentCase.prioritycode)" class="gap-1">
+                  <component :is="getPriorityIcon(currentCase.prioritycode)" class="h-3 w-3" />
                   {{ getPriorityLabel(currentCase.prioritycode) }}
                 </UiBadge>
               </div>
@@ -577,6 +600,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
     <!-- Not found -->
     <UiCard v-else>
       <UiCardContent class="py-12 text-center">
+        <AlertTriangle class="mx-auto h-12 w-12 mb-4 text-muted-foreground opacity-50" />
         <p class="text-muted-foreground">Case not found</p>
         <UiButton variant="outline" class="mt-4" @click="router.push('/cases')">
           Go to Cases

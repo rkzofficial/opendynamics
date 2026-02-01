@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Link2, Users, ArrowLeft } from 'lucide-vue-next'
+import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Link2, Users, ArrowLeft, AlertCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, FileText, CircleDot, Flag, Calendar } from 'lucide-vue-next'
 import type { DashboardStats, DashboardKPIs, Case } from '~/types'
 import { formatTimeAgo } from '~/utils/timeAgo'
 
@@ -132,6 +132,24 @@ function getStatusLabel(statecode: number) {
     case 1: return 'Resolved'
     case 2: return 'Cancelled'
     default: return 'Unknown'
+  }
+}
+
+function getStatusIcon(statecode: number) {
+  switch (statecode) {
+    case 0: return AlertCircle
+    case 1: return CheckCircle
+    case 2: return XCircle
+    default: return AlertCircle
+  }
+}
+
+function getPriorityIcon(prioritycode: number) {
+  switch (prioritycode) {
+    case 1: return ArrowUp
+    case 2: return Minus
+    case 3: return ArrowDown
+    default: return Minus
   }
 }
 
@@ -346,11 +364,11 @@ function formatDate(dateString: string | null | undefined) {
           <UiTable v-if="recentCases.length > 0">
             <UiTableHeader>
               <UiTableRow>
-                <UiTableHead>Ticket #</UiTableHead>
-                <UiTableHead>Title</UiTableHead>
-                <UiTableHead>Status</UiTableHead>
-                <UiTableHead>Priority</UiTableHead>
-                <UiTableHead>Created</UiTableHead>
+                <UiTableHead><span class="flex items-center gap-1.5"><Hash class="h-3.5 w-3.5 text-muted-foreground" />Ticket #</span></UiTableHead>
+                <UiTableHead><span class="flex items-center gap-1.5"><FileText class="h-3.5 w-3.5 text-muted-foreground" />Title</span></UiTableHead>
+                <UiTableHead><span class="flex items-center gap-1.5"><CircleDot class="h-3.5 w-3.5 text-muted-foreground" />Status</span></UiTableHead>
+                <UiTableHead><span class="flex items-center gap-1.5"><Flag class="h-3.5 w-3.5 text-muted-foreground" />Priority</span></UiTableHead>
+                <UiTableHead><span class="flex items-center gap-1.5"><Calendar class="h-3.5 w-3.5 text-muted-foreground" />Created</span></UiTableHead>
               </UiTableRow>
             </UiTableHeader>
             <UiTableBody>
@@ -362,12 +380,14 @@ function formatDate(dateString: string | null | undefined) {
                 </UiTableCell>
                 <UiTableCell class="max-w-[300px] truncate">{{ c.title }}</UiTableCell>
                 <UiTableCell>
-                  <UiBadge :variant="getStatusVariant(c.statecode)">
+                  <UiBadge :variant="getStatusVariant(c.statecode)" class="gap-1">
+                    <component :is="getStatusIcon(c.statecode)" class="h-3 w-3" />
                     {{ getStatusLabel(c.statecode) }}
                   </UiBadge>
                 </UiTableCell>
                 <UiTableCell>
-                  <UiBadge :variant="getPriorityVariant(c.prioritycode)">
+                  <UiBadge :variant="getPriorityVariant(c.prioritycode)" class="gap-1">
+                    <component :is="getPriorityIcon(c.prioritycode)" class="h-3 w-3" />
                     {{ getPriorityLabel(c.prioritycode) }}
                   </UiBadge>
                 </UiTableCell>
@@ -377,7 +397,8 @@ function formatDate(dateString: string | null | undefined) {
           </UiTable>
 
           <div v-else class="text-center py-8 text-muted-foreground">
-            No cases found
+            <FolderOpen class="mx-auto h-12 w-12 mb-4 opacity-50" />
+            <p>No cases found</p>
           </div>
         </UiCardContent>
       </UiCard>
