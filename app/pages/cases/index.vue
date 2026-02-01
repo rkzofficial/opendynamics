@@ -172,75 +172,79 @@ function formatDate(dateString: string | null | undefined) {
 
     <template v-else>
       <!-- Filters -->
-      <UiCard>
-        <UiCardContent class="pt-6">
-          <div class="flex flex-col gap-4 md:flex-row md:items-end">
-            <div class="flex-1">
-              <UiLabel for="search">Search</UiLabel>
-              <div class="relative">
-                <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <UiInput
-                  id="search"
-                  v-model="searchQuery"
-                  placeholder="Search by title or ticket number..."
-                  class="pl-9"
-                  @keyup.enter="applyFilters"
-                />
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <!-- Search -->
+        <div class="relative flex-1">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <UiInput
+            id="search"
+            v-model="searchQuery"
+            placeholder="Search cases..."
+            class="pl-9 h-9 bg-background"
+            @keyup.enter="applyFilters"
+          />
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Status Filter -->
+          <UiSelect v-model="statusFilter">
+            <UiSelectTrigger class="h-9 w-auto min-w-[130px] bg-background">
+              <div class="flex items-center gap-2">
+                <CircleDot class="h-3.5 w-3.5 text-muted-foreground" />
+                <UiSelectValue placeholder="Status" />
               </div>
-            </div>
-            <div class="w-full md:w-40">
-              <UiLabel for="status">Status</UiLabel>
-              <UiSelect v-model="statusFilter">
-                <UiSelectTrigger id="status">
-                  <UiSelectValue placeholder="All Statuses" />
-                </UiSelectTrigger>
-                <UiSelectContent>
-                  <UiSelectItem
-                    v-for="option in statusOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    <span class="flex items-center gap-2">
-                      <component :is="option.icon" class="h-3.5 w-3.5" />
-                      {{ option.label }}
-                    </span>
-                  </UiSelectItem>
-                </UiSelectContent>
-              </UiSelect>
-            </div>
-            <div class="w-full md:w-40">
-              <UiLabel for="priority">Priority</UiLabel>
-              <UiSelect v-model="priorityFilter">
-                <UiSelectTrigger id="priority">
-                  <UiSelectValue placeholder="All Priorities" />
-                </UiSelectTrigger>
-                <UiSelectContent>
-                  <UiSelectItem
-                    v-for="option in priorityOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    <span class="flex items-center gap-2">
-                      <component :is="option.icon" class="h-3.5 w-3.5" />
-                      {{ option.label }}
-                    </span>
-                  </UiSelectItem>
-                </UiSelectContent>
-              </UiSelect>
-            </div>
-            <div class="flex gap-2">
-              <UiButton @click="applyFilters">
-                <Filter class="mr-2 h-4 w-4" />
-                Apply
-              </UiButton>
-              <UiButton variant="outline" @click="handleClearFilters">
-                <X class="mr-2 h-4 w-4" />
-                Clear
-              </UiButton>
-            </div>
-          </div>
-        </UiCardContent>
-      </UiCard>
+            </UiSelectTrigger>
+            <UiSelectContent>
+              <UiSelectItem
+                v-for="option in statusOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                <span class="flex items-center gap-2">
+                  <component :is="option.icon" class="h-3.5 w-3.5" />
+                  {{ option.label }}
+                </span>
+              </UiSelectItem>
+            </UiSelectContent>
+          </UiSelect>
+
+          <!-- Priority Filter -->
+          <UiSelect v-model="priorityFilter">
+            <UiSelectTrigger class="h-9 w-auto min-w-[130px] bg-background">
+              <div class="flex items-center gap-2">
+                <Flag class="h-3.5 w-3.5 text-muted-foreground" />
+                <UiSelectValue placeholder="Priority" />
+              </div>
+            </UiSelectTrigger>
+            <UiSelectContent>
+              <UiSelectItem
+                v-for="option in priorityOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                <span class="flex items-center gap-2">
+                  <component :is="option.icon" class="h-3.5 w-3.5" />
+                  {{ option.label }}
+                </span>
+              </UiSelectItem>
+            </UiSelectContent>
+          </UiSelect>
+
+          <!-- Divider -->
+          <div class="hidden sm:block h-6 w-px bg-border" />
+
+          <!-- Action Buttons -->
+          <UiButton size="sm" class="h-9" @click="applyFilters">
+            <Filter class="mr-1.5 h-3.5 w-3.5" />
+            Apply
+          </UiButton>
+          <UiButton variant="ghost" size="sm" class="h-9 text-muted-foreground" @click="handleClearFilters">
+            <X class="mr-1.5 h-3.5 w-3.5" />
+            Clear
+          </UiButton>
+        </div>
+      </div>
 
       <!-- Loading state -->
       <UiCard v-if="isLoading">
