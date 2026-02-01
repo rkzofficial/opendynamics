@@ -138,15 +138,26 @@ function formatDate(dateString: string | null | undefined) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight">Cases</h1>
-        <p class="text-muted-foreground">
-          View and manage your Dynamics CRM cases
-        </p>
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <FolderOpen class="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 class="text-xl font-semibold tracking-tight">Cases</h1>
+          <p class="text-sm text-muted-foreground">
+            View and manage your support cases
+          </p>
+        </div>
       </div>
-      <UiButton v-if="connectionStatus?.connected" variant="outline" @click="fetchCases()">
-        <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': isLoading }" />
+      <UiButton
+        v-if="connectionStatus?.connected"
+        variant="ghost"
+        size="sm"
+        class="h-8 px-3"
+        @click="fetchCases()"
+      >
+        <RefreshCw class="mr-1.5 h-3.5 w-3.5" :class="{ 'animate-spin': isLoading }" />
         Refresh
       </UiButton>
     </div>
