@@ -252,61 +252,126 @@ function formatDate(dateString: string | null | undefined) {
       </UiCard>
 
       <!-- Cases table -->
-      <UiCard v-else>
-        <UiCardContent class="pt-6">
-          <UiTable v-if="cases.length > 0">
-            <UiTableHeader>
-              <UiTableRow>
-                <UiTableHead><span class="flex items-center gap-1.5"><Hash class="h-3.5 w-3.5 text-muted-foreground" />Ticket #</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><FileText class="h-3.5 w-3.5 text-muted-foreground" />Title</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><CircleDot class="h-3.5 w-3.5 text-muted-foreground" />Status</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><Flag class="h-3.5 w-3.5 text-muted-foreground" />Priority</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><Calendar class="h-3.5 w-3.5 text-muted-foreground" />Created</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><Clock class="h-3.5 w-3.5 text-muted-foreground" />Modified</span></UiTableHead>
-              </UiTableRow>
-            </UiTableHeader>
-            <UiTableBody>
-              <UiTableRow v-for="c in cases" :key="c.incidentid">
-                <UiTableCell class="font-medium">
-                  <NuxtLink :to="`/cases/${c.incidentid}`" class="hover:underline text-primary">
-                    {{ c.ticketnumber }}
-                  </NuxtLink>
-                </UiTableCell>
-                <UiTableCell class="max-w-[300px] truncate">{{ c.title }}</UiTableCell>
-                <UiTableCell>
-                  <UiBadge :variant="getStatusVariant(c.statecode)" class="gap-1">
-                    <component :is="getStatusIcon(c.statecode)" class="h-3 w-3" />
-                    {{ getStatusLabel(c.statecode) }}
-                  </UiBadge>
-                </UiTableCell>
-                <UiTableCell>
-                  <UiBadge :variant="getPriorityVariant(c.prioritycode)" class="gap-1">
-                    <component :is="getPriorityIcon(c.prioritycode)" class="h-3 w-3" />
-                    {{ getPriorityLabel(c.prioritycode) }}
-                  </UiBadge>
-                </UiTableCell>
-                <UiTableCell :title="formatDate(c.createdon).tooltip">{{ formatDate(c.createdon).text }}</UiTableCell>
-                <UiTableCell :title="formatDate(c.modifiedon).tooltip">{{ formatDate(c.modifiedon).text }}</UiTableCell>
-              </UiTableRow>
-            </UiTableBody>
-          </UiTable>
+      <UiCard v-else class="overflow-hidden">
+        <UiCardContent class="p-0">
+          <div v-if="cases.length > 0" class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b bg-muted/50">
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    <span class="flex items-center gap-2">
+                      <Hash class="h-4 w-4" />
+                      Ticket
+                    </span>
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    <span class="flex items-center gap-2">
+                      <FileText class="h-4 w-4" />
+                      Title
+                    </span>
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    <span class="flex items-center gap-2">
+                      <CircleDot class="h-4 w-4" />
+                      Status
+                    </span>
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    <span class="flex items-center gap-2">
+                      <Flag class="h-4 w-4" />
+                      Priority
+                    </span>
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    <span class="flex items-center gap-2">
+                      <Calendar class="h-4 w-4" />
+                      Created
+                    </span>
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    <span class="flex items-center gap-2">
+                      <Clock class="h-4 w-4" />
+                      Modified
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                <tr
+                  v-for="c in cases"
+                  :key="c.incidentid"
+                  class="group transition-colors hover:bg-muted/50 cursor-pointer"
+                  @click="router.push(`/cases/${c.incidentid}`)"
+                >
+                  <td class="h-14 px-4 align-middle">
+                    <span class="font-mono text-sm font-medium text-primary">
+                      {{ c.ticketnumber }}
+                    </span>
+                  </td>
+                  <td class="h-14 px-4 align-middle max-w-[300px]">
+                    <p class="truncate font-medium">{{ c.title }}</p>
+                  </td>
+                  <td class="h-14 px-4 align-middle">
+                    <div class="flex items-center gap-2">
+                      <span
+                        :class="[
+                          'h-2 w-2 rounded-full',
+                          c.statecode === 0 ? 'bg-blue-500' :
+                          c.statecode === 1 ? 'bg-green-500' :
+                          c.statecode === 2 ? 'bg-gray-400' : 'bg-gray-400'
+                        ]"
+                      />
+                      <span class="text-sm">{{ getStatusLabel(c.statecode) }}</span>
+                    </div>
+                  </td>
+                  <td class="h-14 px-4 align-middle">
+                    <div class="flex items-center gap-2">
+                      <component
+                        :is="getPriorityIcon(c.prioritycode)"
+                        :class="[
+                          'h-4 w-4',
+                          c.prioritycode === 1 ? 'text-red-500' :
+                          c.prioritycode === 2 ? 'text-amber-500' :
+                          c.prioritycode === 3 ? 'text-gray-400' : 'text-gray-400'
+                        ]"
+                      />
+                      <span class="text-sm">{{ getPriorityLabel(c.prioritycode) }}</span>
+                    </div>
+                  </td>
+                  <td class="h-14 px-4 align-middle">
+                    <span :title="formatDate(c.createdon).tooltip" class="text-sm text-muted-foreground">
+                      {{ formatDate(c.createdon).text }}
+                    </span>
+                  </td>
+                  <td class="h-14 px-4 align-middle">
+                    <span :title="formatDate(c.modifiedon).tooltip" class="text-sm text-muted-foreground">
+                      {{ formatDate(c.modifiedon).text }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <div v-else class="text-center py-12 text-muted-foreground">
-            <FolderOpen class="mx-auto h-12 w-12 mb-4 opacity-50" />
-            <p>No cases found</p>
+          <div v-else class="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <div class="rounded-full bg-muted p-4 mb-4">
+              <FolderOpen class="h-8 w-8 opacity-50" />
+            </div>
+            <p class="font-medium">No cases found</p>
+            <p class="text-sm mt-1">Try adjusting your filters</p>
           </div>
 
           <!-- Pagination -->
-          <div v-if="canGoBack() || hasMore" class="flex items-center justify-between mt-4 pt-4 border-t">
+          <div v-if="cases.length > 0 && (canGoBack() || hasMore)" class="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
             <p class="text-sm text-muted-foreground">
-              Showing {{ cases.length }} cases per page
+              Showing <span class="font-medium text-foreground">{{ cases.length }}</span> cases
             </p>
             <div class="flex gap-2">
               <UiButton
                 variant="outline"
                 size="sm"
                 :disabled="!canGoBack()"
-                @click="fetchPreviousPage()"
+                @click.stop="fetchPreviousPage()"
               >
                 <ChevronLeft class="mr-1 h-4 w-4" />
                 Previous
@@ -315,7 +380,7 @@ function formatDate(dateString: string | null | undefined) {
                 variant="outline"
                 size="sm"
                 :disabled="!hasMore"
-                @click="fetchNextPage()"
+                @click.stop="fetchNextPage()"
               >
                 Next
                 <ChevronRight class="ml-1 h-4 w-4" />
