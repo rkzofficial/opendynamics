@@ -8,11 +8,11 @@
     "dev": "nuxt dev --dotenv .env.local",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "preview:cf": "wrangler pages dev .output/public",
+    "preview:cf": "wrangler pages dev dist",
     "postinstall": "nuxt prepare",
     "start": "bun run .output/server/index.mjs",
-    "deploy": "bun run build:cf && wrangler pages deploy .output/public",
-    "deploy:prod": "bun run build:cf && wrangler pages deploy .output/public --branch main"
+    "deploy": "bun run build:cf && wrangler pages deploy dist",
+    "deploy:prod": "bun run build:cf && wrangler pages deploy dist --branch main"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.14.0",
