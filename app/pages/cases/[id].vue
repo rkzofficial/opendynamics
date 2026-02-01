@@ -250,6 +250,63 @@ function getActivityLabel(activityType: string): string {
   }
 }
 
+function getActivityColorClasses(item: TimelineItem): { border: string; header: string; badge: string; dot: string } {
+  if (item.type === 'annotation') {
+    return {
+      border: 'border-l-4 border-l-amber-400 dark:border-l-amber-500',
+      header: 'bg-amber-50/50 dark:bg-amber-900/10',
+      badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+      dot: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+    }
+  }
+
+  const activityType = (item.data as Activity).activitytypecode
+  switch (activityType) {
+    case 'email':
+      return {
+        border: 'border-l-4 border-l-blue-400 dark:border-l-blue-500',
+        header: 'bg-blue-50/50 dark:bg-blue-900/10',
+        badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+        dot: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+      }
+    case 'phonecall':
+      return {
+        border: 'border-l-4 border-l-green-400 dark:border-l-green-500',
+        header: 'bg-green-50/50 dark:bg-green-900/10',
+        badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        dot: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+      }
+    case 'task':
+      return {
+        border: 'border-l-4 border-l-purple-400 dark:border-l-purple-500',
+        header: 'bg-purple-50/50 dark:bg-purple-900/10',
+        badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+        dot: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+      }
+    case 'ent_customernote':
+      return {
+        border: 'border-l-4 border-l-cyan-400 dark:border-l-cyan-500',
+        header: 'bg-cyan-50/50 dark:bg-cyan-900/10',
+        badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+        dot: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400'
+      }
+    case 'ent_internalnote':
+      return {
+        border: 'border-l-4 border-l-orange-400 dark:border-l-orange-500',
+        header: 'bg-orange-50/50 dark:bg-orange-900/10',
+        badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+        dot: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
+      }
+    default:
+      return {
+        border: 'border-l-4 border-l-gray-300 dark:border-l-gray-600',
+        header: 'bg-muted/30',
+        badge: 'bg-muted text-muted-foreground',
+        dot: 'bg-muted text-muted-foreground'
+      }
+  }
+}
+
 function linkifyText(text: string): string {
   const urlPattern = /(https?:\/\/[^\s<>"']+)/g
   return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary dark:text-white underline hover:no-underline break-all">$1</a>')
@@ -440,14 +497,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
                     <!-- Timeline dot -->
                     <div
                       :class="[
-                        'absolute left-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-background',
-                        item.type === 'annotation'
-                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                          : (item.data as Activity).activitytypecode === 'email'
-                            ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                            : (item.data as Activity).activitytypecode === 'phonecall'
-                              ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-muted text-muted-foreground'
+                        'absolute left-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-background shadow-sm',
+                        getActivityColorClasses(item).dot
                       ]"
                     >
                       <component
@@ -459,18 +510,12 @@ const timelineItems = computed<TimelineItem[]>(() => {
                     <!-- Content card -->
                     <div class="rounded-lg border bg-card shadow-sm overflow-hidden">
                       <!-- Header -->
-                      <div class="flex items-center justify-between gap-3 px-4 py-3 bg-muted/30 border-b">
+                      <div :class="['flex items-center justify-between gap-3 px-4 py-3 border-b', getActivityColorClasses(item).header]">
                         <div class="flex items-center gap-2 min-w-0">
                           <span
                             :class="[
                               'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                              item.type === 'annotation'
-                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : (item.data as Activity).activitytypecode === 'email'
-                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                  : (item.data as Activity).activitytypecode === 'phonecall'
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                    : 'bg-muted text-muted-foreground'
+                              getActivityColorClasses(item).badge
                             ]"
                           >
                             {{ item.type === 'annotation' ? 'Note' : getActivityLabel((item.data as Activity).activitytypecode) }}
