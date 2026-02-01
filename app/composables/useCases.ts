@@ -156,9 +156,9 @@ export function useCases() {
     casesState.skipTokenHistory = []
   }
 
-  function canGoBack() {
+  const canGoBack = computed(() => {
     return casesState.skipTokenHistory.length > 0 || casesState.filters.skipToken !== undefined
-  }
+  })
 
   return {
     cases: computed(() => casesState.cases),

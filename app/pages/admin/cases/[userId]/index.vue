@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Search, Filter, RefreshCw, ArrowLeft, Users, ArrowLeftCircle, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, FileText, CircleDot, Flag, Calendar, Clock, ChevronLeft, ChevronRight, FolderOpen, X } from 'lucide-vue-next'
+import { Search, RefreshCw, ArrowLeft, Users, ArrowLeftCircle, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, FileText, CircleDot, Flag, Calendar, Clock, ChevronLeft, ChevronRight, FolderOpen, X } from 'lucide-vue-next'
+import { useDebounceFn } from '@vueuse/core'
 import { formatTimeAgo } from '~/utils/timeAgo'
 
 const router = useRouter()
@@ -39,6 +40,21 @@ const priorityOptions = [
   { value: 'normal', label: 'Normal', icon: Minus },
   { value: 'low', label: 'Low', icon: ArrowDown },
 ]
+
+// Debounced search function
+const debouncedSearch = useDebounceFn(() => {
+  applyFilters()
+}, 400)
+
+// Watch search input with debounce
+watch(searchQuery, () => {
+  debouncedSearch()
+})
+
+// Watch dropdowns for immediate filter application
+watch([statusFilter, priorityFilter], () => {
+  applyFilters()
+})
 
 // Get selected user info
 const selectedUser = computed(() => {
@@ -217,7 +233,6 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
                 v-model="searchQuery"
                 placeholder="Search by title or ticket number..."
                 class="pl-9"
-                @keyup.enter="applyFilters"
               />
             </div>
           </div>
@@ -261,16 +276,10 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
               </UiSelectContent>
             </UiSelect>
           </div>
-          <div class="flex gap-2">
-            <UiButton @click="applyFilters">
-              <Filter class="mr-2 h-4 w-4" />
-              Apply
-            </UiButton>
-            <UiButton variant="outline" @click="handleClearFilters">
-              <X class="mr-2 h-4 w-4" />
-              Clear
-            </UiButton>
-          </div>
+          <UiButton variant="outline" @click="handleClearFilters">
+            <X class="mr-2 h-4 w-4" />
+            Clear
+          </UiButton>
         </div>
       </UiCardContent>
     </UiCard>
@@ -333,7 +342,7 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
         </div>
 
         <!-- Pagination -->
-        <div v-if="canGoBack() || hasMore" class="flex items-center justify-between mt-4 pt-4 border-t">
+        <div v-if="canGoBack || hasMore" class="flex items-center justify-between mt-4 pt-4 border-t">
           <p class="text-sm text-muted-foreground">
             Showing {{ cases.length }} cases per page
           </p>
@@ -341,7 +350,7 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
             <UiButton
               variant="outline"
               size="sm"
-              :disabled="!canGoBack()"
+              :disabled="!canGoBack"
               @click="goToPreviousPage"
             >
               <ChevronLeft class="mr-1 h-4 w-4" />

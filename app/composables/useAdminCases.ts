@@ -124,9 +124,9 @@ export function useAdminCases() {
     })
   }
 
-  function canGoBack() {
+  const canGoBack = computed(() => {
     return skipTokenHistory.value.length > 0
-  }
+  })
 
   function resetPagination() {
     skipToken.value = null

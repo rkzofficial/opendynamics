@@ -283,13 +283,25 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
         badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
         dot: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
       }
-    case 'ent_customernote':
+    case 'ent_customernote': {
+      const subject = (item.data as Activity).subject?.toLowerCase() || ''
+      // Adobe notes get rose/red tint
+      if (subject.includes('from: adobe') || subject.startsWith('from:adobe')) {
+        return {
+          border: 'border-l-4 border-l-rose-400 dark:border-l-rose-500',
+          header: 'bg-rose-50/50 dark:bg-rose-900/10',
+          badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+          dot: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+        }
+      }
+      // Customer notes get cyan tint
       return {
         border: 'border-l-4 border-l-cyan-400 dark:border-l-cyan-500',
         header: 'bg-cyan-50/50 dark:bg-cyan-900/10',
         badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
         dot: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400'
       }
+    }
     case 'ent_internalnote':
       return {
         border: 'border-l-4 border-l-orange-400 dark:border-l-orange-500',

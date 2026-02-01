@@ -393,7 +393,7 @@ function formatDate(dateString: string | null | undefined) {
           </div>
 
           <!-- Pagination -->
-          <div v-if="cases.length > 0 && (canGoBack() || hasMore)" class="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
+          <div v-if="cases.length > 0 && (canGoBack || hasMore)" class="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
             <p class="text-sm text-muted-foreground">
               Showing <span class="font-medium text-foreground">{{ cases.length }}</span> cases
             </p>
@@ -401,8 +401,8 @@ function formatDate(dateString: string | null | undefined) {
               <UiButton
                 variant="outline"
                 size="sm"
-                :disabled="!canGoBack()"
-                @click.stop="fetchPreviousPage()"
+                :disabled="!canGoBack"
+                @click="fetchPreviousPage"
               >
                 <ChevronLeft class="mr-1 h-4 w-4" />
                 Previous
@@ -411,7 +411,7 @@ function formatDate(dateString: string | null | undefined) {
                 variant="outline"
                 size="sm"
                 :disabled="!hasMore"
-                @click.stop="fetchNextPage()"
+                @click="fetchNextPage"
               >
                 Next
                 <ChevronRight class="ml-1 h-4 w-4" />
