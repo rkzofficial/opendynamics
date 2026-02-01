@@ -16,12 +16,12 @@ function goToProfile() {
 <template>
   <UiDropdownMenu>
     <template #trigger>
-      <button class="flex items-center gap-2 rounded-full">
+      <UiButton variant="ghost" size="icon" class="rounded-full">
         <UiAvatar
           :fallback="user?.name?.charAt(0) || user?.username?.charAt(0) || '?'"
           class="h-8 w-8"
         />
-      </button>
+      </UiButton>
     </template>
 
     <template #default="{ close }">

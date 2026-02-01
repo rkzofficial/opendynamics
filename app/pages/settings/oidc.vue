@@ -101,11 +101,10 @@ onMounted(fetchConfig)
 
         <form v-else class="space-y-6" @submit.prevent="handleSave">
           <div class="flex items-center space-x-2">
-            <input
+            <UiCheckbox
               id="enabled"
-              v-model="config.enabled"
-              type="checkbox"
-              class="h-4 w-4 rounded border-gray-300"
+              :checked="config.enabled"
+              @update:checked="config.enabled = $event"
             />
             <UiLabel for="enabled">Enable OIDC Authentication</UiLabel>
           </div>

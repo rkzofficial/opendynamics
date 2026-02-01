@@ -256,11 +256,10 @@ onUnmounted(() => {
 
         <form v-else class="space-y-6" @submit.prevent="handleSaveOIDC">
           <div class="flex items-center space-x-2">
-            <input
+            <UiCheckbox
               id="enabled"
-              v-model="oidcConfig.enabled"
-              type="checkbox"
-              class="h-4 w-4 rounded border-gray-300"
+              :checked="oidcConfig.enabled"
+              @update:checked="oidcConfig.enabled = $event"
             />
             <UiLabel for="enabled">Enable OIDC Authentication</UiLabel>
           </div>

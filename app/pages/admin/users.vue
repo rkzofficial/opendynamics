@@ -253,11 +253,20 @@ onMounted(fetchUsers)
         </div>
         <div class="space-y-2">
           <UiLabel for="create-role">Role</UiLabel>
-          <UiSelect
-            id="create-role"
-            v-model="createForm.role"
-            :options="roleOptions"
-          />
+          <UiSelect v-model="createForm.role">
+            <UiSelectTrigger id="create-role">
+              <UiSelectValue placeholder="Select role" />
+            </UiSelectTrigger>
+            <UiSelectContent>
+              <UiSelectItem
+                v-for="option in roleOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </UiSelectItem>
+            </UiSelectContent>
+          </UiSelect>
         </div>
         <div class="flex justify-end gap-2 pt-4">
           <UiButton variant="outline" @click="showCreateDialog = false">
@@ -295,11 +304,20 @@ onMounted(fetchUsers)
         </div>
         <div class="space-y-2">
           <UiLabel for="edit-role">Role</UiLabel>
-          <UiSelect
-            id="edit-role"
-            v-model="editForm.role"
-            :options="roleOptions"
-          />
+          <UiSelect v-model="editForm.role">
+            <UiSelectTrigger id="edit-role">
+              <UiSelectValue placeholder="Select role" />
+            </UiSelectTrigger>
+            <UiSelectContent>
+              <UiSelectItem
+                v-for="option in roleOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </UiSelectItem>
+            </UiSelectContent>
+          </UiSelect>
         </div>
         <div class="space-y-2">
           <UiLabel for="edit-password">New Password (leave empty to keep current)</UiLabel>

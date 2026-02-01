@@ -23,18 +23,18 @@ const {
 
 // Filters
 const searchQuery = ref('')
-const statusFilter = ref('')
-const priorityFilter = ref('')
+const statusFilter = ref('all')
+const priorityFilter = ref('all')
 
 const statusOptions = [
-  { value: '', label: 'All Statuses' },
+  { value: 'all', label: 'All Statuses' },
   { value: 'active', label: 'Active' },
   { value: 'resolved', label: 'Resolved' },
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
 const priorityOptions = [
-  { value: '', label: 'All Priorities' },
+  { value: 'all', label: 'All Priorities' },
   { value: 'high', label: 'High' },
   { value: 'normal', label: 'Normal' },
   { value: 'low', label: 'Low' },
@@ -47,8 +47,8 @@ const selectedUser = computed(() => {
 
 function getCurrentFilters() {
   return {
-    status: statusFilter.value || undefined,
-    priority: priorityFilter.value || undefined,
+    status: statusFilter.value === 'all' ? undefined : statusFilter.value,
+    priority: priorityFilter.value === 'all' ? undefined : priorityFilter.value,
     search: searchQuery.value || undefined,
   }
 }
@@ -75,8 +75,8 @@ function applyFilters() {
 
 function handleClearFilters() {
   searchQuery.value = ''
-  statusFilter.value = ''
-  priorityFilter.value = ''
+  statusFilter.value = 'all'
+  priorityFilter.value = 'all'
   resetPagination()
   loadCases()
 }
@@ -205,19 +205,37 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
           </div>
           <div class="w-full md:w-40">
             <UiLabel for="status">Status</UiLabel>
-            <UiSelect
-              id="status"
-              v-model="statusFilter"
-              :options="statusOptions"
-            />
+            <UiSelect v-model="statusFilter">
+              <UiSelectTrigger id="status">
+                <UiSelectValue placeholder="All Statuses" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem
+                  v-for="option in statusOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
           </div>
           <div class="w-full md:w-40">
             <UiLabel for="priority">Priority</UiLabel>
-            <UiSelect
-              id="priority"
-              v-model="priorityFilter"
-              :options="priorityOptions"
-            />
+            <UiSelect v-model="priorityFilter">
+              <UiSelectTrigger id="priority">
+                <UiSelectValue placeholder="All Priorities" />
+              </UiSelectTrigger>
+              <UiSelectContent>
+                <UiSelectItem
+                  v-for="option in priorityOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </UiSelectItem>
+              </UiSelectContent>
+            </UiSelect>
           </div>
           <div class="flex gap-2">
             <UiButton @click="applyFilters">
