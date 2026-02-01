@@ -234,11 +234,32 @@ function getActivityIcon(activityType: string) {
   }
 }
 
+function getActivityLabel(activityType: string): string {
+  switch (activityType) {
+    case 'email': return 'Email'
+    case 'phonecall': return 'Phone Call'
+    case 'task': return 'Task'
+    case 'appointment': return 'Appointment'
+    case 'letter': return 'Letter'
+    case 'fax': return 'Fax'
+    case 'ent_customernote': return 'Customer Note'
+    case 'ent_abortivenote': return 'Abortive Note'
+    case 'ent_loggednote': return 'Logged Note'
+    case 'ent_internalnote': return 'Internal Note'
+    default: return activityType.replace(/^ent_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  }
+}
+
+function linkifyText(text: string): string {
+  const urlPattern = /(https?:\/\/[^\s<>"']+)/g
+  return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary dark:text-white underline hover:no-underline break-all">$1</a>')
+}
+
 function getActivityContent(activity: Activity): string {
   if (activity.activitytypecode === 'email' && activity.attachments) {
     return processEmailHtml(activity.description || '', activity.attachments)
   }
-  return activity.description || ''
+  return linkifyText(activity.description || '')
 }
 
 interface TimelineItem {
@@ -404,15 +425,18 @@ const timelineItems = computed<TimelineItem[]>(() => {
               </div>
 
               <div v-else class="relative">
-                <!-- Timeline connector line -->
-                <div class="absolute left-5 top-0 bottom-0 w-px bg-border" />
-
                 <div class="space-y-6">
                   <div
                     v-for="(item, index) in timelineItems"
                     :key="item.id"
                     class="relative pl-12"
                   >
+                    <!-- Timeline connector line (not on last item) -->
+                    <div
+                      v-if="index < timelineItems.length - 1"
+                      class="absolute left-5 top-10 bottom-0 -mb-6 w-px bg-border -translate-x-1/2"
+                    />
+
                     <!-- Timeline dot -->
                     <div
                       :class="[
@@ -449,7 +473,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
                                     : 'bg-muted text-muted-foreground'
                             ]"
                           >
-                            {{ item.type === 'annotation' ? 'Note' : (item.data as Activity).activitytypecode }}
+                            {{ item.type === 'annotation' ? 'Note' : getActivityLabel((item.data as Activity).activitytypecode) }}
                           </span>
                           <span class="font-medium truncate">
                             {{ item.type === 'annotation'
@@ -469,19 +493,18 @@ const timelineItems = computed<TimelineItem[]>(() => {
                         <div
                           v-if="item.type === 'activity'"
                           :class="[
-                            'prose prose-sm max-w-none',
+                            'prose prose-sm max-w-none break-words overflow-hidden',
                             (item.data as Activity).activitytypecode === 'email'
                               ? 'bg-white dark:bg-zinc-900 rounded-md p-4 border text-foreground'
                               : 'text-muted-foreground'
                           ]"
                           v-html="getActivityContent(item.data as Activity)"
                         />
-                        <p
+                        <div
                           v-else
-                          class="text-sm leading-relaxed whitespace-pre-wrap"
-                        >
-                          {{ (item.data as Annotation).notetext }}
-                        </p>
+                          class="text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden"
+                          v-html="linkifyText((item.data as Annotation).notetext || '')"
+                        />
                       </div>
 
                       <!-- Footer (if has author) -->
