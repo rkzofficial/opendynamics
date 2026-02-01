@@ -137,6 +137,15 @@ bun run preview
 bunx convex dev
 ```
 
+## Deployment
+
+For production deployment to Vercel or Cloudflare Pages, see [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+
+**Quick Vercel Setup:**
+- Build Command: `npx convex deploy --cmd 'bun run build'`
+- Set `CONVEX_DEPLOY_KEY` environment variable
+- See full guide in DEPLOYMENT.md
+
 ## Features
 
 - **Dashboard**: KPI cards, charts, and recent cases
