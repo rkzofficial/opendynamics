@@ -172,25 +172,32 @@ export class DynamicsApiClient {
     })
   }
 
-  async getDashboardStats(): Promise<{
+  async getDashboardStats(ownerId?: string): Promise<{
     totalCases: number
     openCases: number
     resolvedToday: number
     avgFirstResponseTime: number
   }> {
+    const ownerFilter = ownerId ? `_ownerid_value eq ${ownerId}` : ''
+
     // Get total cases
-    const totalResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$count=true&$top=0')
+    const totalFilter = ownerFilter ? `$filter=${ownerFilter}&` : ''
+    const totalResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?${totalFilter}$count=true&$top=1`)
     const totalCases = totalResponse['@odata.count'] || 0
 
     // Get open cases
-    const openResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$filter=statecode eq 0&$count=true&$top=0')
+    const openFilter = ownerFilter ? `statecode eq 0 and ${ownerFilter}` : 'statecode eq 0'
+    const openResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=${openFilter}&$count=true&$top=1`)
     const openCases = openResponse['@odata.count'] || 0
 
     // Get resolved today
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const todayStr = today.toISOString()
-    const resolvedResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=statecode eq 1 and modifiedon ge ${todayStr}&$count=true&$top=0`)
+    const resolvedFilter = ownerFilter
+      ? `statecode eq 1 and modifiedon ge ${todayStr} and ${ownerFilter}`
+      : `statecode eq 1 and modifiedon ge ${todayStr}`
+    const resolvedResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=${resolvedFilter}&$count=true&$top=1`)
     const resolvedToday = resolvedResponse['@odata.count'] || 0
 
     return {
@@ -201,16 +208,18 @@ export class DynamicsApiClient {
     }
   }
 
-  async getDashboardKPIs(): Promise<{
+  async getDashboardKPIs(ownerId?: string): Promise<{
     casesByStatus: { status: string; count: number }[]
     casesByPriority: { priority: string; count: number }[]
     resolutionTimeTrend: { date: string; avgHours: number }[]
     slaCompliancePercent: number
   }> {
+    const ownerFilter = ownerId ? ` and _ownerid_value eq ${ownerId}` : ''
+
     // Get cases by status
-    const activeResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$filter=statecode eq 0&$count=true&$top=0')
-    const resolvedResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$filter=statecode eq 1&$count=true&$top=0')
-    const cancelledResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$filter=statecode eq 2&$count=true&$top=0')
+    const activeResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=statecode eq 0${ownerFilter}&$count=true&$top=1`)
+    const resolvedResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=statecode eq 1${ownerFilter}&$count=true&$top=1`)
+    const cancelledResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=statecode eq 2${ownerFilter}&$count=true&$top=1`)
 
     const casesByStatus = [
       { status: 'Active', count: activeResponse['@odata.count'] || 0 },
@@ -219,9 +228,9 @@ export class DynamicsApiClient {
     ]
 
     // Get cases by priority
-    const highResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$filter=prioritycode eq 1&$count=true&$top=0')
-    const normalResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$filter=prioritycode eq 2&$count=true&$top=0')
-    const lowResponse = await this.fetch<{ '@odata.count': number }>('/incidents?$filter=prioritycode eq 3&$count=true&$top=0')
+    const highResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 1${ownerFilter}&$count=true&$top=1`)
+    const normalResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 2${ownerFilter}&$count=true&$top=1`)
+    const lowResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 3${ownerFilter}&$count=true&$top=1`)
 
     const casesByPriority = [
       { priority: 'High', count: highResponse['@odata.count'] || 0 },

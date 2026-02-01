@@ -1,0 +1,23 @@
+# Cloudflare Pages configuration for OpenDynamics
+# Documentation: https://developers.cloudflare.com/pages/
+
+name = "opendynamics"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages-specific settings
+pages_build_output_dir = ".output/public"
+
+# Environment variables are configured in Cloudflare Dashboard:
+# - NUXT_CONVEX_URL
+# - SESSION_SECRET
+# - ENCRYPTION_KEY
+# - NUXT_PUBLIC_APP_URL
+
+# Production environment overrides (optional)
+# [env.production.vars]
+# NUXT_PUBLIC_APP_URL = "https://your-domain.com"
+
+# Preview environment overrides (optional)
+# [env.preview.vars]
+# NUXT_PUBLIC_APP_URL = "https://preview.your-domain.com"

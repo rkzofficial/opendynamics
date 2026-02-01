@@ -47,7 +47,8 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    preset: 'bun',
+    // Use NITRO_PRESET env var for Cloudflare, defaults to bun for local dev
+    preset: process.env.NITRO_PRESET || 'bun',
     alias: {
       '@convex': join(currentDir, 'convex'),
     },

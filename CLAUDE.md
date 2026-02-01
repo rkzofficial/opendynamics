@@ -7,10 +7,16 @@
 bun run dev              # Start dev server on http://localhost:3000
 bunx convex dev          # Start Convex dev mode for schema changes
 
-# Production
+# Production (Bun)
 bun run build            # Build for production
 bun run preview          # Preview production build
 bun run start            # Start production server (uses bun)
+
+# Cloudflare Pages Deployment
+bun run build:cf         # Build for Cloudflare Pages
+bun run preview:cf       # Preview Cloudflare build locally
+bun run deploy           # Build and deploy to Cloudflare Pages
+bun run deploy:prod      # Deploy to production branch
 
 # Convex Operations
 bunx convex run seedAdmin:seed    # Seed initial admin user
