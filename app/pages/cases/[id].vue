@@ -387,63 +387,111 @@ const timelineItems = computed<TimelineItem[]>(() => {
 
           <!-- Activity timeline -->
           <UiCard>
-            <UiCardHeader>
-              <UiCardTitle>Activity Timeline</UiCardTitle>
+            <UiCardHeader class="pb-3">
+              <UiCardTitle class="flex items-center gap-2">
+                <Clock class="h-4 w-4 text-muted-foreground" />
+                Activity Timeline
+              </UiCardTitle>
             </UiCardHeader>
             <UiCardContent>
               <div v-if="isLoadingActivities" class="space-y-4">
                 <UiSkeleton v-for="i in 3" :key="i" class="h-24 w-full" />
               </div>
 
-              <div v-else-if="timelineItems.length === 0" class="text-center py-8 text-muted-foreground">
-                <MessageSquare class="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>No activities yet</p>
+              <div v-else-if="timelineItems.length === 0" class="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <MessageSquare class="h-12 w-12 mb-3 opacity-40" />
+                <p class="text-sm">No activities yet</p>
               </div>
 
-              <div v-else class="space-y-4">
-                <div
-                  v-for="item in timelineItems"
-                  :key="item.id"
-                  class="flex gap-4 p-4 rounded-lg border"
-                >
-                  <div class="flex-shrink-0">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <div v-else class="relative">
+                <!-- Timeline connector line -->
+                <div class="absolute left-5 top-0 bottom-0 w-px bg-border" />
+
+                <div class="space-y-6">
+                  <div
+                    v-for="(item, index) in timelineItems"
+                    :key="item.id"
+                    class="relative pl-12"
+                  >
+                    <!-- Timeline dot -->
+                    <div
+                      :class="[
+                        'absolute left-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-background',
+                        item.type === 'annotation'
+                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                          : (item.data as Activity).activitytypecode === 'email'
+                            ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                            : (item.data as Activity).activitytypecode === 'phonecall'
+                              ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-muted text-muted-foreground'
+                      ]"
+                    >
                       <component
                         :is="item.type === 'annotation' ? FileText : getActivityIcon((item.data as Activity).activitytypecode)"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                       />
                     </div>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                      <span class="font-medium">
-                        {{ item.type === 'annotation'
-                          ? ((item.data as Annotation).subject || 'Note')
-                          : ((item.data as Activity).subject || (item.data as Activity).activitytypecode)
-                        }}
-                      </span>
-                      <span :title="formatDate(item.date).tooltip" class="text-xs text-muted-foreground">
-                        {{ formatDate(item.date).text }}
-                      </span>
-                    </div>
-                    <div
-                      v-if="item.type === 'activity'"
-                      :class="[
-                        'text-sm prose prose-sm max-w-none p-3 rounded border',
-                        (item.data as Activity).activitytypecode === 'email'
-                          ? 'bg-white text-gray-900 border-gray-200'
-                          : 'text-muted-foreground border-transparent'
-                      ]"
-                      v-html="getActivityContent(item.data as Activity)"
-                    />
-                    <p
-                      v-else
-                      class="text-sm text-muted-foreground whitespace-pre-wrap"
-                    >
-                      {{ (item.data as Annotation).notetext }}
-                    </p>
-                    <div v-if="item.type === 'annotation' && (item.data as Annotation).createdby?.fullname" class="mt-1 text-xs text-muted-foreground">
-                      By {{ (item.data as Annotation).createdby?.fullname }}
+
+                    <!-- Content card -->
+                    <div class="rounded-lg border bg-card shadow-sm overflow-hidden">
+                      <!-- Header -->
+                      <div class="flex items-center justify-between gap-3 px-4 py-3 bg-muted/30 border-b">
+                        <div class="flex items-center gap-2 min-w-0">
+                          <span
+                            :class="[
+                              'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                              item.type === 'annotation'
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                : (item.data as Activity).activitytypecode === 'email'
+                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                  : (item.data as Activity).activitytypecode === 'phonecall'
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-muted text-muted-foreground'
+                            ]"
+                          >
+                            {{ item.type === 'annotation' ? 'Note' : (item.data as Activity).activitytypecode }}
+                          </span>
+                          <span class="font-medium truncate">
+                            {{ item.type === 'annotation'
+                              ? ((item.data as Annotation).subject || 'Untitled Note')
+                              : ((item.data as Activity).subject || 'No subject')
+                            }}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+                          <Calendar class="h-3 w-3" />
+                          <span :title="formatDate(item.date).tooltip">{{ formatDate(item.date).text }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Body -->
+                      <div class="p-4">
+                        <div
+                          v-if="item.type === 'activity'"
+                          :class="[
+                            'prose prose-sm max-w-none',
+                            (item.data as Activity).activitytypecode === 'email'
+                              ? 'bg-white dark:bg-zinc-900 rounded-md p-4 border text-foreground'
+                              : 'text-muted-foreground'
+                          ]"
+                          v-html="getActivityContent(item.data as Activity)"
+                        />
+                        <p
+                          v-else
+                          class="text-sm leading-relaxed whitespace-pre-wrap"
+                        >
+                          {{ (item.data as Annotation).notetext }}
+                        </p>
+                      </div>
+
+                      <!-- Footer (if has author) -->
+                      <div
+                        v-if="item.type === 'annotation' && (item.data as Annotation).createdby?.fullname"
+                        class="flex items-center gap-2 px-4 py-2 bg-muted/30 border-t text-xs text-muted-foreground"
+                      >
+                        <User class="h-3 w-3" />
+                        <span>{{ (item.data as Annotation).createdby?.fullname }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
