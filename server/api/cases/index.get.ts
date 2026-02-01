@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { getDynamicsClient } from '../../utils/dynamics'
 import { buildCaseFilter } from '../../utils/odata-builder'
 import { getEffectiveUserIdFromEvent } from '../../utils/cache'
@@ -7,10 +8,11 @@ const CACHE_MAX_AGE = 300 // 5 minutes in seconds
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
-  
-  // Generate cache key
+
+  // Generate cache key with hashed query params (avoids invalid filesystem chars)
   const effectiveUserId = getEffectiveUserIdFromEvent(event)
-  const cacheKey = `${effectiveUserId}:cases:list:${JSON.stringify(query)}`
+  const queryHash = createHash('sha256').update(JSON.stringify(query)).digest('hex').slice(0, 16)
+  const cacheKey = `${effectiveUserId}:cases:list:${queryHash}`
   
   // Try to get from cache
   const storage = useStorage('cache')

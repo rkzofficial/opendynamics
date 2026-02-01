@@ -268,44 +268,44 @@ function formatDate(dateString: string | null | undefined) {
 
       <!-- Cases table -->
       <UiCard v-else class="overflow-hidden">
-        <UiCardContent class="p-0">
-          <div v-if="cases.length > 0" class="overflow-x-auto">
-            <table class="w-full table-fixed">
+        <UiCardContent class="p-0 overflow-x-auto">
+          <div v-if="cases.length > 0">
+            <table class="w-full min-w-[880px] table-fixed">
               <thead>
                 <tr class="border-b bg-muted/50">
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-32">
-                    <span class="flex items-center gap-2">
-                      <Hash class="h-4 w-4" />
+                  <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[110px]">
+                    <span class="flex items-center gap-1.5">
+                      <Hash class="h-3.5 w-3.5" />
                       Ticket
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <span class="flex items-center gap-2">
-                      <FileText class="h-4 w-4" />
+                  <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground">
+                    <span class="flex items-center gap-1.5">
+                      <FileText class="h-3.5 w-3.5" />
                       Title
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-28">
-                    <span class="flex items-center gap-2">
-                      <CircleDot class="h-4 w-4" />
+                  <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[100px]">
+                    <span class="flex items-center gap-1.5">
+                      <CircleDot class="h-3.5 w-3.5" />
                       Status
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-28">
-                    <span class="flex items-center gap-2">
-                      <Flag class="h-4 w-4" />
+                  <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[100px]">
+                    <span class="flex items-center gap-1.5">
+                      <Flag class="h-3.5 w-3.5" />
                       Priority
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-44">
-                    <span class="flex items-center gap-2">
-                      <Calendar class="h-4 w-4" />
+                  <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[160px]">
+                    <span class="flex items-center gap-1.5">
+                      <Calendar class="h-3.5 w-3.5" />
                       Created
                     </span>
                   </th>
-                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-44">
-                    <span class="flex items-center gap-2">
-                      <Clock class="h-4 w-4" />
+                  <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[160px]">
+                    <span class="flex items-center gap-1.5">
+                      <Clock class="h-3.5 w-3.5" />
                       Modified
                     </span>
                   </th>
@@ -318,12 +318,12 @@ function formatDate(dateString: string | null | undefined) {
                   class="group transition-colors hover:bg-muted/50 cursor-pointer"
                   @click="router.push(`/cases/${c.incidentid}`)"
                 >
-                  <td class="h-14 px-4 align-middle">
+                  <td class="h-14 px-3 align-middle">
                     <span class="font-mono text-sm font-medium text-primary">
                       {{ c.ticketnumber }}
                     </span>
                   </td>
-                  <td class="px-4 py-3 align-middle overflow-hidden">
+                  <td class="px-3 py-3 align-middle overflow-hidden">
                     <UiTooltip :content="c.description" position="bottom" max-width="450px">
                       <div class="overflow-hidden">
                         <p class="truncate font-medium">{{ c.title }}</p>
@@ -333,8 +333,8 @@ function formatDate(dateString: string | null | undefined) {
                       </div>
                     </UiTooltip>
                   </td>
-                  <td class="h-14 px-4 align-middle whitespace-nowrap">
-                    <div class="flex items-center gap-2">
+                  <td class="h-14 px-3 align-middle">
+                    <div class="flex items-center gap-1.5">
                       <span
                         :class="[
                           'h-2 w-2 rounded-full flex-shrink-0',
@@ -346,8 +346,8 @@ function formatDate(dateString: string | null | undefined) {
                       <span class="text-sm">{{ getStatusLabel(c.statecode) }}</span>
                     </div>
                   </td>
-                  <td class="h-14 px-4 align-middle whitespace-nowrap">
-                    <div class="flex items-center gap-2">
+                  <td class="h-14 px-3 align-middle">
+                    <div class="flex items-center gap-1.5">
                       <component
                         :is="getPriorityIcon(c.prioritycode)"
                         :class="[
@@ -360,12 +360,12 @@ function formatDate(dateString: string | null | undefined) {
                       <span class="text-sm">{{ getPriorityLabel(c.prioritycode) }}</span>
                     </div>
                   </td>
-                  <td class="h-14 px-4 align-middle whitespace-nowrap">
+                  <td class="h-14 px-3 align-middle">
                     <span :title="formatDate(c.createdon).tooltip" class="text-sm text-muted-foreground">
                       {{ formatDate(c.createdon).text }}
                     </span>
                   </td>
-                  <td class="h-14 px-4 align-middle whitespace-nowrap">
+                  <td class="h-14 px-3 align-middle">
                     <span :title="formatDate(c.modifiedon).tooltip" class="text-sm text-muted-foreground">
                       {{ formatDate(c.modifiedon).text }}
                     </span>
