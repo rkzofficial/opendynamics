@@ -31,7 +31,6 @@ export default defineNuxtConfig({
     encryptionKey: process.env.ENCRYPTION_KEY || 'default-encryption-key-32chars!',
     public: {
       convexUrl: process.env.NUXT_CONVEX_URL || '',
-      appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
     },
   },
 

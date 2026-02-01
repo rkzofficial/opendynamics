@@ -12,12 +12,3 @@ pages_build_output_dir = ".output/public"
 # - NUXT_CONVEX_URL
 # - SESSION_SECRET
 # - ENCRYPTION_KEY
-# - NUXT_PUBLIC_APP_URL
-
-# Production environment overrides (optional)
-# [env.production.vars]
-# NUXT_PUBLIC_APP_URL = "https://your-domain.com"
-
-# Preview environment overrides (optional)
-# [env.preview.vars]
-# NUXT_PUBLIC_APP_URL = "https://preview.your-domain.com"
