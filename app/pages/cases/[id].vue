@@ -493,16 +493,16 @@ const timelineItems = computed<TimelineItem[]>(() => {
                         <div
                           v-if="item.type === 'activity'"
                           :class="[
-                            'prose prose-sm max-w-none break-words overflow-hidden',
+                            'prose prose-sm max-w-none break-words overflow-hidden dark:prose-invert',
                             (item.data as Activity).activitytypecode === 'email'
-                              ? 'bg-white dark:bg-zinc-900 rounded-md p-4 border text-foreground'
-                              : 'text-muted-foreground'
+                              ? 'bg-gray-50 dark:bg-zinc-800/50 rounded-md p-4 border border-gray-200 dark:border-zinc-700'
+                              : ''
                           ]"
                           v-html="getActivityContent(item.data as Activity)"
                         />
                         <div
                           v-else
-                          class="text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden"
+                          class="text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden text-foreground"
                           v-html="linkifyText((item.data as Annotation).notetext || '')"
                         />
                       </div>
