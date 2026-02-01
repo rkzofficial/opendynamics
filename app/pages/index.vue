@@ -264,7 +264,7 @@ function formatDate(dateString: string | null | undefined) {
         <p class="text-muted-foreground mb-4 max-w-md">
           Connect your Microsoft account to view cases and metrics from Dynamics 365 CRM.
         </p>
-        <NuxtLink to="/settings/dynamics">
+        <NuxtLink to="/settings">
           <UiButton>
             <Link2 class="mr-2 h-4 w-4" />
             Connect Now
