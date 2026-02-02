@@ -9,6 +9,7 @@ interface Props {
   hasMore: boolean
   canGoBack: boolean
   basePath: string
+  pageSize?: number
   emptyTitle?: string
   emptyDescription?: string
   initialSearch?: string
@@ -19,6 +20,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  pageSize: 20,
   emptyTitle: 'No cases found',
   emptyDescription: 'Try adjusting your filters',
   initialSearch: '',
@@ -33,6 +35,7 @@ const emit = defineEmits<{
   previous: []
   next: []
   filterChange: [filters: { search: string; status: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
+  pageSizeChange: [size: number]
 }>()
 
 const searchQuery = ref(props.initialSearch)
@@ -66,9 +69,10 @@ watch(searchQuery, () => {
 })
 
 // Watch dropdowns for immediate filter application
+// immediate: true ensures initial filters are synced to parent on mount
 watch([statusFilter, priorityFilter], () => {
   emitFilterChange()
-})
+}, { immediate: true })
 
 function emitFilterChange() {
   emit('filterChange', {
@@ -111,6 +115,10 @@ function handlePrevious() {
 
 function handleNext() {
   emit('next')
+}
+
+function handlePageSizeChange(size: number) {
+  emit('pageSizeChange', size)
 }
 </script>
 
@@ -219,8 +227,10 @@ function handleNext() {
           :cases-count="cases.length"
           :has-more="hasMore"
           :can-go-back="canGoBack"
+          :page-size="props.pageSize"
           @previous="handlePrevious"
           @next="handleNext"
+          @page-size-change="handlePageSizeChange"
         />
       </UiCardContent>
     </UiCard>

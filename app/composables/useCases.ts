@@ -156,6 +156,14 @@ export function useCases() {
     casesState.skipTokenHistory = []
   }
 
+  function setPageSize(size: number) {
+    casesState.pageSize = size
+    casesState.skipToken = null
+    casesState.skipTokenHistory = []
+    casesState.filters.skipToken = undefined
+    fetchCases({ pageSize: size })
+  }
+
   const canGoBack = computed(() => {
     return casesState.skipTokenHistory.length > 0 || casesState.filters.skipToken !== undefined
   })
@@ -182,5 +190,6 @@ export function useCases() {
     addReply,
     setFilters,
     clearFilters,
+    setPageSize,
   }
 }

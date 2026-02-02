@@ -17,11 +17,13 @@ const {
   hasMore,
   isLoading,
   canGoBack,
+  pageSize,
   fetchCases,
   fetchNextPage,
   fetchPreviousPage,
   setFilters,
   clearFilters,
+  setPageSize,
 } = useCases()
 
 function handleFilterChange(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
@@ -41,16 +43,7 @@ function handleClear() {
   fetchCases()
 }
 
-watch(
-  () => connectionStatus.value?.connected,
-  (connected) => {
-    if (connected) {
-      setFilters({ orderBy: 'modifiedon', orderDirection: 'desc' })
-      fetchCases()
-    }
-  },
-  { immediate: true }
-)
+// CasesList's immediate watch handles initial fetch with correct filters
 </script>
 
 <template>
@@ -70,7 +63,7 @@ watch(
     </div>
 
     <!-- Loading state while checking connection -->
-    <template v-if="connectionStatus === null || (connectionStatus?.connected && isLoading)">
+    <template v-if="connectionStatus === null">
       <UiCard>
         <UiCardContent class="pt-6 space-y-4">
           <UiSkeleton class="h-10 w-full" />
@@ -105,6 +98,7 @@ watch(
         :is-loading="isLoading"
         :has-more="hasMore"
         :can-go-back="canGoBack"
+        :page-size="pageSize"
         base-path="/cases"
         initial-status="active"
         empty-title="No cases found"
@@ -113,6 +107,7 @@ watch(
         @refresh="fetchCases"
         @previous="fetchPreviousPage"
         @next="fetchNextPage"
+        @page-size-change="setPageSize"
       />
     </template>
   </div>
