@@ -7,7 +7,7 @@ const route = useRoute()
 const userId = computed(() => route.params.userId as string)
 
 // Track current filters for refresh/pagination
-const currentFilters = ref({ search: '', status: 'active', priority: 'all' })
+const currentFilters = ref({ search: '', status: 'active', priority: 'all', orderBy: 'modifiedon', orderDirection: 'desc' as 'asc' | 'desc' })
 
 const {
   users,
@@ -34,18 +34,20 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
   return user.username
 }
 
-function getCurrentFilters(filters: { search: string; status: string; priority: string }) {
+function getCurrentFilters(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   return {
     status: filters.status === 'all' ? undefined : filters.status,
     priority: filters.priority === 'all' ? undefined : filters.priority,
     search: filters.search || undefined,
+    orderBy: filters.orderBy,
+    orderDirection: filters.orderDirection,
   }
 }
 
-async function loadCases(filters: { search: string; status: string; priority: string }) {
+async function loadCases(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   if (!userId.value) return
-  
-  currentFilters.value = filters
+
+  currentFilters.value = { ...currentFilters.value, ...filters }
   await fetchUserCases(userId.value, {
     ...getCurrentFilters(filters),
   })
@@ -54,15 +56,15 @@ async function loadCases(filters: { search: string; status: string; priority: st
 // Load data on mount
 onMounted(async () => {
   await fetchUsersWithDynamics()
-  await loadCases({ search: '', status: 'active', priority: 'all' })
+  await loadCases({ search: '', status: 'active', priority: 'all', orderBy: 'modifiedon', orderDirection: 'desc' })
 })
 
-function handleFilterChange(filters: { search: string; status: string; priority: string }) {
+function handleFilterChange(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   resetPagination()
   loadCases(filters)
 }
 
-function handleRefresh(filters: { search: string; status: string; priority: string }) {
+function handleRefresh(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   loadCases(filters)
 }
 

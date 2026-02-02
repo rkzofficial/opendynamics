@@ -24,11 +24,13 @@ const {
   clearFilters,
 } = useCases()
 
-function handleFilterChange(filters: { search: string; status: string; priority: string }) {
+function handleFilterChange(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   setFilters({
     search: filters.search,
     status: (filters.status === 'all' ? '' : filters.status) as '' | 'active' | 'resolved' | 'cancelled',
     priority: (filters.priority === 'all' ? '' : filters.priority) as '' | 'high' | 'normal' | 'low',
+    orderBy: filters.orderBy,
+    orderDirection: filters.orderDirection,
     skipToken: undefined,
   })
   fetchCases()
@@ -43,6 +45,7 @@ watch(
   () => connectionStatus.value?.connected,
   (connected) => {
     if (connected) {
+      setFilters({ orderBy: 'modifiedon', orderDirection: 'desc' })
       fetchCases()
     }
   },

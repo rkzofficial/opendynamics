@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Hash, FileText, CircleDot, Flag, Calendar, Clock, FolderOpen } from 'lucide-vue-next'
+import { Hash, FileText, CircleDot, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-vue-next'
 import type { Case } from '~/types'
+import type { Component } from 'vue'
 import {
   getStatusLabel,
   getStatusDotColor,
@@ -13,22 +14,57 @@ import {
 interface Props {
   cases: Case[]
   basePath?: string
-
   emptyTitle?: string
   emptyDescription?: string
+  sortable?: boolean
+  sortColumn?: string
+  sortDirection?: 'asc' | 'desc'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   basePath: '/cases',
-
   emptyTitle: 'No cases found',
   emptyDescription: '',
+  sortable: false,
+  sortColumn: '',
+  sortDirection: 'desc',
 })
+
+const emit = defineEmits<{
+  'sort-change': [column: string, direction: 'asc' | 'desc']
+}>()
 
 const router = useRouter()
 
+interface ColumnConfig {
+  key: string
+  label: string
+  icon: Component
+  width: string
+}
+
+const columns: ColumnConfig[] = [
+  { key: 'ticketnumber', label: 'Ticket', icon: Hash, width: 'w-[130px]' },
+  { key: 'title', label: 'Title', icon: FileText, width: '' },
+  { key: 'statecode', label: 'Status', icon: CircleDot, width: 'w-[100px]' },
+  { key: 'prioritycode', label: 'Priority', icon: Flag, width: 'w-[100px]' },
+  { key: 'createdon', label: 'Created', icon: Calendar, width: 'w-[120px]' },
+  { key: 'modifiedon', label: 'Modified', icon: Clock, width: 'w-[120px]' },
+]
+
 function handleRowClick(caseId: string) {
   router.push(`${props.basePath}/${caseId}`)
+}
+
+function handleSort(columnKey: string) {
+  if (!props.sortable) return
+  const newDirection = props.sortColumn === columnKey && props.sortDirection === 'desc' ? 'asc' : 'desc'
+  emit('sort-change', columnKey, newDirection)
+}
+
+function getSortIcon(columnKey: string): Component {
+  if (props.sortColumn !== columnKey) return ArrowUpDown
+  return props.sortDirection === 'asc' ? ArrowUp : ArrowDown
 }
 </script>
 
@@ -37,40 +73,27 @@ function handleRowClick(caseId: string) {
     <table class="w-full min-w-[880px] table-fixed">
       <thead>
         <tr class="border-b bg-muted/50">
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[130px]">
+          <th
+            v-for="col in columns"
+            :key="col.key"
+            :class="[
+              'h-12 px-3 text-left align-middle font-medium text-muted-foreground',
+              col.width,
+              sortable ? 'cursor-pointer select-none hover:bg-muted/80 transition-colors' : ''
+            ]"
+            @click="handleSort(col.key)"
+          >
             <span class="flex items-center gap-1.5">
-              <Hash class="h-3.5 w-3.5" />
-              Ticket
-            </span>
-          </th>
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground">
-            <span class="flex items-center gap-1.5">
-              <FileText class="h-3.5 w-3.5" />
-              Title
-            </span>
-          </th>
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[100px]">
-            <span class="flex items-center gap-1.5">
-              <CircleDot class="h-3.5 w-3.5" />
-              Status
-            </span>
-          </th>
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[100px]">
-            <span class="flex items-center gap-1.5">
-              <Flag class="h-3.5 w-3.5" />
-              Priority
-            </span>
-          </th>
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[120px]">
-            <span class="flex items-center gap-1.5">
-              <Calendar class="h-3.5 w-3.5" />
-              Created
-            </span>
-          </th>
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[120px]">
-            <span class="flex items-center gap-1.5">
-              <Clock class="h-3.5 w-3.5" />
-              Modified
+              <component :is="col.icon" class="h-3.5 w-3.5" />
+              {{ col.label }}
+              <component
+                v-if="sortable"
+                :is="getSortIcon(col.key)"
+                :class="[
+                  'h-3.5 w-3.5 ml-auto',
+                  sortColumn === col.key ? 'text-foreground' : 'text-muted-foreground/50'
+                ]"
+              />
             </span>
           </th>
         </tr>

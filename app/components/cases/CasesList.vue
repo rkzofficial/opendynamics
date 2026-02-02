@@ -14,6 +14,8 @@ interface Props {
   initialSearch?: string
   initialStatus?: string
   initialPriority?: string
+  initialSortColumn?: string
+  initialSortDirection?: 'asc' | 'desc'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -22,18 +24,22 @@ const props = withDefaults(defineProps<Props>(), {
   initialSearch: '',
   initialStatus: 'active',
   initialPriority: 'all',
+  initialSortColumn: 'modifiedon',
+  initialSortDirection: 'desc',
 })
 
 const emit = defineEmits<{
-  refresh: [filters: { search: string; status: string; priority: string }]
+  refresh: [filters: { search: string; status: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
   previous: []
   next: []
-  filterChange: [filters: { search: string; status: string; priority: string }]
+  filterChange: [filters: { search: string; status: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
 }>()
 
 const searchQuery = ref(props.initialSearch)
 const statusFilter = ref(props.initialStatus)
 const priorityFilter = ref(props.initialPriority)
+const sortColumn = ref(props.initialSortColumn)
+const sortDirection = ref<'asc' | 'desc'>(props.initialSortDirection)
 
 const statusOptions = [
   { value: 'all', label: 'All Statuses', icon: CircleDot },
@@ -69,13 +75,23 @@ function emitFilterChange() {
     search: searchQuery.value,
     status: statusFilter.value,
     priority: priorityFilter.value,
+    orderBy: sortColumn.value,
+    orderDirection: sortDirection.value,
   })
+}
+
+function handleSortChange(column: string, direction: 'asc' | 'desc') {
+  sortColumn.value = column
+  sortDirection.value = direction
+  emitFilterChange()
 }
 
 function handleClearFilters() {
   searchQuery.value = ''
   statusFilter.value = 'all'
   priorityFilter.value = 'all'
+  sortColumn.value = props.initialSortColumn
+  sortDirection.value = props.initialSortDirection
   emitFilterChange()
 }
 
@@ -84,6 +100,8 @@ function handleRefresh() {
     search: searchQuery.value,
     status: statusFilter.value,
     priority: priorityFilter.value,
+    orderBy: sortColumn.value,
+    orderDirection: sortDirection.value,
   })
 }
 
@@ -187,9 +205,12 @@ function handleNext() {
         <CasesTable
           :cases="cases"
           :base-path="basePath"
-          show-modified
+          :sortable="true"
+          :sort-column="sortColumn"
+          :sort-direction="sortDirection"
           :empty-title="emptyTitle"
           :empty-description="emptyDescription"
+          @sort-change="handleSortChange"
         />
 
         <!-- Pagination -->
