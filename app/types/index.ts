@@ -219,6 +219,20 @@ export interface StatusReasonOption {
   state: number // parent statecode (0=Active, 1=Resolved, 2=Cancelled)
 }
 
+// SLA Badge types for CasesTable
+export type SLABadgeStatus = 'success' | 'warning' | 'error' | 'none'
+
+export interface CaseSLAInfo {
+  createdon?: string     // SLA start time (ISO datetime)
+  warningtime?: string   // Warning deadline (ISO datetime)
+  failuretime?: string   // Failure deadline (ISO datetime)
+  status: number         // 0=InProgress, 1=Noncompliant, 2=NearingNoncompliance, 4=Succeeded
+}
+
+export interface BatchSLAResponse {
+  slaData: Record<string, CaseSLAInfo>
+}
+
 // Filter types
 export interface CaseFilters {
   status?: 'active' | 'resolved' | 'cancelled' | ''

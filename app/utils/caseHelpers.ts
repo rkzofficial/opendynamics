@@ -1,6 +1,7 @@
 import { AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, Mail, Phone, FileText, MessageSquare } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import { formatTimeAgo } from './timeAgo'
+import type { CaseSLAInfo, SLABadgeStatus } from '~/types'
 
 // Windows timezone code to readable name mapping
 export const timezoneCodeMap: Record<number, string> = {
@@ -125,6 +126,82 @@ export function formatCountdown(targetDate: string): string {
     return `${hours}h ${minutes}m ${seconds}s`
   } else {
     return `${minutes}m ${seconds}s`
+  }
+}
+
+// SLA Badge helpers for CasesTable
+export function getSLABadgeStatus(
+  slaInfo: CaseSLAInfo | undefined,
+  statuscode?: number
+): SLABadgeStatus {
+  // Only show for "In Progress" case status (statuscode === 1)
+  if (statuscode !== 1 || !slaInfo) return 'none'
+
+  // Use Dynamics SLA KPI status directly
+  // status: 0=InProgress, 1=Noncompliant, 2=NearingNoncompliance, 4=Succeeded
+  switch (slaInfo.status) {
+    case 1: // Noncompliant - SLA breached
+      return 'error'
+
+    case 2: // Nearing Noncompliance - warning from Dynamics
+      return 'warning'
+
+    case 4: // Succeeded
+      return 'success'
+
+    case 0: // In Progress - determine based on time elapsed
+    default: {
+      const now = Date.now()
+      const startTime = slaInfo.createdon
+        ? new Date(slaInfo.createdon).getTime()
+        : null
+      const failureTime = slaInfo.failuretime
+        ? new Date(slaInfo.failuretime).getTime()
+        : null
+
+      if (!failureTime) return 'none'
+
+      // If past failure time, show error
+      if (now >= failureTime) return 'error'
+
+      // If we have start time, check if 50% of SLA time has passed
+      if (startTime) {
+        const totalDuration = failureTime - startTime
+        const halfwayPoint = startTime + (totalDuration / 2)
+
+        // If past halfway point, show warning
+        if (now >= halfwayPoint) return 'warning'
+      }
+
+      // Otherwise, SLA is healthy
+      return 'success'
+    }
+  }
+}
+
+export function getSLABadgeClass(status: SLABadgeStatus): string {
+  switch (status) {
+    case 'success':
+      return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+    case 'warning':
+      return 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+    case 'error':
+      return 'bg-red-500/10 text-red-500 border-red-500/20'
+    default:
+      return ''
+  }
+}
+
+export function getSLABadgeLabel(status: SLABadgeStatus): string {
+  switch (status) {
+    case 'success':
+      return 'SLA OK'
+    case 'warning':
+      return 'SLA Warning'
+    case 'error':
+      return 'SLA Breached'
+    default:
+      return ''
   }
 }
 

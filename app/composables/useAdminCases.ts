@@ -19,6 +19,17 @@ interface SLAKPIsResponse {
   slakpis: any[]
 }
 
+interface CaseSLAInfo {
+  createdon?: string
+  warningtime?: string
+  failuretime?: string
+  status: number
+}
+
+interface BatchSLAResponse {
+  slaData: Record<string, CaseSLAInfo>
+}
+
 interface StatusReasonOption {
   value: number
   label: string
@@ -37,6 +48,8 @@ export function useAdminCases() {
   const slaKPIs = ref<SLAKPIsResponse | null>(null)
   const isLoadingSLAKPIs = ref(false)
   const statusReasonOptions = ref<StatusReasonOption[]>([])
+  const caseSLAData = ref<Record<string, CaseSLAInfo>>({})
+  const isLoadingBatchSLA = ref(false)
 
   async function fetchUsersWithDynamics() {
     loading.value = true
@@ -191,14 +204,36 @@ export function useAdminCases() {
     }
   }
 
+  async function fetchBatchSLAData(userId: string, caseIds: string[]) {
+    if (caseIds.length === 0) {
+      caseSLAData.value = {}
+      return
+    }
+
+    isLoadingBatchSLA.value = true
+    try {
+      const response = await $fetch<BatchSLAResponse>(
+        `/api/cases/sla-batch?userId=${userId}&caseIds=${caseIds.join(',')}`
+      )
+      caseSLAData.value = response.slaData
+    } catch (e: unknown) {
+      console.error('Failed to fetch batch SLA data:', e)
+      caseSLAData.value = {}
+    } finally {
+      isLoadingBatchSLA.value = false
+    }
+  }
+
   return {
     users: readonly(users),
     cases: readonly(cases),
     slaKPIs: readonly(slaKPIs),
+    caseSLAData: readonly(caseSLAData),
     hasMore: readonly(hasMore),
     pageSize: readonly(pageSize),
     loading: readonly(loading),
     isLoadingSLAKPIs: readonly(isLoadingSLAKPIs),
+    isLoadingBatchSLA: readonly(isLoadingBatchSLA),
     error: readonly(error),
     statusReasonOptions: readonly(statusReasonOptions),
     canGoBack,
@@ -209,6 +244,7 @@ export function useAdminCases() {
     fetchPreviousPage,
     fetchCaseDetails,
     fetchSLAKPIs,
+    fetchBatchSLAData,
     fetchStatusReasonOptions,
   }
 }

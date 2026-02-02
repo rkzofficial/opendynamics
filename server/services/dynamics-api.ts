@@ -198,6 +198,55 @@ export class DynamicsApiClient {
     return this.fetch(`/slakpiinstances${query}`)
   }
 
+  async getBatchCaseSLAKPIs(caseIds: string[]): Promise<Record<string, { createdon?: string; warningtime?: string; failuretime?: string; status: number }>> {
+    if (caseIds.length === 0) return {}
+
+    // Limit batch size to prevent URL length issues (each GUID adds ~50 chars to filter)
+    const MAX_BATCH_SIZE = 20
+    const limitedCaseIds = caseIds.slice(0, MAX_BATCH_SIZE)
+
+    // Build filter using 'or' conditions for each case ID
+    // Format: (_regarding_value eq 'guid1' or _regarding_value eq 'guid2' ...)
+    const orConditions = limitedCaseIds.map(id => `_regarding_value eq '${id}'`).join(' or ')
+    const filter = `(${orConditions})`
+
+    const query = buildODataQuery({
+      select: [
+        'slakpiinstanceid', 'name', 'createdon', 'warningtime', 'failuretime', 'status', '_regarding_value'
+      ],
+      filter,
+      orderby: 'createdon desc',
+    })
+
+    const response = await this.fetch<{ value: Array<{
+      slakpiinstanceid: string
+      name: string
+      createdon?: string
+      warningtime?: string
+      failuretime?: string
+      status: number
+      _regarding_value: string
+    }> }>(`/slakpiinstances${query}`)
+
+    // Group KPIs by case ID and return the most recent one for each case
+    const result: Record<string, { createdon?: string; warningtime?: string; failuretime?: string; status: number }> = {}
+
+    for (const kpi of response.value) {
+      const caseId = kpi._regarding_value
+      // Only keep the first (most recent due to orderby) KPI for each case
+      if (!result[caseId]) {
+        result[caseId] = {
+          createdon: kpi.createdon,
+          warningtime: kpi.warningtime,
+          failuretime: kpi.failuretime,
+          status: kpi.status,
+        }
+      }
+    }
+
+    return result
+  }
+
   async getCaseActivities(incidentId: string): Promise<{ value: unknown[] }> {
     // First get all activities
     const query = buildODataQuery({

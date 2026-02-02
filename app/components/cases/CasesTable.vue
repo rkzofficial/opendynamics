@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { Hash, FileText, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown, Info } from 'lucide-vue-next'
-import type { Case } from '~/types'
+import type { Case, CaseSLAInfo } from '~/types'
 import {
   getStatusReasonLabel,
   getStatusReasonBadgeClass,
   getPriorityLabel,
   getPriorityBadgeClass,
   formatCaseDate,
+  getSLABadgeStatus,
+  getSLABadgeClass,
 } from '~/utils/caseHelpers'
 
 interface Props {
   cases: Case[]
+  caseSLAData?: Record<string, CaseSLAInfo>
   basePath?: string
   emptyTitle?: string
   emptyDescription?: string
@@ -26,6 +29,19 @@ const props = withDefaults(defineProps<Props>(), {
   sortable: false,
   sortColumn: '',
   sortDirection: 'desc',
+})
+
+// Use composable as fallback for SLA data when prop not provided
+const { caseSLAData: composableSLAData } = useCases()
+
+// Use prop if provided, otherwise fall back to composable
+const effectiveSLAData = computed(() => {
+  // If prop has data, use it
+  if (props.caseSLAData && Object.keys(props.caseSLAData).length > 0) {
+    return props.caseSLAData
+  }
+  // Fall back to composable data
+  return composableSLAData.value
 })
 
 const emit = defineEmits<{
@@ -50,6 +66,20 @@ const columns: ColumnConfig[] = [
   { key: 'modifiedon', label: 'Modified', icon: Clock, width: 'w-[120px]' },
 ]
 
+// Get status reason badge class - uses SLA colors for "In Progress" cases
+function getStatusBadgeClass(caseItem: Case) {
+  // For "In Progress" cases (statuscode === 1), use SLA-based colors
+  if (caseItem.statuscode === 1) {
+    const slaInfo = getCaseSLA(caseItem.incidentid)
+    const slaStatus = getSLABadgeStatus(slaInfo, caseItem.statuscode)
+    if (slaStatus !== 'none') {
+      return getSLABadgeClass(slaStatus)
+    }
+  }
+  // For other statuses, use default status reason colors
+  return getStatusReasonBadgeClass(caseItem.statecode)
+}
+
 function handleRowClick(caseId: string) {
   router.push(`${props.basePath}/${caseId}`)
 }
@@ -63,6 +93,18 @@ function handleSort(columnKey: string) {
 function getSortIcon(columnKey: string): Component {
   if (props.sortColumn !== columnKey) return ArrowUpDown
   return props.sortDirection === 'asc' ? ArrowUp : ArrowDown
+}
+
+// Helper to get SLA info for a case (handles case sensitivity of GUIDs)
+function getCaseSLA(caseId: string) {
+  const data = effectiveSLAData.value
+  // Try exact match first
+  if (data[caseId]) {
+    return data[caseId]
+  }
+  // Try lowercase match (Dynamics GUIDs can vary in casing)
+  const lowerId = caseId.toLowerCase()
+  return data[lowerId]
 }
 </script>
 
@@ -122,7 +164,7 @@ function getSortIcon(columnKey: string): Component {
             <span
               :class="[
                 'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
-                getStatusReasonBadgeClass(c.statecode)
+                getStatusBadgeClass(c)
               ]"
             >
               {{ getStatusReasonLabel(c['statuscode@OData.Community.Display.V1.FormattedValue']) }}

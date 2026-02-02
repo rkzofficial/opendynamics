@@ -1,10 +1,11 @@
-import type { Case, CasesResponse, CaseFilters, ActivitiesResponse, SLAKPIsResponse, StatusReasonOption } from '~/types'
+import type { Case, CasesResponse, CaseFilters, ActivitiesResponse, SLAKPIsResponse, StatusReasonOption, CaseSLAInfo, BatchSLAResponse } from '~/types'
 
 interface CasesState {
   cases: Case[]
   currentCase: Case | null
   activities: ActivitiesResponse | null
   slaKPIs: SLAKPIsResponse | null
+  caseSLAData: Record<string, CaseSLAInfo>
   skipToken: string | null
   skipTokenHistory: string[]
   hasMore: boolean
@@ -12,6 +13,7 @@ interface CasesState {
   isLoading: boolean
   isLoadingActivities: boolean
   isLoadingSLAKPIs: boolean
+  isLoadingBatchSLA: boolean
   filters: CaseFilters
   statusReasonOptions: StatusReasonOption[]
 }
@@ -21,6 +23,7 @@ const casesState = reactive<CasesState>({
   currentCase: null,
   activities: null,
   slaKPIs: null,
+  caseSLAData: {},
   skipToken: null,
   skipTokenHistory: [],
   hasMore: false,
@@ -28,6 +31,7 @@ const casesState = reactive<CasesState>({
   isLoading: false,
   isLoadingActivities: false,
   isLoadingSLAKPIs: false,
+  isLoadingBatchSLA: false,
   filters: {},
   statusReasonOptions: [],
 })
@@ -58,11 +62,24 @@ export function useCases() {
       casesState.hasMore = response.hasMore
       casesState.pageSize = response.pageSize
       casesState.filters = mergedFilters
+
+      // Fetch batch SLA data for "In Progress" cases (statuscode === 1)
+      const inProgressCaseIds = response.cases
+        .filter(c => c.statuscode === 1)
+        .map(c => c.incidentid)
+
+      if (inProgressCaseIds.length > 0) {
+        // Don't await - fetch SLA data in background
+        fetchBatchSLAData(inProgressCaseIds)
+      } else {
+        casesState.caseSLAData = {}
+      }
     } catch (error) {
       console.error('Failed to fetch cases:', error)
       casesState.cases = []
       casesState.skipToken = null
       casesState.hasMore = false
+      casesState.caseSLAData = {}
     } finally {
       casesState.isLoading = false
     }
@@ -160,6 +177,26 @@ export function useCases() {
     }
   }
 
+  async function fetchBatchSLAData(caseIds: string[]) {
+    if (caseIds.length === 0) {
+      casesState.caseSLAData = {}
+      return
+    }
+
+    casesState.isLoadingBatchSLA = true
+    try {
+      const response = await $fetch<BatchSLAResponse>(
+        `/api/cases/sla-batch?caseIds=${caseIds.join(',')}`
+      )
+      casesState.caseSLAData = response.slaData
+    } catch (error) {
+      console.error('Failed to fetch batch SLA data:', error)
+      casesState.caseSLAData = {}
+    } finally {
+      casesState.isLoadingBatchSLA = false
+    }
+  }
+
   function setFilters(filters: CaseFilters) {
     casesState.filters = { ...casesState.filters, ...filters }
   }
@@ -187,12 +224,14 @@ export function useCases() {
     currentCase: computed(() => casesState.currentCase),
     activities: computed(() => casesState.activities),
     slaKPIs: computed(() => casesState.slaKPIs),
+    caseSLAData: computed(() => casesState.caseSLAData),
     skipToken: computed(() => casesState.skipToken),
     hasMore: computed(() => casesState.hasMore),
     pageSize: computed(() => casesState.pageSize),
     isLoading: computed(() => casesState.isLoading),
     isLoadingActivities: computed(() => casesState.isLoadingActivities),
     isLoadingSLAKPIs: computed(() => casesState.isLoadingSLAKPIs),
+    isLoadingBatchSLA: computed(() => casesState.isLoadingBatchSLA),
     filters: computed(() => casesState.filters),
     statusReasonOptions: computed(() => casesState.statusReasonOptions),
     canGoBack,
@@ -202,6 +241,7 @@ export function useCases() {
     fetchCase,
     fetchActivities,
     fetchSLAKPIs,
+    fetchBatchSLAData,
     fetchStatusReasonOptions,
     addReply,
     setFilters,

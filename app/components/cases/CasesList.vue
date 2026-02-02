@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { Search, RefreshCw, AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, CircleDot, Flag, X } from 'lucide-vue-next'
+import { Search, RefreshCw, AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, CircleDot, Flag, X, Timer } from 'lucide-vue-next'
 import { useDebounceFn } from '@vueuse/core'
-import type { Case, StatusReasonOption } from '~/types'
+import type { Case, StatusReasonOption, CaseSLAInfo } from '~/types'
+import { getSLABadgeStatus } from '~/utils/caseHelpers'
+
+// Get SLA data from composable as fallback (for regular user flow)
+const { caseSLAData: composableSLAData } = useCases()
 
 interface Props {
   cases: Case[]
+  caseSLAData?: Record<string, CaseSLAInfo>
   isLoading: boolean
   hasMore: boolean
   canGoBack: boolean
@@ -32,6 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
   initialSortColumn: 'modifiedon',
   initialSortDirection: 'desc',
   statusReasonOptions: () => [],
+  caseSLAData: () => ({}),
 })
 
 const emit = defineEmits<{
@@ -46,6 +52,7 @@ const searchQuery = ref(props.initialSearch)
 const statusFilter = ref(props.initialStatus)
 const statusReasonFilter = ref(props.initialStatusReason)
 const priorityFilter = ref(props.initialPriority)
+const slaFilter = ref('all')
 const sortColumn = ref(props.initialSortColumn)
 const sortDirection = ref<'asc' | 'desc'>(props.initialSortDirection)
 
@@ -94,6 +101,59 @@ const priorityOptions = [
   { value: 'important', label: 'P3 - Important', icon: AlertCircle },
   { value: 'minor', label: 'P4 - Minor', icon: Circle },
 ]
+
+const slaOptions = [
+  { value: 'all', label: 'All SLA', icon: Timer },
+  { value: 'success', label: 'SLA OK', icon: CheckCircle },
+  { value: 'warning', label: 'SLA Warning', icon: AlertTriangle },
+  { value: 'error', label: 'SLA Breached', icon: XCircle },
+]
+
+// Show SLA filter only when "In Progress" status reason is selected (statuscode 1)
+const showSLAFilter = computed(() => {
+  return statusReasonFilter.value === '1'
+})
+
+// Reset SLA filter when status reason changes away from "In Progress"
+watch(statusReasonFilter, (newValue) => {
+  if (newValue !== '1') {
+    slaFilter.value = 'all'
+  }
+})
+
+// Get effective SLA data - use prop if available, otherwise fall back to composable
+const effectiveSLAData = computed(() => {
+  const propData = toValue(props.caseSLAData) || {}
+  // If prop has data, use it
+  if (Object.keys(propData).length > 0) {
+    return propData
+  }
+  // Fall back to composable data (for regular user flow)
+  return composableSLAData.value || {}
+})
+
+// Filter cases by SLA status (client-side filter)
+const filteredCases = computed(() => {
+  const rawSlaData = effectiveSLAData.value
+  const cases = props.cases
+  const filter = slaFilter.value
+
+  if (filter === 'all') {
+    return cases
+  }
+
+  // Normalize SLA data keys to lowercase for consistent lookup
+  const slaData: Record<string, CaseSLAInfo> = {}
+  for (const [key, value] of Object.entries(rawSlaData)) {
+    slaData[key.toLowerCase()] = value
+  }
+
+  return cases.filter(c => {
+    const slaInfo = slaData[c.incidentid.toLowerCase()]
+    const slaStatus = getSLABadgeStatus(slaInfo, c.statuscode)
+    return slaStatus === filter
+  })
+})
 
 // Debounced search function
 const debouncedSearch = useDebounceFn(() => {
@@ -149,6 +209,7 @@ function handleClearFilters() {
   statusFilter.value = 'all'
   statusReasonFilter.value = 'all'
   priorityFilter.value = 'all'
+  slaFilter.value = 'all'
   sortColumn.value = props.initialSortColumn
   sortDirection.value = props.initialSortDirection
   emitFilterChange()
@@ -259,6 +320,25 @@ function handlePageSizeChange(size: number) {
           </UiSelectContent>
         </UiSelect>
 
+        <!-- SLA Filter - only shown when "In Progress" status reason is selected -->
+        <UiSelect v-if="showSLAFilter" v-model="slaFilter">
+          <UiSelectTrigger class="h-9 w-auto min-w-[120px] bg-background">
+            <UiSelectValue placeholder="SLA" />
+          </UiSelectTrigger>
+          <UiSelectContent>
+            <UiSelectItem
+              v-for="option in slaOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              <span class="flex items-center gap-2">
+                <component :is="option.icon" class="h-3.5 w-3.5" />
+                {{ option.label }}
+              </span>
+            </UiSelectItem>
+          </UiSelectContent>
+        </UiSelect>
+
         <!-- Divider -->
         <div class="hidden sm:block h-6 w-px bg-border" />
 
@@ -293,7 +373,8 @@ function handlePageSizeChange(size: number) {
     <UiCard v-else class="overflow-hidden">
       <UiCardContent class="p-0 overflow-x-auto">
         <CasesTable
-          :cases="cases"
+          :cases="filteredCases"
+          :case-sla-data="effectiveSLAData"
           :base-path="basePath"
           :sortable="true"
           :sort-column="sortColumn"
@@ -305,8 +386,8 @@ function handlePageSizeChange(size: number) {
 
         <!-- Pagination -->
         <CasesPagination
-          v-if="cases.length > 0"
-          :cases-count="cases.length"
+          v-if="filteredCases.length > 0"
+          :cases-count="filteredCases.length"
           :has-more="hasMore"
           :can-go-back="canGoBack"
           :page-size="props.pageSize"

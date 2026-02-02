@@ -14,6 +14,7 @@ onMounted(() => {
 const { connectionStatus } = useDynamics()
 const {
   cases,
+  caseSLAData,
   hasMore,
   isLoading,
   canGoBack,
@@ -105,6 +106,7 @@ function handleClear() {
     <template v-else>
       <CasesList
         :cases="cases"
+        :case-sla-data="caseSLAData"
         :is-loading="isLoading"
         :has-more="hasMore"
         :can-go-back="canGoBack"

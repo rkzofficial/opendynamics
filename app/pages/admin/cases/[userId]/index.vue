@@ -16,12 +16,14 @@ const {
   loading: isLoading,
   canGoBack,
   statusReasonOptions,
+  caseSLAData,
   resetPagination,
   fetchUsersWithDynamics,
   fetchUserCases,
   fetchNextPage,
   fetchPreviousPage,
   fetchStatusReasonOptions,
+  fetchBatchSLAData,
 } = useAdminCases()
 
 // Get selected user info
@@ -51,9 +53,20 @@ async function loadCases(filters: { search: string; status: string; statusReason
   if (!userId.value) return
 
   currentFilters.value = { ...currentFilters.value, ...filters }
-  await fetchUserCases(userId.value, {
+  const response = await fetchUserCases(userId.value, {
     ...getCurrentFilters(filters),
   })
+
+  // Fetch batch SLA data for "In Progress" cases (statuscode === 1)
+  if (response?.cases) {
+    const inProgressCaseIds = response.cases
+      .filter((c: { statuscode: number }) => c.statuscode === 1)
+      .map((c: { incidentid: string }) => c.incidentid)
+
+    if (inProgressCaseIds.length > 0) {
+      fetchBatchSLAData(userId.value, inProgressCaseIds)
+    }
+  }
 }
 
 // Load data on mount
@@ -128,6 +141,7 @@ function goBack() {
     <!-- Cases List -->
     <CasesList
       :cases="cases"
+      :case-sla-data="caseSLAData"
       :is-loading="isLoading"
       :has-more="hasMore"
       :can-go-back="canGoBack"
