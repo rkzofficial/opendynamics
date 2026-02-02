@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Download, X, Check } from 'lucide-vue-next'
 
 interface BeforeInstallPromptEvent extends Event {
@@ -8,41 +8,42 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
 }
 
-const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
-const isInstalled = ref(false)
 const isDismissed = ref(false)
 const showInstallSuccess = ref(false)
+const isStandalone = ref(false)
+const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
 
 onMounted(() => {
-  // Check if already installed
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    isInstalled.value = true
-    return
-  }
+  // Check if already running as installed PWA
+  isStandalone.value = window.matchMedia('(display-mode: standalone)').matches
 
-  // Listen for the beforeinstallprompt event
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault()
-    deferredPrompt.value = e as BeforeInstallPromptEvent
-  })
+  // Check if early script captured the event
+  if ((window as any).__pwaInstallPrompt) {
+    deferredPrompt.value = (window as any).__pwaInstallPrompt
+  }
 
   // Listen for app installed event
   window.addEventListener('appinstalled', () => {
     deferredPrompt.value = null
-    isInstalled.value = true
     showInstallSuccess.value = true
     setTimeout(() => {
       showInstallSuccess.value = false
     }, 3000)
+  })
+
+  // Listen for beforeinstallprompt in case it fires later
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault()
+    deferredPrompt.value = e as BeforeInstallPromptEvent
   })
 })
 
 const handleInstall = async () => {
   if (!deferredPrompt.value) return
 
-  deferredPrompt.value.prompt()
+  await deferredPrompt.value.prompt()
   const { outcome } = await deferredPrompt.value.userChoice
-  
+
   if (outcome === 'accepted') {
     deferredPrompt.value = null
   }
@@ -52,9 +53,9 @@ const handleDismiss = () => {
   isDismissed.value = true
 }
 
-const canShowPrompt = computed(() => 
-  deferredPrompt.value && !isInstalled.value && !isDismissed.value
-)
+const canShowPrompt = computed(() => {
+  return !!deferredPrompt.value && !isStandalone.value && !isDismissed.value
+})
 </script>
 
 <template>
