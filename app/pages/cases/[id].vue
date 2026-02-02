@@ -14,16 +14,24 @@ const {
   isLoadingActivities,
   isLoadingSLAKPIs,
   isDownloadingAttachment,
+  isLoadingPreview,
   fetchCase,
   fetchActivities,
   fetchSLAKPIs,
   addReply,
   downloadAttachment,
+  getAttachmentPreviewUrl,
+  clearPreviewCache,
 } = useCases()
 
 const replyText = ref('')
 const replySubject = ref('')
 const isSubmitting = ref(false)
+
+// Preview state
+const isPreviewOpen = ref(false)
+const previewIndex = ref(0)
+const previewUrl = ref<string | null>(null)
 
 // Countdown timer for SLA deadlines
 const firstResponseCountdown = ref('')
@@ -39,6 +47,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopCountdownTimer()
+  clearPreviewCache()
 })
 
 function getSLAKPIByName(name: string) {
@@ -116,6 +125,36 @@ function handleBack() {
 async function handleDownloadAttachment(attachment: { annotationid: string; filename: string }) {
   await downloadAttachment(caseId, attachment.annotationid, attachment.filename)
 }
+
+async function handlePreviewAttachment(index: number) {
+  const attachments = activities.value?.attachments || []
+  if (index < 0 || index >= attachments.length) return
+
+  previewIndex.value = index
+  isPreviewOpen.value = true
+  previewUrl.value = null
+
+  const attachment = attachments[index]
+  const url = await getAttachmentPreviewUrl(caseId, attachment.annotationid)
+  previewUrl.value = url
+}
+
+async function handleNavigatePreview(index: number) {
+  const attachments = activities.value?.attachments || []
+  if (index < 0 || index >= attachments.length) return
+
+  previewIndex.value = index
+  previewUrl.value = null
+
+  const attachment = attachments[index]
+  const url = await getAttachmentPreviewUrl(caseId, attachment.annotationid)
+  previewUrl.value = url
+}
+
+function handleClosePreview() {
+  isPreviewOpen.value = false
+  previewUrl.value = null
+}
 </script>
 
 <template>
@@ -126,6 +165,10 @@ async function handleDownloadAttachment(attachment: { annotationid: string; file
     :is-loading-activities="isLoadingActivities"
     :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
     :is-downloading-attachment="isDownloadingAttachment"
+    :is-preview-open="isPreviewOpen"
+    :preview-index="previewIndex"
+    :preview-url="previewUrl"
+    :is-loading-preview="isLoadingPreview"
     :first-response-s-l-a="getFirstResponseSLA()"
     :customer-update-s-l-a="getCustomerUpdateSLA()"
     :first-response-countdown="firstResponseCountdown"
@@ -136,5 +179,8 @@ async function handleDownloadAttachment(attachment: { annotationid: string; file
     @back="handleBack"
     @submit-reply="handleSubmitReply"
     @download-attachment="handleDownloadAttachment"
+    @preview-attachment="handlePreviewAttachment"
+    @navigate-preview="handleNavigatePreview"
+    @close-preview="handleClosePreview"
   />
 </template>

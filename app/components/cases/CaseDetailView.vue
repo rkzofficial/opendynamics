@@ -22,6 +22,10 @@ interface Props {
   isLoadingActivities: boolean
   isLoadingSLAKPIs: boolean
   isDownloadingAttachment?: boolean
+  isPreviewOpen?: boolean
+  previewIndex?: number
+  previewUrl?: string | null
+  isLoadingPreview?: boolean
   firstResponseSLA?: SLAData | null
   customerUpdateSLA?: SLAData | null
   firstResponseCountdown?: string
@@ -35,11 +39,18 @@ const props = withDefaults(defineProps<Props>(), {
   customerUpdateCountdown: '',
   error: '',
   isDownloadingAttachment: false,
+  isPreviewOpen: false,
+  previewIndex: 0,
+  previewUrl: null,
+  isLoadingPreview: false,
 })
 
 const emit = defineEmits<{
   back: []
   downloadAttachment: [attachment: CaseAttachment]
+  previewAttachment: [index: number]
+  navigatePreview: [index: number]
+  closePreview: []
 }>()
 
 const descriptionCopied = ref(false)
@@ -227,6 +238,19 @@ const timelineItems = computed<TimelineItem[]>(() => {
             :attachments="activities?.attachments || []"
             :is-loading="isLoadingActivities"
             :is-downloading="isDownloadingAttachment"
+            @download="emit('downloadAttachment', $event)"
+            @preview="emit('previewAttachment', $event)"
+          />
+
+          <!-- Attachment Preview Modal -->
+          <CasesAttachmentPreviewModal
+            :is-open="isPreviewOpen"
+            :attachments="activities?.attachments || []"
+            :current-index="previewIndex"
+            :preview-url="previewUrl"
+            :is-loading="isLoadingPreview"
+            @close="emit('closePreview')"
+            @navigate="emit('navigatePreview', $event)"
             @download="emit('downloadAttachment', $event)"
           />
 

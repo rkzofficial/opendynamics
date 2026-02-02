@@ -15,9 +15,13 @@ interface CasesState {
   isLoadingSLAKPIs: boolean
   isLoadingBatchSLA: boolean
   isDownloadingAttachment: boolean
+  isLoadingPreview: boolean
   filters: CaseFilters
   statusReasonOptions: StatusReasonOption[]
 }
+
+// Preview cache - stores blob URLs for attachments
+const previewCache = new Map<string, string>()
 
 const casesState = reactive<CasesState>({
   cases: [],
@@ -34,6 +38,7 @@ const casesState = reactive<CasesState>({
   isLoadingSLAKPIs: false,
   isLoadingBatchSLA: false,
   isDownloadingAttachment: false,
+  isLoadingPreview: false,
   filters: {},
   statusReasonOptions: [],
 })
@@ -235,6 +240,49 @@ export function useCases() {
     }
   }
 
+  async function getAttachmentPreviewUrl(caseId: string, annotationId: string): Promise<string | null> {
+    // Check cache first
+    const cacheKey = `${caseId}:${annotationId}`
+    if (previewCache.has(cacheKey)) {
+      return previewCache.get(cacheKey)!
+    }
+
+    casesState.isLoadingPreview = true
+    try {
+      const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
+        `/api/cases/${caseId}/attachments/${annotationId}`
+      )
+
+      // Convert base64 to blob
+      const byteCharacters = atob(response.documentbody)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: response.mimetype })
+
+      // Create blob URL and cache it
+      const url = URL.createObjectURL(blob)
+      previewCache.set(cacheKey, url)
+
+      return url
+    } catch (error) {
+      console.error('Failed to get attachment preview:', error)
+      return null
+    } finally {
+      casesState.isLoadingPreview = false
+    }
+  }
+
+  function clearPreviewCache() {
+    // Revoke all cached blob URLs
+    for (const url of previewCache.values()) {
+      URL.revokeObjectURL(url)
+    }
+    previewCache.clear()
+  }
+
   function setFilters(filters: CaseFilters) {
     casesState.filters = { ...casesState.filters, ...filters }
   }
@@ -271,6 +319,7 @@ export function useCases() {
     isLoadingSLAKPIs: computed(() => casesState.isLoadingSLAKPIs),
     isLoadingBatchSLA: computed(() => casesState.isLoadingBatchSLA),
     isDownloadingAttachment: computed(() => casesState.isDownloadingAttachment),
+    isLoadingPreview: computed(() => casesState.isLoadingPreview),
     filters: computed(() => casesState.filters),
     statusReasonOptions: computed(() => casesState.statusReasonOptions),
     canGoBack,
@@ -284,6 +333,8 @@ export function useCases() {
     fetchStatusReasonOptions,
     addReply,
     downloadAttachment,
+    getAttachmentPreviewUrl,
+    clearPreviewCache,
     setFilters,
     clearFilters,
     setPageSize,

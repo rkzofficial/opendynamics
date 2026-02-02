@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   download: [attachment: CaseAttachment]
+  preview: [index: number]
 }>()
 
 function formatFileSize(bytes?: number): string {
@@ -30,6 +31,21 @@ function getFileIcon(mimetype: string) {
   if (mimetype.includes('zip') || mimetype.includes('archive') || mimetype.includes('tar') || mimetype.includes('rar')) return FileArchive
   if (mimetype.includes('text') || mimetype.includes('pdf') || mimetype.includes('document')) return FileText
   return File
+}
+
+function canPreview(mimetype: string): boolean {
+  return mimetype.startsWith('image/') || mimetype.startsWith('video/')
+}
+
+function handleRowClick(index: number, mimetype: string) {
+  if (canPreview(mimetype)) {
+    emit('preview', index)
+  }
+}
+
+function handleDownloadClick(e: Event, attachment: CaseAttachment) {
+  e.stopPropagation()
+  emit('download', attachment)
 }
 </script>
 
@@ -56,9 +72,13 @@ function getFileIcon(mimetype: string) {
 
       <div v-else class="space-y-3">
         <div
-          v-for="attachment in attachments"
+          v-for="(attachment, index) in attachments"
           :key="attachment.annotationid"
-          class="flex items-center gap-4 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+          :class="[
+            'flex items-center gap-4 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors',
+            canPreview(attachment.mimetype) ? 'cursor-pointer' : ''
+          ]"
+          @click="handleRowClick(index, attachment.mimetype)"
         >
           <!-- File icon -->
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
@@ -92,7 +112,7 @@ function getFileIcon(mimetype: string) {
             size="icon"
             class="h-9 w-9 flex-shrink-0"
             :disabled="isDownloading"
-            @click="emit('download', attachment)"
+            @click="handleDownloadClick($event, attachment)"
           >
             <Loader2 v-if="isDownloading" class="h-4 w-4 animate-spin" />
             <Download v-else class="h-4 w-4" />

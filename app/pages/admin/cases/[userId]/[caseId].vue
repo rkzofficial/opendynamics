@@ -21,7 +21,16 @@ const isLoading = ref(true)
 const isLoadingActivities = ref(false)
 const isLoadingSLAKPIs = ref(false)
 const isDownloadingAttachment = ref(false)
+const isLoadingPreview = ref(false)
 const error = ref('')
+
+// Preview state
+const isPreviewOpen = ref(false)
+const previewIndex = ref(0)
+const previewUrl = ref<string | null>(null)
+
+// Preview cache for admin page
+const previewCache = new Map<string, string>()
 
 const replyText = ref('')
 const replySubject = ref('')
@@ -49,7 +58,15 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopCountdownTimer()
+  clearPreviewCache()
 })
+
+function clearPreviewCache() {
+  for (const url of previewCache.values()) {
+    URL.revokeObjectURL(url)
+  }
+  previewCache.clear()
+}
 
 async function loadCase() {
   if (!userId.value || !caseId.value) return
@@ -219,6 +236,73 @@ async function handleDownloadAttachment(attachment: { annotationid: string; file
     isDownloadingAttachment.value = false
   }
 }
+
+async function getAttachmentPreviewUrl(annotationId: string): Promise<string | null> {
+  if (!caseId.value) return null
+
+  // Check cache first
+  const cacheKey = `${caseId.value}:${annotationId}`
+  if (previewCache.has(cacheKey)) {
+    return previewCache.get(cacheKey)!
+  }
+
+  isLoadingPreview.value = true
+  try {
+    const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
+      `/api/cases/${caseId.value}/attachments/${annotationId}`,
+      { params: { userId: userId.value } }
+    )
+
+    // Convert base64 to blob
+    const byteCharacters = atob(response.documentbody)
+    const byteNumbers = new Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    const blob = new Blob([byteArray], { type: response.mimetype })
+
+    // Create blob URL and cache it
+    const url = URL.createObjectURL(blob)
+    previewCache.set(cacheKey, url)
+
+    return url
+  } catch (e) {
+    return null
+  } finally {
+    isLoadingPreview.value = false
+  }
+}
+
+async function handlePreviewAttachment(index: number) {
+  const attachments = activities.value?.attachments || []
+  if (index < 0 || index >= attachments.length) return
+
+  previewIndex.value = index
+  isPreviewOpen.value = true
+  previewUrl.value = null
+
+  const attachment = attachments[index]
+  const url = await getAttachmentPreviewUrl(attachment.annotationid)
+  previewUrl.value = url
+}
+
+async function handleNavigatePreview(index: number) {
+  const attachments = activities.value?.attachments || []
+  if (index < 0 || index >= attachments.length) return
+
+  previewIndex.value = index
+  previewUrl.value = null
+
+  const attachment = attachments[index]
+  const url = await getAttachmentPreviewUrl(attachment.annotationid)
+  previewUrl.value = url
+}
+
+function handleClosePreview() {
+  isPreviewOpen.value = false
+  previewUrl.value = null
+}
 </script>
 
 <template>
@@ -229,6 +313,10 @@ async function handleDownloadAttachment(attachment: { annotationid: string; file
     :is-loading-activities="isLoadingActivities"
     :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
     :is-downloading-attachment="isDownloadingAttachment"
+    :is-preview-open="isPreviewOpen"
+    :preview-index="previewIndex"
+    :preview-url="previewUrl"
+    :is-loading-preview="isLoadingPreview"
     :first-response-s-l-a="getFirstResponseSLA()"
     :customer-update-s-l-a="getCustomerUpdateSLA()"
     :first-response-countdown="firstResponseCountdown"
@@ -241,5 +329,8 @@ async function handleDownloadAttachment(attachment: { annotationid: string; file
     @back="handleBack"
     @submit-reply="handleSubmitReply"
     @download-attachment="handleDownloadAttachment"
+    @preview-attachment="handlePreviewAttachment"
+    @navigate-preview="handleNavigatePreview"
+    @close-preview="handleClosePreview"
   />
 </template>
