@@ -36,7 +36,7 @@ export interface Case {
     emailaddress1?: string
   }
   _ownerid_value?: string
-  ownerid?: {
+  owninguser?: {
     fullname?: string
   }
   // SLA and deadline fields

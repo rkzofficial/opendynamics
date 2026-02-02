@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Send, FileText, Copy, Check, Users, AlertTriangle } from 'lucide-vue-next'
+import { ArrowLeft, Send, FileText, Copy, Check, Users, AlertTriangle, User } from 'lucide-vue-next'
 import type { Case, ActivitiesResponse } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
 import {
@@ -154,6 +154,17 @@ const timelineItems = computed<TimelineItem[]>(() => {
               </UiBadge>
             </div>
             <h1 class="text-2xl font-bold tracking-tight">{{ props.case.title }}</h1>
+          </div>
+
+          <!-- Support Engineer -->
+          <div v-if="props.case.owninguser?.fullname" class="flex items-center gap-3">
+            <div class="rounded-full bg-primary/10 p-2">
+              <User class="h-5 w-5 text-primary" />
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-muted-foreground">Support Engineer</p>
+              <p class="font-medium">{{ props.case.owninguser.fullname }}</p>
+            </div>
           </div>
         </div>
       </div>

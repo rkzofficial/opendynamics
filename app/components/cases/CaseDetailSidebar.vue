@@ -14,12 +14,6 @@ import {
 } from 'lucide-vue-next'
 import type { Case } from '~/types'
 import {
-  getStatusLabel,
-  getStatusVariant,
-  getPriorityLabel,
-  getPriorityVariant,
-  getStatusIcon,
-  getPriorityIcon,
   formatCaseDate,
   getTimezoneName,
   getTimezoneIANA,
@@ -102,18 +96,6 @@ function formatTimePart(dateString: string | null | undefined): string {
         </UiCardTitle>
       </UiCardHeader>
       <UiCardContent class="space-y-4">
-        <!-- Status & Priority -->
-        <div class="flex items-center justify-center gap-2">
-          <UiBadge :variant="getStatusVariant(props.case.statecode)" class="gap-1.5 px-3 py-1">
-            <component :is="getStatusIcon(props.case.statecode)" class="h-3.5 w-3.5" />
-            {{ getStatusLabel(props.case.statecode) }}
-          </UiBadge>
-          <UiBadge :variant="getPriorityVariant(props.case.prioritycode)" class="gap-1.5 px-3 py-1">
-            <component :is="getPriorityIcon(props.case.prioritycode)" class="h-3.5 w-3.5" />
-            {{ getPriorityLabel(props.case.prioritycode) }}
-          </UiBadge>
-        </div>
-
         <!-- Ticket Number -->
         <div class="flex items-center gap-3 rounded-md border bg-background p-3">
           <div class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-500/10">
