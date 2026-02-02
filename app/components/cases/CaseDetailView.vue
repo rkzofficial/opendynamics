@@ -3,12 +3,10 @@ import { ArrowLeft, Send, FileText, Copy, Check, Users, AlertTriangle, User } fr
 import type { Case, ActivitiesResponse } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
 import {
-  getStatusLabel,
-  getStatusVariant,
+  getStatusReasonLabel,
+  getStatusReasonBadgeClass,
   getPriorityLabel,
-  getPriorityVariant,
-  getStatusIcon,
-  getPriorityIcon,
+  getPriorityBadgeClass,
 } from '~/utils/caseHelpers'
 
 interface SLAData {
@@ -137,33 +135,42 @@ const timelineItems = computed<TimelineItem[]>(() => {
 
     <template v-else-if="props.case">
       <!-- Case header -->
-      <div class="sticky top-16 z-30 -mx-4 -mt-4 mb-6 bg-background px-4 py-4 md:-mx-6 md:-mt-6 md:px-6 md:py-6 border-b">
-        <div class="flex items-start justify-between">
-          <div>
-            <div class="flex items-center gap-3 mb-2">
-              <span class="text-sm font-medium text-muted-foreground">
+      <div class="border-b pb-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-sm text-muted-foreground">
                 {{ props.case.ticketnumber }}
               </span>
-              <UiBadge :variant="getStatusVariant(props.case.statecode)" class="gap-1">
-                <component :is="getStatusIcon(props.case.statecode)" class="h-3 w-3" />
-                {{ getStatusLabel(props.case.statecode) }}
-              </UiBadge>
-              <UiBadge :variant="getPriorityVariant(props.case.prioritycode)" class="gap-1">
-                <component :is="getPriorityIcon(props.case.prioritycode)" class="h-3 w-3" />
+              <span class="text-muted-foreground/40">•</span>
+              <span
+                :class="[
+                  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
+                  getStatusReasonBadgeClass(props.case.statecode)
+                ]"
+              >
+                {{ getStatusReasonLabel(props.case['statuscode@OData.Community.Display.V1.FormattedValue']) }}
+              </span>
+              <span
+                :class="[
+                  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                  getPriorityBadgeClass(props.case.prioritycode)
+                ]"
+              >
                 {{ getPriorityLabel(props.case.prioritycode) }}
-              </UiBadge>
+              </span>
             </div>
-            <h1 class="text-2xl font-bold tracking-tight">{{ props.case.title }}</h1>
+            <h1 class="text-xl font-bold tracking-tight lg:text-2xl">{{ props.case.title }}</h1>
           </div>
 
           <!-- Support Engineer -->
-          <div v-if="props.case.owninguser?.fullname" class="flex items-center gap-3">
-            <div class="rounded-full bg-primary/10 p-2">
-              <User class="h-5 w-5 text-primary" />
+          <div v-if="props.case.owninguser?.fullname" class="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2.5">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <User class="h-4 w-4 text-primary" />
             </div>
-            <div class="text-right">
-              <p class="text-sm text-muted-foreground">Support Engineer</p>
-              <p class="font-medium">{{ props.case.owninguser.fullname }}</p>
+            <div>
+              <p class="text-xs text-muted-foreground">Support Engineer</p>
+              <p class="text-sm font-medium">{{ props.case.owninguser.fullname }}</p>
             </div>
           </div>
         </div>
@@ -195,7 +202,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
             <UiCardContent>
               <div
                 v-if="props.case.description"
-                class="rounded-md bg-muted/50 p-4 text-base leading-relaxed whitespace-pre-wrap"
+                class="rounded-md bg-muted/50 p-4 text-base leading-relaxed whitespace-pre-wrap break-words overflow-hidden"
               >
                 {{ props.case.description }}
               </div>
