@@ -14,6 +14,7 @@ interface CasesState {
   isLoadingActivities: boolean
   isLoadingSLAKPIs: boolean
   isLoadingBatchSLA: boolean
+  isDownloadingAttachment: boolean
   filters: CaseFilters
   statusReasonOptions: StatusReasonOption[]
 }
@@ -32,6 +33,7 @@ const casesState = reactive<CasesState>({
   isLoadingActivities: false,
   isLoadingSLAKPIs: false,
   isLoadingBatchSLA: false,
+  isDownloadingAttachment: false,
   filters: {},
   statusReasonOptions: [],
 })
@@ -198,6 +200,41 @@ export function useCases() {
     }
   }
 
+  async function downloadAttachment(caseId: string, annotationId: string, filename: string) {
+    casesState.isDownloadingAttachment = true
+    try {
+      const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
+        `/api/cases/${caseId}/attachments/${annotationId}`
+      )
+
+      // Convert base64 to blob
+      const byteCharacters = atob(response.documentbody)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: response.mimetype })
+
+      // Trigger download
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename || response.filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to download attachment:', error)
+      return { success: false, error: 'Failed to download attachment' }
+    } finally {
+      casesState.isDownloadingAttachment = false
+    }
+  }
+
   function setFilters(filters: CaseFilters) {
     casesState.filters = { ...casesState.filters, ...filters }
   }
@@ -233,6 +270,7 @@ export function useCases() {
     isLoadingActivities: computed(() => casesState.isLoadingActivities),
     isLoadingSLAKPIs: computed(() => casesState.isLoadingSLAKPIs),
     isLoadingBatchSLA: computed(() => casesState.isLoadingBatchSLA),
+    isDownloadingAttachment: computed(() => casesState.isDownloadingAttachment),
     filters: computed(() => casesState.filters),
     statusReasonOptions: computed(() => casesState.statusReasonOptions),
     canGoBack,
@@ -245,6 +283,7 @@ export function useCases() {
     fetchBatchSLAData,
     fetchStatusReasonOptions,
     addReply,
+    downloadAttachment,
     setFilters,
     clearFilters,
     setPageSize,

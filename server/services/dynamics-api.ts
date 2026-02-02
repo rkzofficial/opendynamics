@@ -280,13 +280,93 @@ export class DynamicsApiClient {
 
   async getCaseAnnotations(incidentId: string): Promise<{ value: unknown[] }> {
     const query = buildODataQuery({
-      select: ['annotationid', 'subject', 'notetext', 'createdon', 'modifiedon', '_createdby_value', 'isdocument', 'filename', 'mimetype'],
+      select: ['annotationid', 'subject', 'notetext', 'createdon', 'modifiedon', '_createdby_value', 'isdocument', 'filename', 'mimetype', 'filesize'],
       expand: ['createdby($select=fullname)'],
       filter: `_objectid_value eq ${incidentId}`,
       orderby: 'createdon desc',
     })
 
     return this.fetch(`/annotations${query}`)
+  }
+
+  async getCaseAttachments(incidentId: string): Promise<{ attachments: Array<{
+    attachmentMetadataId: string
+    fileName: string
+    mimeType: string
+    createdOn: string
+    uploadedBy: string
+    direction: string
+    documentType: string
+  }> }> {
+    try {
+      const response = await this.fetch<{
+        result: string
+        resultStatus: string
+      }>('/ent_AttachmentSearch', {
+        method: 'POST',
+        body: JSON.stringify({
+          regardingEntityId: incidentId,
+        }),
+      })
+
+      if (response.resultStatus !== 'SUCCESS') {
+        console.error('[DEBUG] ent_AttachmentSearch failed:', response.resultStatus)
+        return { attachments: [] }
+      }
+
+      // Parse the JSON string in result
+      const parsed = JSON.parse(response.result)
+      const attachments = (parsed.resultRecords || []).map((record: any) => ({
+        attachmentMetadataId: record.attachmentMetadataId,
+        fileName: record.fileName,
+        mimeType: record.mimeType,
+        createdOn: record.localizedCreatedOn || record.createdOn,
+        uploadedBy: record.uploadedBy,
+        direction: record.direction,
+        documentType: record.documentType,
+      }))
+
+      return { attachments }
+    } catch (error) {
+      console.error('[DEBUG] Error fetching case attachments:', error)
+      return { attachments: [] }
+    }
+  }
+
+  async downloadAttachment(attachmentMetadataId: string): Promise<{ content: string; fileName: string; mimeType: string }> {
+    const response = await this.fetch<{
+      documentBody: string
+      fileName: string
+      mimeType: string
+      resultStatus: string
+      resultMessage: string | null
+    }>('/ent_AttachmentDownload', {
+      method: 'POST',
+      body: JSON.stringify({
+        attachmentMetadata: {
+          '@odata.type': 'Microsoft.Dynamics.CRM.ent_attachmentmetadata',
+          'ent_attachmentmetadataid': attachmentMetadataId,
+        },
+      }),
+    })
+
+    if (response.resultStatus !== 'SUCCESS') {
+      throw new Error(response.resultMessage || 'Failed to download attachment')
+    }
+
+    return {
+      content: response.documentBody,
+      fileName: response.fileName,
+      mimeType: response.mimeType,
+    }
+  }
+
+  async getAttachmentContent(annotationId: string): Promise<{ documentbody: string; filename: string; mimetype: string }> {
+    const query = buildODataQuery({
+      select: ['documentbody', 'filename', 'mimetype'],
+    })
+
+    return this.fetch(`/annotations(${annotationId})${query}`)
   }
 
   async createAnnotation(incidentId: string, noteText: string, subject?: string): Promise<unknown> {

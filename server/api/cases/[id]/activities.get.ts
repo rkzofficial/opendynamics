@@ -1,4 +1,5 @@
 import { getDynamicsClient } from '../../../utils/dynamics'
+import type { Annotation, CaseAttachment } from '~/types'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -16,14 +17,29 @@ export default defineEventHandler(async (event) => {
   const { client } = await getDynamicsClient(event, userId)
 
   try {
-    const [activitiesResponse, annotationsResponse] = await Promise.all([
+    const [activitiesResponse, annotationsResponse, attachmentsResponse] = await Promise.all([
       client.getCaseActivities(caseId),
       client.getCaseAnnotations(caseId),
+      client.getCaseAttachments(caseId),
     ])
+
+    // Filter out annotations that are documents (keep only text notes)
+    const allAnnotations = annotationsResponse.value as Annotation[]
+    const annotations = allAnnotations.filter(a => !a.isdocument)
+
+    // Map custom Adobe attachments to CaseAttachment format
+    const attachments: CaseAttachment[] = attachmentsResponse.attachments.map(a => ({
+      annotationid: a.attachmentMetadataId,
+      filename: a.fileName,
+      mimetype: a.mimeType || 'application/octet-stream',
+      createdon: a.createdOn,
+      createdby: a.uploadedBy ? { fullname: a.uploadedBy } : undefined,
+    }))
 
     return {
       activities: activitiesResponse.value,
-      annotations: annotationsResponse.value,
+      annotations,
+      attachments,
     }
   } catch (error: unknown) {
     const err = error as Error

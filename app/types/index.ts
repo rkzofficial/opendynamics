@@ -137,6 +137,16 @@ export interface Annotation {
   isdocument?: boolean
   filename?: string
   mimetype?: string
+  filesize?: number
+}
+
+export interface CaseAttachment {
+  annotationid: string
+  filename: string
+  mimetype: string
+  filesize?: number
+  createdon: string
+  createdby?: { fullname?: string }
 }
 
 // API Response types
@@ -150,6 +160,7 @@ export interface CasesResponse {
 export interface ActivitiesResponse {
   activities: Activity[]
   annotations: Annotation[]
+  attachments: CaseAttachment[]
 }
 
 export interface SLAKPIInstance {

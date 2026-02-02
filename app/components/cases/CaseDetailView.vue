@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User } from 'lucide-vue-next'
-import type { Case, ActivitiesResponse } from '~/types'
+import type { Case, ActivitiesResponse, CaseAttachment } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
 import {
   getStatusReasonLabel,
@@ -21,6 +21,7 @@ interface Props {
   isLoading: boolean
   isLoadingActivities: boolean
   isLoadingSLAKPIs: boolean
+  isDownloadingAttachment?: boolean
   firstResponseSLA?: SLAData | null
   customerUpdateSLA?: SLAData | null
   firstResponseCountdown?: string
@@ -33,10 +34,12 @@ const props = withDefaults(defineProps<Props>(), {
   firstResponseCountdown: '',
   customerUpdateCountdown: '',
   error: '',
+  isDownloadingAttachment: false,
 })
 
 const emit = defineEmits<{
   back: []
+  downloadAttachment: [attachment: CaseAttachment]
 }>()
 
 const descriptionCopied = ref(false)
@@ -218,6 +221,14 @@ const timelineItems = computed<TimelineItem[]>(() => {
               </div>
             </UiCardContent>
           </UiCard>
+
+          <!-- Attachments -->
+          <CasesCaseAttachments
+            :attachments="activities?.attachments || []"
+            :is-loading="isLoadingActivities"
+            :is-downloading="isDownloadingAttachment"
+            @download="emit('downloadAttachment', $event)"
+          />
 
           <!-- Activity timeline -->
           <CasesActivityTimeline

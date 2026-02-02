@@ -20,6 +20,7 @@ const activities = ref<any>(null)
 const isLoading = ref(true)
 const isLoadingActivities = ref(false)
 const isLoadingSLAKPIs = ref(false)
+const isDownloadingAttachment = ref(false)
 const error = ref('')
 
 const replyText = ref('')
@@ -184,6 +185,40 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
 function handleBack() {
   router.push(`/admin/cases/${userId.value}`)
 }
+
+async function handleDownloadAttachment(attachment: { annotationid: string; filename: string }) {
+  if (!caseId.value) return
+  isDownloadingAttachment.value = true
+  try {
+    const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
+      `/api/cases/${caseId.value}/attachments/${attachment.annotationid}`,
+      { params: { userId: userId.value } }
+    )
+
+    // Convert base64 to blob
+    const byteCharacters = atob(response.documentbody)
+    const byteNumbers = new Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    const blob = new Blob([byteArray], { type: response.mimetype })
+
+    // Trigger download
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = attachment.filename || response.filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    // Silent fail
+  } finally {
+    isDownloadingAttachment.value = false
+  }
+}
 </script>
 
 <template>
@@ -193,6 +228,7 @@ function handleBack() {
     :is-loading="isLoading"
     :is-loading-activities="isLoadingActivities"
     :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
+    :is-downloading-attachment="isDownloadingAttachment"
     :first-response-s-l-a="getFirstResponseSLA()"
     :customer-update-s-l-a="getCustomerUpdateSLA()"
     :first-response-countdown="firstResponseCountdown"
@@ -204,5 +240,6 @@ function handleBack() {
     :error="error"
     @back="handleBack"
     @submit-reply="handleSubmitReply"
+    @download-attachment="handleDownloadAttachment"
   />
 </template>

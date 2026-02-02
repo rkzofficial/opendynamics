@@ -13,10 +13,12 @@ const {
   isLoading,
   isLoadingActivities,
   isLoadingSLAKPIs,
+  isDownloadingAttachment,
   fetchCase,
   fetchActivities,
   fetchSLAKPIs,
   addReply,
+  downloadAttachment,
 } = useCases()
 
 const replyText = ref('')
@@ -110,6 +112,10 @@ async function handleSubmitReply() {
 function handleBack() {
   router.push('/cases')
 }
+
+async function handleDownloadAttachment(attachment: { annotationid: string; filename: string }) {
+  await downloadAttachment(caseId, attachment.annotationid, attachment.filename)
+}
 </script>
 
 <template>
@@ -119,6 +125,7 @@ function handleBack() {
     :is-loading="isLoading"
     :is-loading-activities="isLoadingActivities"
     :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
+    :is-downloading-attachment="isDownloadingAttachment"
     :first-response-s-l-a="getFirstResponseSLA()"
     :customer-update-s-l-a="getCustomerUpdateSLA()"
     :first-response-countdown="firstResponseCountdown"
@@ -128,5 +135,6 @@ function handleBack() {
     :is-submitting="isSubmitting"
     @back="handleBack"
     @submit-reply="handleSubmitReply"
+    @download-attachment="handleDownloadAttachment"
   />
 </template>
