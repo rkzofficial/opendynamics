@@ -18,6 +18,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
+    '@vite-pwa/nuxt',
   ],
 
   css: ['~/assets/css/main.css'],
@@ -49,6 +50,15 @@ export default defineNuxtConfig({
     strict: true,
   },
 
+  components: {
+    dirs: [
+      {
+        path: '~/components',
+        ignore: ['**/index.ts'],
+      },
+    ],
+  },
+
   nitro: {
     // Use NITRO_PRESET env var for Cloudflare, defaults to bun for local dev
     preset: process.env.NITRO_PRESET || 'bun',
@@ -57,6 +67,156 @@ export default defineNuxtConfig({
     },
     routeRules: {
       '/api/**': { cors: true },
+    },
+  },
+
+  // PWA Configuration
+  pwa: {
+    registerType: 'autoUpdate',
+    strategies: 'generateSW',
+    manifest: {
+      name: 'OpenDynamics CRM',
+      short_name: 'OpenDynamics',
+      description: 'Microsoft Dynamics 365 CRM Dashboard',
+      theme_color: '#0f172a',
+      background_color: '#0f172a',
+      display: 'standalone',
+      orientation: 'portrait',
+      scope: '/',
+      start_url: '/',
+      categories: ['business', 'productivity'],
+      icons: [
+        {
+          src: '/icon-72x72.png',
+          sizes: '72x72',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: '/icon-96x96.png',
+          sizes: '96x96',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: '/icon-128x128.png',
+          sizes: '128x128',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: '/icon-144x144.png',
+          sizes: '144x144',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: '/icon-152x152.png',
+          sizes: '152x152',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: '/icon-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: '/icon-384x384.png',
+          sizes: '384x384',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: '/icon-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+      ],
+      shortcuts: [
+        {
+          name: 'Dashboard',
+          short_name: 'Dashboard',
+          description: 'View CRM Dashboard',
+          url: '/dashboard',
+          icons: [{ src: '/icon-96x96.png', sizes: '96x96' }],
+        },
+        {
+          name: 'Cases',
+          short_name: 'Cases',
+          description: 'View all cases',
+          url: '/cases',
+          icons: [{ src: '/icon-96x96.png', sizes: '96x96' }],
+        },
+      ],
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+      cleanupOutdatedCaches: true,
+      clientsClaim: true,
+      skipWaiting: true,
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/api\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24, // 24 hours
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/.+\.convex\.cloud\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'convex-cache',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 5, // 5 minutes
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        {
+          urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'image-cache',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            },
+          },
+        },
+        {
+          urlPattern: /\.(?:woff2|woff|ttf|otf)$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'font-cache',
+            expiration: {
+              maxEntries: 20,
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+            },
+          },
+        },
+      ],
+    },
+    devOptions: {
+      enabled: true,
+      type: 'module',
+    },
+    client: {
+      installPrompt: true,
+      periodicSyncForUpdates: 3600, // Check for updates every hour
     },
   },
 })

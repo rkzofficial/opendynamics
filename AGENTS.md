@@ -195,6 +195,40 @@ types/
 6. **Follow shadcn-vue patterns** for UI components
 7. **Use Tailwind utility classes** for styling (no CSS modules)
 
+## PWA (Progressive Web App)
+
+The project includes full PWA support with offline capabilities and push notifications.
+
+### PWA Components
+
+- **`PWA/NotificationPrompt.vue`** - Notification permission UI (card/inline/banner variants)
+- **`PWA/PWAInstallPrompt.vue`** - App install prompt with browser detection
+- **`PWA/PWAStatus.vue`** - Online/offline status indicator and update notifications
+
+### PWA Composables
+
+- **`useNotifications.ts`** - Notification permission, local notifications, push subscription
+
+### PWA Setup
+
+1. **Generate icons** from a source image:
+   ```bash
+   bun add -d sharp
+   node scripts/generate-pwa-icons.js ./app/assets/logo.png
+   ```
+
+2. **Configure push notifications** (optional):
+   ```bash
+   npx web-push generate-vapid-keys
+   # Add keys to .env.local
+   ```
+
+3. **Test PWA** in development:
+   - Open Chrome DevTools > Application tab
+   - Check Manifest, Service Workers, and Push sections
+
+See `scripts/README-PWA.md` for complete documentation.
+
 ## Environment Variables
 
 Copy `.env.example` to `.env.local` for local development:
@@ -202,3 +236,5 @@ Copy `.env.example` to `.env.local` for local development:
 - `NUXT_CONVEX_URL` - Convex API URL
 - `SESSION_SECRET` - Min 32 chars
 - `ENCRYPTION_KEY` - Exactly 32 chars for token encryption
+- `VAPID_PUBLIC_KEY` - For push notifications (optional)
+- `VAPID_PRIVATE_KEY` - For push notifications (optional)

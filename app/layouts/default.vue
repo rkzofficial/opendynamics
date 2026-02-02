@@ -34,5 +34,8 @@ watch(isAuthenticated, (value) => {
     <main class="flex-1 p-4 md:p-6">
       <slot />
     </main>
+
+    <!-- PWA Status Components -->
+    <PWAStatus />
   </div>
 </template>
