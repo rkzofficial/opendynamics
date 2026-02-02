@@ -572,7 +572,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-6 lg:sticky lg:top-48 lg:self-start">
+        <div class="space-y-6">
           <!-- Case info -->
           <UiCard>
             <UiCardHeader class="pb-3">
