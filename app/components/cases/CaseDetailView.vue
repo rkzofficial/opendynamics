@@ -74,7 +74,9 @@ function escapeHtml(text: string): string {
 
 function linkifyText(text: string): string {
   // First escape HTML to prevent XSS
-  const escaped = escapeHtml(text)
+  let escaped = escapeHtml(text)
+  // Convert newlines to <br> tags for proper line breaks
+  escaped = escaped.replace(/\n/g, '<br>')
   // Match URLs (http, https, ftp) and www. prefixed URLs
   const urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])|(\bwww\.[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])/gi
   return escaped.replace(urlPattern, (url) => {

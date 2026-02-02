@@ -231,9 +231,23 @@ export function getActivityLabel(activityType: string): string {
   }
 }
 
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export function linkifyText(text: string): string {
+  // First escape HTML to prevent XSS
+  let escaped = escapeHtml(text)
+  // Convert newlines to <br> tags for proper line breaks
+  escaped = escaped.replace(/\n/g, '<br>')
+  // Then linkify URLs
   const urlPattern = /(https?:\/\/[^\s<>"']+)/g
-  return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary dark:text-white underline hover:no-underline break-all">$1</a>')
+  return escaped.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary dark:text-white underline hover:no-underline break-all">$1</a>')
 }
 
 // Status helpers
