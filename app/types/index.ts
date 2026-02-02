@@ -41,10 +41,16 @@ export interface Case {
   // SLA and deadline fields
   responseby?: string
   followupby?: string
-  // Support plan / entitlement
+  // Support plan / entitlement (standard - often null)
   _entitlementid_value?: string
   entitlementid?: {
     name?: string
+  }
+  // Custom product entitlement (Adobe custom entity)
+  _ent_productentitlement_value?: string
+  ent_productentitlement?: {
+    ent_supportlevel?: number
+    'ent_supportlevel@OData.Community.Display.V1.FormattedValue'?: string
   }
   // Primary contact
   _primarycontactid_value?: string

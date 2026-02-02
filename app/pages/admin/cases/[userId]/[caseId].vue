@@ -585,7 +585,7 @@ function goBack() {
                 <Shield class="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div class="min-w-0">
                   <p class="text-xs text-muted-foreground">Support Plan</p>
-                  <p class="text-sm">{{ currentCase.entitlementid?.name || 'Not set' }}</p>
+                  <p class="text-sm">{{ currentCase.ent_productentitlement?.['ent_supportlevel@OData.Community.Display.V1.FormattedValue'] || currentCase.entitlementid?.name || 'Not set' }}</p>
                 </div>
               </div>
             </UiCardContent>
