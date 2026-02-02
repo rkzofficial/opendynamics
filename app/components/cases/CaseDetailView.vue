@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Send, FileText, Copy, Check, Users, AlertTriangle, User } from 'lucide-vue-next'
+import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User } from 'lucide-vue-next'
 import type { Case, ActivitiesResponse } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
 import {
@@ -25,9 +25,6 @@ interface Props {
   customerUpdateSLA?: SLAData | null
   firstResponseCountdown?: string
   customerUpdateCountdown?: string
-  replySubject: string
-  replyText: string
-  isSubmitting: boolean
   adminUserInfo?: { name: string }
   error?: string
 }
@@ -40,20 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   back: []
-  submitReply: []
-  'update:replySubject': [value: string]
-  'update:replyText': [value: string]
 }>()
-
-const localReplySubject = computed({
-  get: () => props.replySubject,
-  set: (value: string) => emit('update:replySubject', value),
-})
-
-const localReplyText = computed({
-  get: () => props.replyText,
-  set: (value: string) => emit('update:replyText', value),
-})
 
 const descriptionCopied = ref(false)
 
@@ -232,40 +216,6 @@ const timelineItems = computed<TimelineItem[]>(() => {
               <div v-else class="flex items-center justify-center py-8 text-muted-foreground">
                 <span class="italic">No description provided</span>
               </div>
-            </UiCardContent>
-          </UiCard>
-
-          <!-- Reply box -->
-          <UiCard>
-            <UiCardHeader>
-              <UiCardTitle>Add Note</UiCardTitle>
-            </UiCardHeader>
-            <UiCardContent class="space-y-4">
-              <div>
-                <UiLabel for="subject">Subject (optional)</UiLabel>
-                <UiInput
-                  id="subject"
-                  v-model="localReplySubject"
-                  placeholder="Note subject..."
-                />
-              </div>
-              <div>
-                <UiLabel for="note">Note</UiLabel>
-                <UiTextarea
-                  id="note"
-                  v-model="localReplyText"
-                  placeholder="Write your note here..."
-                  :rows="4"
-                />
-              </div>
-              <UiButton
-                :disabled="!replyText.trim() || isSubmitting"
-                @click="emit('submitReply')"
-              >
-                <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
-                <Send v-else class="mr-2 h-4 w-4" />
-                Add Note
-              </UiButton>
             </UiCardContent>
           </UiCard>
 
