@@ -15,6 +15,12 @@ interface SLAData {
   succeeded?: string
 }
 
+interface CompareItem {
+  attachment: CaseAttachment
+  previewUrl: string | null
+  isLoading: boolean
+}
+
 interface Props {
   case: Case | null
   activities: ActivitiesResponse | null
@@ -26,6 +32,8 @@ interface Props {
   previewIndex?: number
   previewUrl?: string | null
   isLoadingPreview?: boolean
+  isCompareOpen?: boolean
+  compareItems?: CompareItem[]
   firstResponseSLA?: SLAData | null
   customerUpdateSLA?: SLAData | null
   firstResponseCountdown?: string
@@ -43,6 +51,8 @@ const props = withDefaults(defineProps<Props>(), {
   previewIndex: 0,
   previewUrl: null,
   isLoadingPreview: false,
+  isCompareOpen: false,
+  compareItems: () => [],
 })
 
 const emit = defineEmits<{
@@ -51,6 +61,9 @@ const emit = defineEmits<{
   previewAttachment: [index: number]
   navigatePreview: [index: number]
   closePreview: []
+  compareAttachments: [indices: number[]]
+  closeCompare: []
+  removeFromCompare: [index: number]
 }>()
 
 const descriptionCopied = ref(false)
@@ -240,6 +253,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
             :is-downloading="isDownloadingAttachment"
             @download="emit('downloadAttachment', $event)"
             @preview="emit('previewAttachment', $event)"
+            @compare="emit('compareAttachments', $event)"
           />
 
           <!-- Attachment Preview Modal -->
@@ -252,6 +266,15 @@ const timelineItems = computed<TimelineItem[]>(() => {
             @close="emit('closePreview')"
             @navigate="emit('navigatePreview', $event)"
             @download="emit('downloadAttachment', $event)"
+          />
+
+          <!-- Attachment Compare Modal -->
+          <CasesAttachmentCompareModal
+            :is-open="isCompareOpen"
+            :items="compareItems"
+            @close="emit('closeCompare')"
+            @download="emit('downloadAttachment', $event)"
+            @remove="emit('removeFromCompare', $event)"
           />
 
           <!-- Activity timeline -->

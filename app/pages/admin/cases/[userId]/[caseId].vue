@@ -29,6 +29,15 @@ const isPreviewOpen = ref(false)
 const previewIndex = ref(0)
 const previewUrl = ref<string | null>(null)
 
+// Compare state
+interface CompareItem {
+  attachment: { annotationid: string; filename: string; mimetype: string }
+  previewUrl: string | null
+  isLoading: boolean
+}
+const isCompareOpen = ref(false)
+const compareItems = ref<CompareItem[]>([])
+
 // Preview cache for admin page
 const previewCache = new Map<string, string>()
 
@@ -303,6 +312,44 @@ function handleClosePreview() {
   isPreviewOpen.value = false
   previewUrl.value = null
 }
+
+async function handleCompareAttachments(indices: number[]) {
+  const attachments = activities.value?.attachments || []
+  if (indices.length < 2) return
+
+  // Initialize compare items with loading state
+  compareItems.value = indices.map(index => ({
+    attachment: attachments[index],
+    previewUrl: null,
+    isLoading: true,
+  }))
+  isCompareOpen.value = true
+
+  // Fetch preview URLs in parallel
+  await Promise.all(
+    indices.map(async (index, i) => {
+      const attachment = attachments[index]
+      const url = await getAttachmentPreviewUrl(attachment.annotationid)
+      if (compareItems.value[i]) {
+        compareItems.value[i].previewUrl = url
+        compareItems.value[i].isLoading = false
+      }
+    })
+  )
+}
+
+function handleCloseCompare() {
+  isCompareOpen.value = false
+  compareItems.value = []
+}
+
+function handleRemoveFromCompare(index: number) {
+  compareItems.value = compareItems.value.filter((_, i) => i !== index)
+  // Close compare modal if less than 2 items remain
+  if (compareItems.value.length < 2) {
+    handleCloseCompare()
+  }
+}
 </script>
 
 <template>
@@ -317,6 +364,8 @@ function handleClosePreview() {
     :preview-index="previewIndex"
     :preview-url="previewUrl"
     :is-loading-preview="isLoadingPreview"
+    :is-compare-open="isCompareOpen"
+    :compare-items="compareItems"
     :first-response-s-l-a="getFirstResponseSLA()"
     :customer-update-s-l-a="getCustomerUpdateSLA()"
     :first-response-countdown="firstResponseCountdown"
@@ -332,5 +381,8 @@ function handleClosePreview() {
     @preview-attachment="handlePreviewAttachment"
     @navigate-preview="handleNavigatePreview"
     @close-preview="handleClosePreview"
+    @compare-attachments="handleCompareAttachments"
+    @close-compare="handleCloseCompare"
+    @remove-from-compare="handleRemoveFromCompare"
   />
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Paperclip, Download, FileText, FileImage, FileArchive, File, Loader2 } from 'lucide-vue-next'
+import { Paperclip, Download, FileText, FileImage, FileArchive, File, Loader2, Columns2 } from 'lucide-vue-next'
 import type { CaseAttachment } from '~/types'
 import { formatCaseDate } from '~/utils/caseHelpers'
 
@@ -17,7 +17,46 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   download: [attachment: CaseAttachment]
   preview: [index: number]
+  compare: [indices: number[]]
 }>()
+
+// Selection state for comparison
+const selectedIndices = ref<Set<number>>(new Set())
+
+const selectedCount = computed(() => selectedIndices.value.size)
+const canCompare = computed(() => selectedCount.value >= 2)
+
+function isSelected(index: number): boolean {
+  return selectedIndices.value.has(index)
+}
+
+function toggleSelection(index: number, e: Event) {
+  e.stopPropagation()
+  const newSet = new Set(selectedIndices.value)
+  if (newSet.has(index)) {
+    newSet.delete(index)
+  } else {
+    // Limit to 8 items max
+    if (newSet.size >= 8) return
+    newSet.add(index)
+  }
+  selectedIndices.value = newSet
+}
+
+function clearSelection() {
+  selectedIndices.value = new Set()
+}
+
+function handleCompare() {
+  if (!canCompare.value) return
+  const indices = Array.from(selectedIndices.value).sort((a, b) => a - b)
+  emit('compare', indices)
+}
+
+// Clear selection when attachments change
+watch(() => props.attachments, () => {
+  selectedIndices.value = new Set()
+})
 
 function formatFileSize(bytes?: number): string {
   if (!bytes) return ''
@@ -52,13 +91,36 @@ function handleDownloadClick(e: Event, attachment: CaseAttachment) {
 <template>
   <UiCard v-if="isLoading || attachments.length > 0">
     <UiCardHeader class="pb-3">
-      <UiCardTitle class="flex items-center gap-2">
-        <Paperclip class="h-4 w-4 text-muted-foreground" />
-        Attachments
-        <span v-if="attachments.length > 0" class="text-sm font-normal text-muted-foreground">
-          ({{ attachments.length }})
-        </span>
-      </UiCardTitle>
+      <div class="flex items-center justify-between">
+        <UiCardTitle class="flex items-center gap-2">
+          <Paperclip class="h-4 w-4 text-muted-foreground" />
+          Attachments
+          <span v-if="attachments.length > 0" class="text-sm font-normal text-muted-foreground">
+            ({{ attachments.length }})
+          </span>
+        </UiCardTitle>
+
+        <!-- Compare button -->
+        <div v-if="selectedCount > 0" class="flex items-center gap-2">
+          <span class="text-sm text-muted-foreground">{{ selectedCount }} selected</span>
+          <UiButton
+            v-if="canCompare"
+            variant="outline"
+            size="sm"
+            @click="handleCompare"
+          >
+            <Columns2 class="h-4 w-4 mr-1.5" />
+            Compare
+          </UiButton>
+          <UiButton
+            variant="ghost"
+            size="sm"
+            @click="clearSelection"
+          >
+            Clear
+          </UiButton>
+        </div>
+      </div>
     </UiCardHeader>
     <UiCardContent>
       <div v-if="isLoading" class="space-y-3">
@@ -75,11 +137,24 @@ function handleDownloadClick(e: Event, attachment: CaseAttachment) {
           v-for="(attachment, index) in attachments"
           :key="attachment.annotationid"
           :class="[
-            'flex items-center gap-4 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors',
-            canPreview(attachment.mimetype) ? 'cursor-pointer' : ''
+            'flex items-center gap-3 p-3 rounded-lg border transition-colors',
+            canPreview(attachment.mimetype) ? 'cursor-pointer' : '',
+            isSelected(index) ? 'bg-primary/10 border-primary/30' : 'bg-muted/30 hover:bg-muted/50'
           ]"
           @click="handleRowClick(index, attachment.mimetype)"
         >
+          <!-- Checkbox for previewable attachments -->
+          <div
+            v-if="canPreview(attachment.mimetype)"
+            class="flex-shrink-0"
+            @click="toggleSelection(index, $event)"
+          >
+            <UiCheckbox
+              :checked="isSelected(index)"
+              class="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            />
+          </div>
+
           <!-- File icon -->
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
             <component
