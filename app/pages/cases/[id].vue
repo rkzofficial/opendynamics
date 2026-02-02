@@ -359,7 +359,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
 
       <div class="grid gap-6 lg:grid-cols-3">
         <!-- Main content -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-6 min-w-0">
           <!-- Description -->
           <UiCard>
             <UiCardHeader class="pb-3">
@@ -502,7 +502,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
                         <div
                           v-if="item.type === 'activity'"
                           :class="[
-                            'prose prose-sm max-w-none break-words overflow-hidden dark:prose-invert',
+                            'prose prose-sm max-w-full break-words overflow-x-auto [&_img]:max-w-full [&_table]:max-w-full [&_pre]:max-w-full [&_pre]:overflow-x-auto dark:prose-invert',
                             (item.data as Activity).activitytypecode === 'email'
                               ? 'bg-gray-50 dark:bg-zinc-800/50 rounded-md p-4 border border-gray-200 dark:border-zinc-700'
                               : ''

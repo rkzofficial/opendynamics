@@ -449,7 +449,7 @@ function goBack() {
                     <div
                       v-if="item.type === 'activity'"
                       :class="[
-                        'text-sm prose prose-sm max-w-none p-3 rounded border',
+                        'text-sm prose prose-sm max-w-full overflow-x-auto [&_img]:max-w-full [&_table]:max-w-full [&_pre]:max-w-full [&_pre]:overflow-x-auto p-3 rounded border',
                         (item.data as Activity).activitytypecode === 'email'
                           ? 'bg-white text-gray-900 border-gray-200'
                           : 'text-muted-foreground border-transparent'
