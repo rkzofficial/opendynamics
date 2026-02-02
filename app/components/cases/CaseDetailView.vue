@@ -66,6 +66,28 @@ async function copyDescription() {
   }, 2000)
 }
 
+function escapeHtml(text: string): string {
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
+}
+
+function linkifyText(text: string): string {
+  // First escape HTML to prevent XSS
+  const escaped = escapeHtml(text)
+  // Match URLs (http, https, ftp) and www. prefixed URLs
+  const urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])|(\bwww\.[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])/gi
+  return escaped.replace(urlPattern, (url) => {
+    const href = url.startsWith('www.') ? `https://${url}` : url
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-primary underline hover:text-primary/80 break-all">${url}</a>`
+  })
+}
+
+const linkedDescription = computed(() => {
+  if (!props.case?.description) return ''
+  return linkifyText(props.case.description)
+})
+
 const timelineItems = computed<TimelineItem[]>(() => {
   const items: TimelineItem[] = []
 
@@ -203,9 +225,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
               <div
                 v-if="props.case.description"
                 class="rounded-md bg-muted/50 p-4 text-base leading-relaxed whitespace-pre-wrap break-words overflow-hidden"
-              >
-                {{ props.case.description }}
-              </div>
+                v-html="linkedDescription"
+              />
               <div v-else class="flex items-center justify-center py-8 text-muted-foreground">
                 <span class="italic">No description provided</span>
               </div>
