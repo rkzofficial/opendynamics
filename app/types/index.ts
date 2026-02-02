@@ -52,11 +52,14 @@ export interface Case {
     ent_supportlevel?: number
     'ent_supportlevel@OData.Community.Display.V1.FormattedValue'?: string
   }
-  // Primary contact
+  // Primary contact (standard - often null)
   _primarycontactid_value?: string
   primarycontactid?: {
     fullname?: string
   }
+  // Custom contact field (Adobe custom - used instead of primarycontactid)
+  _ent_contact_value?: string
+  '_ent_contact_value@OData.Community.Display.V1.FormattedValue'?: string
   // Organization/Account
   _accountid_value?: string
   customerid_account?: {

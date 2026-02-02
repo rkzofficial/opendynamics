@@ -561,7 +561,7 @@ function goBack() {
                   <User class="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <div class="min-w-0">
                     <p class="text-xs text-muted-foreground">Primary Contact</p>
-                    <p class="text-sm">{{ currentCase.primarycontactid?.fullname || 'Not set' }}</p>
+                    <p class="text-sm">{{ currentCase['_ent_contact_value@OData.Community.Display.V1.FormattedValue'] || currentCase.primarycontactid?.fullname || 'Not set' }}</p>
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
