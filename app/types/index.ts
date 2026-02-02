@@ -67,6 +67,20 @@ export interface Case {
   }
   // Additional contact (field name to be determined)
   additionalContactName?: string
+  // Customer 360 (Adobe custom)
+  _ent_customer_value?: string
+  '_ent_customer_value@OData.Community.Display.V1.FormattedValue'?: string
+  // Customer contact preferences
+  ent_preferredemail?: string
+  ent_preferredphonenumber?: string
+  ent_supportedlanguage?: number
+  'ent_supportedlanguage@OData.Community.Display.V1.FormattedValue'?: string
+  ent_preferredcustomertimezone?: number
+  'ent_preferredcustomertimezone@OData.Community.Display.V1.FormattedValue'?: string
+  ent_custworkhrsstarttime?: number
+  ent_custworkhrsendtime?: number
+  ent_threestrikepreference?: number
+  'ent_threestrikepreference@OData.Community.Display.V1.FormattedValue'?: string
 }
 
 export interface ActivityAttachment {

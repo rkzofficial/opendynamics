@@ -167,7 +167,10 @@ export class DynamicsApiClient {
         'incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode',
         'createdon', 'modifiedon', '_customerid_value', '_ownerid_value',
         'responseby', 'followupby', '_entitlementid_value', '_primarycontactid_value', '_accountid_value',
-        '_ent_productentitlement_value', '_ent_contact_value'
+        '_ent_productentitlement_value', '_ent_contact_value', '_ent_customer_value',
+        'ent_preferredemail', 'ent_preferredphonenumber', 'ent_supportedlanguage',
+        'ent_preferredcustomertimezone', 'ent_custworkhrsstarttime', 'ent_custworkhrsendtime',
+        'ent_threestrikepreference'
       ],
       expand: [
         'customerid_contact($select=fullname,emailaddress1)',

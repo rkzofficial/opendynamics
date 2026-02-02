@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onUnmounted } from 'vue'
-import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users, Hash, Clock, Timer, User, Building, Shield, Info, AlertTriangle, FolderOpen } from 'lucide-vue-next'
+import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users, Hash, Clock, Timer, User, Building, Shield, Info, AlertTriangle, FolderOpen, Globe, Languages } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
 import {
@@ -12,6 +12,45 @@ import {
   getPriorityIcon,
   formatCaseDate,
 } from '~/utils/caseHelpers'
+
+// Windows timezone code to readable name mapping (common codes)
+const timezoneCodeMap: Record<number, string> = {
+  0: '(UTC-12:00) International Date Line West',
+  1: '(UTC-11:00) Coordinated Universal Time-11',
+  2: '(UTC-10:00) Hawaii',
+  4: '(UTC-09:00) Alaska',
+  10: '(UTC-08:00) Pacific Time (US & Canada)',
+  15: '(UTC-07:00) Mountain Time (US & Canada)',
+  20: '(UTC-06:00) Central Time (US & Canada)',
+  35: '(UTC-05:00) Eastern Time (US & Canada)',
+  45: '(UTC-04:00) Atlantic Time (Canada)',
+  65: '(UTC) Dublin, Edinburgh, Lisbon, London',
+  85: '(UTC+01:00) Amsterdam, Berlin, Rome, Paris',
+  110: '(UTC+02:00) Cairo, Helsinki, Kyiv',
+  130: '(UTC+03:00) Moscow, Baghdad, Kuwait',
+  145: '(UTC+04:00) Abu Dhabi, Muscat',
+  165: '(UTC+05:00) Islamabad, Karachi',
+  175: '(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi',
+  185: '(UTC+06:00) Dhaka, Astana',
+  195: '(UTC+07:00) Bangkok, Hanoi, Jakarta',
+  205: '(UTC+08:00) Beijing, Hong Kong, Singapore',
+  210: '(UTC+08:00) Kuala Lumpur, Singapore',
+  215: '(UTC+08:00) Taipei',
+  225: '(UTC+08:00) Perth',
+  230: '(UTC+09:00) Tokyo, Seoul',
+  235: '(UTC+09:00) Osaka, Sapporo, Tokyo',
+  245: '(UTC+09:30) Adelaide, Darwin',
+  250: '(UTC+10:00) Brisbane, Canberra, Sydney',
+  255: '(UTC+10:00) Hobart',
+  265: '(UTC+11:00) Solomon Islands, New Caledonia',
+  275: '(UTC+12:00) Auckland, Wellington, Fiji',
+  290: '(UTC+13:00) Nuku\'alofa, Samoa',
+}
+
+function getTimezoneName(code: number | undefined): string | null {
+  if (code === undefined || code === null) return null
+  return timezoneCodeMap[code] || `UTC Timezone (Code: ${code})`
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -554,32 +593,6 @@ function goBack() {
                 </div>
               </div>
 
-              <!-- Contact & Organization -->
-              <div class="space-y-3 rounded-md bg-muted/50 p-3">
-                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Contact Info</p>
-                <div class="flex items-center gap-3">
-                  <User class="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <div class="min-w-0">
-                    <p class="text-xs text-muted-foreground">Primary Contact</p>
-                    <p class="text-sm">{{ currentCase['_ent_contact_value@OData.Community.Display.V1.FormattedValue'] || currentCase.primarycontactid?.fullname || 'Not set' }}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <Building class="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <div class="min-w-0">
-                    <p class="text-xs text-muted-foreground">Organization</p>
-                    <p class="text-sm">{{ currentCase.customerid_account?.name || 'Not set' }}</p>
-                  </div>
-                </div>
-                <div v-if="currentCase.additionalContactName" class="flex items-center gap-3">
-                  <User class="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <div class="min-w-0">
-                    <p class="text-xs text-muted-foreground">Additional Contact</p>
-                    <p class="text-sm">{{ currentCase.additionalContactName }}</p>
-                  </div>
-                </div>
-              </div>
-
               <!-- Support Plan -->
               <div class="flex items-center gap-3 rounded-md bg-muted/50 p-3">
                 <Shield class="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -592,15 +605,83 @@ function goBack() {
           </UiCard>
 
           <!-- Customer info -->
-          <UiCard v-if="currentCase.customerid_contact">
+          <UiCard>
             <UiCardHeader>
               <UiCardTitle>Customer</UiCardTitle>
             </UiCardHeader>
-            <UiCardContent class="space-y-2">
-              <p class="font-medium">{{ currentCase.customerid_contact.fullname }}</p>
-              <p v-if="currentCase.customerid_contact.emailaddress1" class="text-sm text-muted-foreground">
-                {{ currentCase.customerid_contact.emailaddress1 }}
-              </p>
+            <UiCardContent class="space-y-3">
+              <!-- Primary Contact -->
+              <div class="flex items-center gap-3">
+                <User class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Primary Contact</p>
+                  <p class="text-sm font-medium">{{ currentCase['_ent_contact_value@OData.Community.Display.V1.FormattedValue'] || currentCase.customerid_contact?.fullname || 'Not set' }}</p>
+                </div>
+              </div>
+              <!-- Organization -->
+              <div class="flex items-center gap-3">
+                <Building class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Organization</p>
+                  <p class="text-sm">{{ currentCase.customerid_account?.name || 'Not set' }}</p>
+                </div>
+              </div>
+              <!-- Email -->
+              <div class="flex items-center gap-3">
+                <Mail class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Email</p>
+                  <p class="text-sm">{{ currentCase.ent_preferredemail || currentCase.customerid_contact?.emailaddress1 || 'Not set' }}</p>
+                </div>
+              </div>
+              <!-- Customer 360 -->
+              <div v-if="currentCase['_ent_customer_value@OData.Community.Display.V1.FormattedValue']" class="flex items-center gap-3">
+                <User class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Customer 360</p>
+                  <p class="text-sm">{{ currentCase['_ent_customer_value@OData.Community.Display.V1.FormattedValue'] }}</p>
+                </div>
+              </div>
+              <!-- Phone -->
+              <div v-if="currentCase.ent_preferredphonenumber" class="flex items-center gap-3">
+                <Phone class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Phone</p>
+                  <p class="text-sm">{{ currentCase.ent_preferredphonenumber }}</p>
+                </div>
+              </div>
+              <!-- Language -->
+              <div v-if="currentCase['ent_supportedlanguage@OData.Community.Display.V1.FormattedValue']" class="flex items-center gap-3">
+                <Languages class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Language</p>
+                  <p class="text-sm">{{ currentCase['ent_supportedlanguage@OData.Community.Display.V1.FormattedValue'] }}</p>
+                </div>
+              </div>
+              <!-- Time Zone -->
+              <div v-if="getTimezoneName(currentCase.ent_preferredcustomertimezone)" class="flex items-center gap-3">
+                <Globe class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Time Zone</p>
+                  <p class="text-sm">{{ getTimezoneName(currentCase.ent_preferredcustomertimezone) }}</p>
+                </div>
+              </div>
+              <!-- Working Hours -->
+              <div v-if="currentCase.ent_custworkhrsstarttime !== undefined && currentCase.ent_custworkhrsendtime !== undefined" class="flex items-center gap-3">
+                <Clock class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Working Hours</p>
+                  <p class="text-sm">{{ currentCase.ent_custworkhrsstarttime }}:00 - {{ currentCase.ent_custworkhrsendtime }}:00</p>
+                </div>
+              </div>
+              <!-- Three Strike Preference -->
+              <div v-if="currentCase['ent_threestrikepreference@OData.Community.Display.V1.FormattedValue']" class="flex items-center gap-3">
+                <AlertTriangle class="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground">Three Strike Preference</p>
+                  <p class="text-sm">{{ currentCase['ent_threestrikepreference@OData.Community.Display.V1.FormattedValue'] }}</p>
+                </div>
+              </div>
             </UiCardContent>
           </UiCard>
 
