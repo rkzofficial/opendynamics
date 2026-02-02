@@ -5,9 +5,10 @@
  * For dates >= 2 days old: shows absolute date in 12-hour format
  * 
  * @param dateString - ISO date string to format
+ * @param dateOnly - If true, shows date without time for dates >= 2 days old
  * @returns Object with display text and tooltip text
  */
-export function formatTimeAgo(dateString: string | null | undefined): {
+export function formatTimeAgo(dateString: string | null | undefined, dateOnly = false): {
   text: string
   tooltip: string
 } {
@@ -34,14 +35,20 @@ export function formatTimeAgo(dateString: string | null | undefined): {
 
   // For dates >= 2 days, show absolute date
   if (diffDays >= 2) {
-    const text = date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    })
+    const text = dateOnly
+      ? date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        })
     return { text, tooltip }
   }
 

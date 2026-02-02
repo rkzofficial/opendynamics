@@ -232,7 +232,6 @@ function handleClearFilters() {
           <CasesTable
             :cases="cases"
             base-path="/cases"
-            show-modified
             empty-title="No cases found"
             empty-description="Try adjusting your filters"
           />

@@ -243,7 +243,6 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
         <CasesTable
           :cases="cases"
           :base-path="`/admin/cases/${userId}`"
-          show-modified
           empty-title="No cases found for this user"
         />
 

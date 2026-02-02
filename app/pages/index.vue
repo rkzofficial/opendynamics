@@ -305,7 +305,6 @@ const statCards = computed(() => [
             <CasesTable
               :cases="recentCases"
               :base-path="isAdmin() ? `/admin/cases/${selectedUserId}` : '/cases'"
-              :show-modified="false"
               empty-title="No cases found"
             />
           </UiCardContent>

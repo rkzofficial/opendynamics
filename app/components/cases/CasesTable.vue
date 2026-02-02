@@ -13,14 +13,14 @@ import {
 interface Props {
   cases: Case[]
   basePath?: string
-  showModified?: boolean
+
   emptyTitle?: string
   emptyDescription?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   basePath: '/cases',
-  showModified: true,
+
   emptyTitle: 'No cases found',
   emptyDescription: '',
 })
@@ -37,7 +37,7 @@ function handleRowClick(caseId: string) {
     <table class="w-full min-w-[880px] table-fixed">
       <thead>
         <tr class="border-b bg-muted/50">
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[110px]">
+          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[130px]">
             <span class="flex items-center gap-1.5">
               <Hash class="h-3.5 w-3.5" />
               Ticket
@@ -61,13 +61,13 @@ function handleRowClick(caseId: string) {
               Priority
             </span>
           </th>
-          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[160px]">
+          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[120px]">
             <span class="flex items-center gap-1.5">
               <Calendar class="h-3.5 w-3.5" />
               Created
             </span>
           </th>
-          <th v-if="showModified" class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[160px]">
+          <th class="h-12 px-3 text-left align-middle font-medium text-muted-foreground w-[120px]">
             <span class="flex items-center gap-1.5">
               <Clock class="h-3.5 w-3.5" />
               Modified
@@ -121,13 +121,13 @@ function handleRowClick(caseId: string) {
             </div>
           </td>
           <td class="h-14 px-3 align-middle">
-            <span :title="formatCaseDate(c.createdon).tooltip" class="text-sm text-muted-foreground">
-              {{ formatCaseDate(c.createdon).text }}
+            <span :title="formatCaseDate(c.createdon, true).tooltip" class="text-sm text-muted-foreground">
+              {{ formatCaseDate(c.createdon, true).text }}
             </span>
           </td>
-          <td v-if="showModified" class="h-14 px-3 align-middle">
-            <span :title="formatCaseDate(c.modifiedon).tooltip" class="text-sm text-muted-foreground">
-              {{ formatCaseDate(c.modifiedon).text }}
+          <td class="h-14 px-3 align-middle">
+            <span :title="formatCaseDate(c.modifiedon, true).tooltip" class="text-sm text-muted-foreground">
+              {{ formatCaseDate(c.modifiedon, true).text }}
             </span>
           </td>
         </tr>

@@ -77,8 +77,8 @@ export function getPriorityIconColor(prioritycode: number): string {
 }
 
 // Date formatting
-export function formatCaseDate(dateString: string | null | undefined): { text: string; tooltip: string } {
-  return formatTimeAgo(dateString)
+export function formatCaseDate(dateString: string | null | undefined, dateOnly = false): { text: string; tooltip: string } {
+  return formatTimeAgo(dateString, dateOnly)
 }
 
 // Filter options
