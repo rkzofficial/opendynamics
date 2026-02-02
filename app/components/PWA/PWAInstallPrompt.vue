@@ -60,7 +60,7 @@ const canShowPrompt = computed(() => {
 
 <template>
   <!-- Install Prompt Card -->
-  <UiCard v-if="canShowPrompt" class="relative border-primary/20 bg-primary/5">
+  <UiCard v-if="canShowPrompt" class="relative border-primary/20 bg-background">
     <UiButton
       variant="ghost"
       size="icon"
