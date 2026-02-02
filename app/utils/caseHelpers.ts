@@ -41,6 +41,45 @@ export function getTimezoneName(code: number | undefined): string | null {
   return timezoneCodeMap[code] || `UTC Timezone (Code: ${code})`
 }
 
+// Windows timezone code to IANA timezone mapping
+export const timezoneCodeToIANA: Record<number, string> = {
+  0: 'Etc/GMT+12',
+  1: 'Etc/GMT+11',
+  2: 'Pacific/Honolulu',
+  4: 'America/Anchorage',
+  10: 'America/Los_Angeles',
+  15: 'America/Denver',
+  20: 'America/Chicago',
+  35: 'America/New_York',
+  45: 'America/Halifax',
+  65: 'Europe/London',
+  85: 'Europe/Berlin',
+  110: 'Africa/Cairo',
+  130: 'Europe/Moscow',
+  145: 'Asia/Dubai',
+  165: 'Asia/Karachi',
+  175: 'Asia/Kolkata',
+  185: 'Asia/Dhaka',
+  195: 'Asia/Bangkok',
+  205: 'Asia/Shanghai',
+  210: 'Asia/Singapore',
+  215: 'Asia/Taipei',
+  225: 'Australia/Perth',
+  230: 'Asia/Tokyo',
+  235: 'Asia/Tokyo',
+  245: 'Australia/Adelaide',
+  250: 'Australia/Sydney',
+  255: 'Australia/Hobart',
+  265: 'Pacific/Guadalcanal',
+  275: 'Pacific/Auckland',
+  290: 'Pacific/Tongatapu',
+}
+
+export function getTimezoneIANA(code: number | undefined): string | null {
+  if (code === undefined || code === null) return null
+  return timezoneCodeToIANA[code] || null
+}
+
 // SLA helpers
 export function getSLAStatusLabel(status: number): string {
   switch (status) {
