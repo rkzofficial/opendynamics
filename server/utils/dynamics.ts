@@ -83,6 +83,7 @@ export async function getDynamicsClient(event: H3Event, targetUserId?: string): 
         expiresAt,
         email: tokens.email,
         organizationId: tokens.organizationId,
+        dynamicsUserId: tokens.dynamicsUserId,
       })
     } catch {
       throw createError({
@@ -104,6 +105,7 @@ export async function getDynamicsClient(event: H3Event, targetUserId?: string): 
       expiresAt: newTokens.expiresAt,
       email: tokens.email,
       organizationId: tokens.organizationId,
+      dynamicsUserId: tokens.dynamicsUserId,
     })
   }
 

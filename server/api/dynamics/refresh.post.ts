@@ -63,6 +63,7 @@ export default defineEventHandler(async (event) => {
       expiresAt,
       email: tokens.email,
       organizationId: tokens.organizationId,
+      dynamicsUserId: tokens.dynamicsUserId,
     })
 
     return { success: true, expiresAt }

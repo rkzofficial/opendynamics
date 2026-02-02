@@ -1,5 +1,4 @@
 import { getDynamicsClient } from '../../../utils/dynamics'
-import { invalidateCacheByPrefix } from '../../../utils/cache'
 
 export default defineEventHandler(async (event) => {
   const { client } = await getDynamicsClient(event)
@@ -24,10 +23,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     await client.createAnnotation(caseId, noteText, subject)
-    
-    // Invalidate activities cache for this case
-    await invalidateCacheByPrefix(event, `cases:activities:${caseId}`)
-    
+
     return { success: true }
   } catch (error: unknown) {
     const err = error as Error
