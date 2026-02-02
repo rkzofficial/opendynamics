@@ -64,7 +64,8 @@ export async function getDynamicsClient(event: H3Event, targetUserId?: string): 
       const tokenResponse = await refreshAccessToken(
         dynamicsConfig.clientId,
         dynamicsConfig.tenantId,
-        refreshToken
+        refreshToken,
+        dynamicsConfig.orgUrl
       )
 
       accessToken = tokenResponse.access_token
@@ -91,11 +92,30 @@ export async function getDynamicsClient(event: H3Event, targetUserId?: string): 
     }
   }
 
-  const client = new DynamicsApiClient(dynamicsConfig, {
-    accessToken,
-    refreshToken,
-    expiresAt,
-  })
+  // Create token refresh callback to save updated tokens to database
+  const onTokenRefresh = async (newTokens: { accessToken: string; refreshToken: string; expiresAt: number }) => {
+    const encryptedAccessToken = encrypt(newTokens.accessToken, config.encryptionKey)
+    const encryptedRefreshToken = encrypt(newTokens.refreshToken, config.encryptionKey)
+
+    await convex.mutation(api.tokens.save, {
+      userId: effectiveUserId as Id<'users'>,
+      accessToken: encryptedAccessToken,
+      refreshToken: encryptedRefreshToken,
+      expiresAt: newTokens.expiresAt,
+      email: tokens.email,
+      organizationId: tokens.organizationId,
+    })
+  }
+
+  const client = new DynamicsApiClient(
+    dynamicsConfig,
+    {
+      accessToken,
+      refreshToken,
+      expiresAt,
+    },
+    onTokenRefresh
+  )
 
   return {
     client,

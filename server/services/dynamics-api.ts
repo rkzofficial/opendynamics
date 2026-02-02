@@ -12,19 +12,25 @@ export interface DynamicsApiConfig {
   tenantId: string
 }
 
+export type TokenSaveCallback = (tokens: DynamicsTokens) => Promise<void>
+
 export class DynamicsApiClient {
   private config: DynamicsApiConfig
   private tokens: DynamicsTokens
+  private onTokenRefresh?: TokenSaveCallback
+  private isRefreshing = false
+  private refreshPromise: Promise<void> | null = null
 
-  constructor(config: DynamicsApiConfig, tokens: DynamicsTokens) {
+  constructor(config: DynamicsApiConfig, tokens: DynamicsTokens, onTokenRefresh?: TokenSaveCallback) {
     this.config = config
     this.tokens = tokens
+    this.onTokenRefresh = onTokenRefresh
   }
 
-  private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async executeFetch<T>(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const url = `${this.config.orgUrl}/api/data/v9.2${endpoint}`
 
-    const response = await fetch(url, {
+    return fetch(url, {
       ...options,
       headers: {
         'Authorization': `Bearer ${this.tokens.accessToken}`,
@@ -36,6 +42,74 @@ export class DynamicsApiClient {
         ...options.headers,
       },
     })
+  }
+
+  private async refreshToken(): Promise<void> {
+    // If already refreshing, wait for that to complete
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise
+    }
+
+    this.isRefreshing = true
+    this.refreshPromise = this.doRefresh()
+
+    try {
+      await this.refreshPromise
+    } finally {
+      this.isRefreshing = false
+      this.refreshPromise = null
+    }
+  }
+
+  private async doRefresh(): Promise<void> {
+    try {
+      const tokenResponse = await refreshAccessToken(
+        this.config.clientId,
+        this.config.tenantId,
+        this.tokens.refreshToken,
+        this.config.orgUrl
+      )
+
+      this.tokens = {
+        accessToken: tokenResponse.access_token,
+        refreshToken: tokenResponse.refresh_token,
+        expiresAt: Date.now() + tokenResponse.expires_in * 1000,
+      }
+
+      // Save tokens via callback if provided
+      if (this.onTokenRefresh) {
+        await this.onTokenRefresh(this.tokens)
+      }
+    } catch (error) {
+      throw new Error('Token refresh failed: ' + (error instanceof Error ? error.message : String(error)))
+    }
+  }
+
+  private async fetch<T>(endpoint: string, options: RequestInit = {}, retryCount = 0): Promise<T> {
+    const response = await this.executeFetch(endpoint, options)
+
+    // Handle 401 Unauthorized - attempt token refresh and retry
+    if (response.status === 401) {
+      if (retryCount > 0) {
+        // Already tried refreshing, don't retry again
+        const errorText = await response.text()
+        throw new Error(`Dynamics API error: ${response.status} - Token refresh failed or token still invalid`)
+      }
+
+      // No refresh callback configured, can't refresh
+      if (!this.onTokenRefresh) {
+        const errorText = await response.text()
+        throw new Error(`Dynamics API error: ${response.status} - ${errorText}`)
+      }
+
+      try {
+        await this.refreshToken()
+        // Retry the request with new token
+        return this.fetch(endpoint, options, retryCount + 1)
+      } catch {
+        throw new Error(`Dynamics API error: 401 - Session expired. Please reconnect to Dynamics.`)
+      }
+    }
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -323,7 +397,8 @@ export async function pollDeviceCodeToken(
 export async function refreshAccessToken(
   clientId: string,
   tenantId: string,
-  refreshToken: string
+  refreshToken: string,
+  orgUrl: string
 ): Promise<{
   access_token: string
   refresh_token: string
@@ -338,7 +413,7 @@ export async function refreshAccessToken(
       client_id: clientId,
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      scope: 'https://admin.services.crm.dynamics.com/.default offline_access',
+      scope: `${orgUrl}/user_impersonation offline_access`,
     }),
   })
 

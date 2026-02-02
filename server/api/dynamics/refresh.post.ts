@@ -44,7 +44,8 @@ export default defineEventHandler(async (event) => {
     const tokenResponse = await refreshAccessToken(
       dynamicsConfig.clientId,
       dynamicsConfig.tenantId,
-      refreshToken
+      refreshToken,
+      dynamicsConfig.orgUrl
     )
 
     // Calculate expiration
