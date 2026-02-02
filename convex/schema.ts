@@ -45,4 +45,17 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // Case Shares (public shareable links)
+  caseShares: defineTable({
+    shareToken: v.string(),
+    caseId: v.string(),
+    userId: v.id("users"),
+    createdAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    isRevoked: v.boolean(),
+    viewCount: v.number(),
+  })
+    .index("by_token", ["shareToken"])
+    .index("by_case_user", ["caseId", "userId"]),
 });

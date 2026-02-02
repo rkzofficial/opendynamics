@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as caseShares from "../caseShares.js";
 import type * as seedAdmin from "../seedAdmin.js";
 import type * as settings from "../settings.js";
 import type * as tokens from "../tokens.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  caseShares: typeof caseShares;
   seedAdmin: typeof seedAdmin;
   settings: typeof settings;
   tokens: typeof tokens;

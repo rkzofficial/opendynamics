@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User } from 'lucide-vue-next'
+import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User, Share2 } from 'lucide-vue-next'
 import type { Case, ActivitiesResponse, CaseAttachment } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
 import {
@@ -40,6 +40,7 @@ interface Props {
   customerUpdateCountdown?: string
   adminUserInfo?: { name: string }
   error?: string
+  showShareButton?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -53,6 +54,7 @@ const props = withDefaults(defineProps<Props>(), {
   isLoadingPreview: false,
   isCompareOpen: false,
   compareItems: () => [],
+  showShareButton: false,
 })
 
 const emit = defineEmits<{
@@ -64,6 +66,7 @@ const emit = defineEmits<{
   compareAttachments: [indices: number[]]
   closeCompare: []
   removeFromCompare: [index: number]
+  share: []
 }>()
 
 const descriptionCopied = ref(false)
@@ -133,11 +136,16 @@ const timelineItems = computed<TimelineItem[]>(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Back button -->
-    <div class="flex items-center gap-4">
+    <!-- Back button and actions -->
+    <div class="flex items-center justify-between">
       <UiButton variant="ghost" @click="emit('back')">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Cases
+      </UiButton>
+
+      <UiButton v-if="showShareButton && props.case" variant="outline" size="sm" @click="emit('share')">
+        <Share2 class="mr-2 h-4 w-4" />
+        Share
       </UiButton>
     </div>
 

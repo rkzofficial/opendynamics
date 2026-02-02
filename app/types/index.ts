@@ -262,3 +262,15 @@ export interface CaseFilters {
   orderBy?: string
   orderDirection?: 'asc' | 'desc'
 }
+
+// Case share types
+export interface CaseShare {
+  _id: string
+  shareToken: string
+  caseId: string
+  userId: string
+  createdAt: number
+  expiresAt?: number
+  isRevoked: boolean
+  viewCount: number
+}
