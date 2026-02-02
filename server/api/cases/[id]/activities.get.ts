@@ -1,6 +1,8 @@
 import { getDynamicsClient } from '../../../utils/dynamics'
 
 export default defineEventHandler(async (event) => {
+  const query = getQuery(event)
+  const userId = query.userId as string | undefined
   const caseId = getRouterParam(event, 'id')
 
   if (!caseId) {
@@ -11,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Fetch from Dynamics
-  const { client } = await getDynamicsClient(event)
+  const { client } = await getDynamicsClient(event, userId)
 
   try {
     const [activitiesResponse, annotationsResponse] = await Promise.all([
