@@ -58,11 +58,11 @@ export function formatTimeAgo(dateString: string | null | undefined, dateOnly = 
   }
 
   if (diffHours >= 1) {
-    return { text: `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`, tooltip }
+    return { text: `${diffHours}h ago`, tooltip }
   }
 
   if (diffMins >= 1) {
-    return { text: `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`, tooltip }
+    return { text: `${diffMins}m ago`, tooltip }
   }
 
   return { text: 'Just now', tooltip }

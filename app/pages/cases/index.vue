@@ -69,8 +69,19 @@ watch(
       </div>
     </div>
 
+    <!-- Loading state while checking connection -->
+    <template v-if="connectionStatus === null || (connectionStatus?.connected && isLoading)">
+      <UiCard>
+        <UiCardContent class="pt-6 space-y-4">
+          <UiSkeleton class="h-10 w-full" />
+          <UiSkeleton class="h-10 w-full" />
+          <UiSkeleton class="h-64 w-full" />
+        </UiCardContent>
+      </UiCard>
+    </template>
+
     <!-- Not connected state -->
-    <UiCard v-if="!connectionStatus?.connected" class="border-dashed">
+    <UiCard v-else-if="connectionStatus?.connected === false" class="border-dashed">
       <UiCardContent class="flex flex-col items-center justify-center py-12 text-center">
         <div class="rounded-full bg-muted p-3 mb-4">
           <Link2 class="h-8 w-8 text-muted-foreground" />
