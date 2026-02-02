@@ -73,14 +73,17 @@ export function buildCaseFilter(filters: {
 
   if (filters.priority) {
     switch (filters.priority) {
-      case 'high':
+      case 'critical':
         conditions.push('prioritycode eq 1')
         break
-      case 'normal':
+      case 'urgent':
         conditions.push('prioritycode eq 2')
         break
-      case 'low':
+      case 'important':
         conditions.push('prioritycode eq 3')
+        break
+      case 'minor':
+        conditions.push('prioritycode eq 4')
         break
     }
   }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, RefreshCw, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, CircleDot, Flag, X } from 'lucide-vue-next'
+import { Search, RefreshCw, AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, CircleDot, Flag, X } from 'lucide-vue-next'
 import { useDebounceFn } from '@vueuse/core'
 import type { Case } from '~/types'
 
@@ -53,9 +53,10 @@ const statusOptions = [
 
 const priorityOptions = [
   { value: 'all', label: 'All Priorities', icon: Flag },
-  { value: 'high', label: 'High', icon: ArrowUp },
-  { value: 'normal', label: 'Normal', icon: Minus },
-  { value: 'low', label: 'Low', icon: ArrowDown },
+  { value: 'critical', label: 'P1 - Critical', icon: AlertOctagon },
+  { value: 'urgent', label: 'P2 - Urgent', icon: AlertTriangle },
+  { value: 'important', label: 'P3 - Important', icon: AlertCircle },
+  { value: 'minor', label: 'P4 - Minor', icon: Circle },
 ]
 
 // Debounced search function

@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { Hash, FileText, CircleDot, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-vue-next'
 import type { Case } from '~/types'
-import type { Component } from 'vue'
 import {
   getStatusLabel,
-  getStatusDotColor,
+  getStatusBadgeClass,
   getPriorityLabel,
-  getPriorityIcon,
-  getPriorityIconColor,
+  getPriorityBadgeClass,
   formatCaseDate,
 } from '~/utils/caseHelpers'
 
@@ -47,7 +45,7 @@ const columns: ColumnConfig[] = [
   { key: 'ticketnumber', label: 'Ticket', icon: Hash, width: 'w-[130px]' },
   { key: 'title', label: 'Title', icon: FileText, width: '' },
   { key: 'statecode', label: 'Status', icon: CircleDot, width: 'w-[100px]' },
-  { key: 'prioritycode', label: 'Priority', icon: Flag, width: 'w-[100px]' },
+  { key: 'prioritycode', label: 'Priority', icon: Flag, width: 'w-[150px]' },
   { key: 'createdon', label: 'Created', icon: Calendar, width: 'w-[120px]' },
   { key: 'modifiedon', label: 'Modified', icon: Clock, width: 'w-[120px]' },
 ]
@@ -121,27 +119,24 @@ function getSortIcon(columnKey: string): Component {
             </UiTooltip>
           </td>
           <td class="h-14 px-3 align-middle">
-            <div class="flex items-center gap-1.5">
-              <span
-                :class="[
-                  'h-2 w-2 rounded-full flex-shrink-0',
-                  getStatusDotColor(c.statecode)
-                ]"
-              />
-              <span class="text-sm">{{ getStatusLabel(c.statecode) }}</span>
-            </div>
+            <span
+              :class="[
+                'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                getStatusBadgeClass(c.statecode)
+              ]"
+            >
+              {{ getStatusLabel(c.statecode) }}
+            </span>
           </td>
           <td class="h-14 px-3 align-middle">
-            <div class="flex items-center gap-1.5">
-              <component
-                :is="getPriorityIcon(c.prioritycode)"
-                :class="[
-                  'h-4 w-4 flex-shrink-0',
-                  getPriorityIconColor(c.prioritycode)
-                ]"
-              />
-              <span class="text-sm">{{ getPriorityLabel(c.prioritycode) }}</span>
-            </div>
+            <span
+              :class="[
+                'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                getPriorityBadgeClass(c.prioritycode)
+              ]"
+            >
+              {{ getPriorityLabel(c.prioritycode) }}
+            </span>
           </td>
           <td class="h-14 px-3 align-middle">
             <span :title="formatCaseDate(c.createdon, true).tooltip" class="text-sm text-muted-foreground">

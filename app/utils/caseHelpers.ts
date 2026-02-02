@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Mail, Phone, FileText, MessageSquare } from 'lucide-vue-next'
+import { AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, Mail, Phone, FileText, MessageSquare } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import { formatTimeAgo } from './timeAgo'
 
@@ -196,40 +196,64 @@ export function getStatusDotColor(statecode: number): string {
   }
 }
 
+export function getStatusBadgeClass(statecode: number): string {
+  switch (statecode) {
+    case 0: return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+    case 1: return 'bg-green-500/10 text-green-500 border-green-500/20'
+    case 2: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+    default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+  }
+}
+
 // Priority helpers
+// P1 = Critical, P2 = Urgent, P3 = Important, P4 = Minor
 export function getPriorityLabel(prioritycode: number): string {
   switch (prioritycode) {
-    case 1: return 'High'
-    case 2: return 'Normal'
-    case 3: return 'Low'
+    case 1: return 'P1 - Critical'
+    case 2: return 'P2 - Urgent'
+    case 3: return 'P3 - Important'
+    case 4: return 'P4 - Minor'
     default: return 'Unknown'
   }
 }
 
-export function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | 'secondary' {
+export function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | 'secondary' | 'outline' {
   switch (prioritycode) {
     case 1: return 'destructive'
     case 2: return 'warning'
     case 3: return 'secondary'
-    default: return 'secondary'
+    case 4: return 'outline'
+    default: return 'outline'
   }
 }
 
 export function getPriorityIcon(prioritycode: number): Component {
   switch (prioritycode) {
-    case 1: return ArrowUp
-    case 2: return Minus
-    case 3: return ArrowDown
-    default: return Minus
+    case 1: return AlertOctagon
+    case 2: return AlertTriangle
+    case 3: return AlertCircle
+    case 4: return Circle
+    default: return Circle
   }
 }
 
 export function getPriorityIconColor(prioritycode: number): string {
   switch (prioritycode) {
-    case 1: return 'text-red-500'
-    case 2: return 'text-amber-500'
-    case 3: return 'text-gray-400'
-    default: return 'text-gray-400'
+    case 1: return 'text-red-600'
+    case 2: return 'text-amber-600'
+    case 3: return 'text-blue-600'
+    case 4: return 'text-gray-500'
+    default: return 'text-gray-500'
+  }
+}
+
+export function getPriorityBadgeClass(prioritycode: number): string {
+  switch (prioritycode) {
+    case 1: return 'bg-red-500/10 text-red-500 border-red-500/20'
+    case 2: return 'bg-orange-500/10 text-orange-500 border-orange-500/20'
+    case 3: return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+    case 4: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+    default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
   }
 }
 
@@ -248,9 +272,10 @@ export const statusFilterOptions = [
 
 export const priorityFilterOptions = [
   { value: 'all', label: 'All Priorities', icon: Flag },
-  { value: 'high', label: 'High', icon: ArrowUp },
-  { value: 'normal', label: 'Normal', icon: Minus },
-  { value: 'low', label: 'Low', icon: ArrowDown },
+  { value: 'critical', label: 'P1 - Critical', icon: AlertOctagon },
+  { value: 'urgent', label: 'P2 - Urgent', icon: AlertTriangle },
+  { value: 'important', label: 'P3 - Important', icon: AlertCircle },
+  { value: 'minor', label: 'P4 - Minor', icon: Circle },
 ]
 
 // Import icons for filter options (needed for circular imports)

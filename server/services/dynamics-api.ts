@@ -306,15 +306,17 @@ export class DynamicsApiClient {
       { status: 'Cancelled', count: cancelledResponse['@odata.count'] || 0 },
     ]
 
-    // Get cases by priority
-    const highResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 1${ownerFilter}&$count=true&$top=1`)
-    const normalResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 2${ownerFilter}&$count=true&$top=1`)
-    const lowResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 3${ownerFilter}&$count=true&$top=1`)
+    // Get cases by priority (P1=Critical, P2=Urgent, P3=Important, P4=Minor)
+    const criticalResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 1${ownerFilter}&$count=true&$top=1`)
+    const urgentResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 2${ownerFilter}&$count=true&$top=1`)
+    const importantResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 3${ownerFilter}&$count=true&$top=1`)
+    const minorResponse = await this.fetch<{ '@odata.count': number }>(`/incidents?$filter=prioritycode eq 4${ownerFilter}&$count=true&$top=1`)
 
     const casesByPriority = [
-      { priority: 'High', count: highResponse['@odata.count'] || 0 },
-      { priority: 'Normal', count: normalResponse['@odata.count'] || 0 },
-      { priority: 'Low', count: lowResponse['@odata.count'] || 0 },
+      { priority: 'P1 - Critical', count: criticalResponse['@odata.count'] || 0 },
+      { priority: 'P2 - Urgent', count: urgentResponse['@odata.count'] || 0 },
+      { priority: 'P3 - Important', count: importantResponse['@odata.count'] || 0 },
+      { priority: 'P4 - Minor', count: minorResponse['@odata.count'] || 0 },
     ]
 
     // Generate mock resolution time trend (would need actual data calculation)
