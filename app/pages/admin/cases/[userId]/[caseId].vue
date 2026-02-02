@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { onUnmounted } from 'vue'
-import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users, AlertCircle, CheckCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, CircleDot, Flag, Clock, Timer, User, Building, Shield, Info, AlertTriangle, FolderOpen } from 'lucide-vue-next'
+import { ArrowLeft, Send, Mail, Phone, FileText, MessageSquare, Calendar, Users, Hash, Clock, Timer, User, Building, Shield, Info, AlertTriangle, FolderOpen } from 'lucide-vue-next'
 import type { Activity, Annotation } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
-import { formatTimeAgo } from '~/utils/timeAgo'
+import {
+  getStatusLabel,
+  getStatusVariant,
+  getPriorityLabel,
+  getPriorityVariant,
+  getStatusIcon,
+  getPriorityIcon,
+  formatCaseDate,
+} from '~/utils/caseHelpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -219,63 +227,7 @@ async function handleSubmitReply() {
   }
 }
 
-function getStatusLabel(statecode: number) {
-  switch (statecode) {
-    case 0: return 'Active'
-    case 1: return 'Resolved'
-    case 2: return 'Cancelled'
-    default: return 'Unknown'
-  }
-}
 
-function getStatusVariant(statecode: number): 'default' | 'success' | 'secondary' {
-  switch (statecode) {
-    case 0: return 'default'
-    case 1: return 'success'
-    case 2: return 'secondary'
-    default: return 'secondary'
-  }
-}
-
-function getPriorityLabel(prioritycode: number) {
-  switch (prioritycode) {
-    case 1: return 'High'
-    case 2: return 'Normal'
-    case 3: return 'Low'
-    default: return 'Unknown'
-  }
-}
-
-function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | 'secondary' {
-  switch (prioritycode) {
-    case 1: return 'destructive'
-    case 2: return 'warning'
-    case 3: return 'secondary'
-    default: return 'secondary'
-  }
-}
-
-function getStatusIcon(statecode: number) {
-  switch (statecode) {
-    case 0: return AlertCircle
-    case 1: return CheckCircle
-    case 2: return XCircle
-    default: return AlertCircle
-  }
-}
-
-function getPriorityIcon(prioritycode: number) {
-  switch (prioritycode) {
-    case 1: return ArrowUp
-    case 2: return Minus
-    case 3: return ArrowDown
-    default: return Minus
-  }
-}
-
-function formatDate(dateString: string | null | undefined) {
-  return formatTimeAgo(dateString)
-}
 
 function getActivityIcon(activityType: string) {
   switch (activityType) {
@@ -490,8 +442,8 @@ function goBack() {
                           : ((item.data as Activity).subject || (item.data as Activity).activitytypecode)
                         }}
                       </span>
-                      <span :title="formatDate(item.date).tooltip" class="text-xs text-muted-foreground">
-                        {{ formatDate(item.date).text }}
+                      <span :title="formatCaseDate(item.date).tooltip" class="text-xs text-muted-foreground">
+                        {{ formatCaseDate(item.date).text }}
                       </span>
                     </div>
                     <div
@@ -556,11 +508,11 @@ function goBack() {
                   <Clock class="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <div class="min-w-0 flex-1">
                     <p class="text-xs text-muted-foreground">Created</p>
-                    <p :title="formatDate(currentCase.createdon).tooltip" class="text-sm">{{ formatDate(currentCase.createdon).text }}</p>
+                    <p :title="formatCaseDate(currentCase.createdon).tooltip" class="text-sm">{{ formatCaseDate(currentCase.createdon).text }}</p>
                   </div>
                   <div class="min-w-0">
                     <p class="text-xs text-muted-foreground">Modified</p>
-                    <p :title="formatDate(currentCase.modifiedon).tooltip" class="text-sm">{{ formatDate(currentCase.modifiedon).text }}</p>
+                    <p :title="formatCaseDate(currentCase.modifiedon).tooltip" class="text-sm">{{ formatCaseDate(currentCase.modifiedon).text }}</p>
                   </div>
                 </div>
               </div>
@@ -574,11 +526,11 @@ function goBack() {
                     <p class="text-xs text-muted-foreground">First Response</p>
                     <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
                     <template v-else>
-                      <p v-if="getFirstResponseSLA()?.succeeded" :title="formatDate(getFirstResponseSLA()?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
-                        Completed {{ formatDate(getFirstResponseSLA()?.succeeded).text }}
+                      <p v-if="getFirstResponseSLA()?.succeeded" :title="formatCaseDate(getFirstResponseSLA()?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
+                        Completed {{ formatCaseDate(getFirstResponseSLA()?.succeeded).text }}
                       </p>
                       <p v-else-if="getFirstResponseSLA()?.deadline" class="text-sm font-mono font-medium">
-                        {{ firstResponseCountdown || formatDate(getFirstResponseSLA()?.deadline).text }}
+                        {{ firstResponseCountdown || formatCaseDate(getFirstResponseSLA()?.deadline).text }}
                       </p>
                       <p v-else class="text-sm text-muted-foreground">Not set</p>
                     </template>
@@ -590,11 +542,11 @@ function goBack() {
                     <p class="text-xs text-muted-foreground">Customer Update</p>
                     <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
                     <template v-else>
-                      <p v-if="getCustomerUpdateSLA()?.succeeded" :title="formatDate(getCustomerUpdateSLA()?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
-                        Completed {{ formatDate(getCustomerUpdateSLA()?.succeeded).text }}
+                      <p v-if="getCustomerUpdateSLA()?.succeeded" :title="formatCaseDate(getCustomerUpdateSLA()?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
+                        Completed {{ formatCaseDate(getCustomerUpdateSLA()?.succeeded).text }}
                       </p>
                       <p v-else-if="getCustomerUpdateSLA()?.deadline" class="text-sm font-mono font-medium">
-                        {{ customerUpdateCountdown || formatDate(getCustomerUpdateSLA()?.deadline).text }}
+                        {{ customerUpdateCountdown || formatCaseDate(getCustomerUpdateSLA()?.deadline).text }}
                       </p>
                       <p v-else class="text-sm text-muted-foreground">Not set</p>
                     </template>

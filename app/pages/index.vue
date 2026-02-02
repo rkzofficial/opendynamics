@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Link2, Users, ArrowLeft, AlertCircle, XCircle, ArrowUp, Minus, ArrowDown, Hash, FileText, CircleDot, Flag, Calendar } from 'lucide-vue-next'
+import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Link2, Users, ArrowLeft, AlertCircle } from 'lucide-vue-next'
 import type { DashboardStats, DashboardKPIs, Case } from '~/types'
-import { formatTimeAgo } from '~/utils/timeAgo'
 
 const { connectionStatus } = useDynamics()
 const { isAdmin } = useAuth()
@@ -126,63 +125,7 @@ const statCards = computed(() => [
   },
 ])
 
-function getStatusLabel(statecode: number) {
-  switch (statecode) {
-    case 0: return 'Active'
-    case 1: return 'Resolved'
-    case 2: return 'Cancelled'
-    default: return 'Unknown'
-  }
-}
 
-function getStatusIcon(statecode: number) {
-  switch (statecode) {
-    case 0: return AlertCircle
-    case 1: return CheckCircle
-    case 2: return XCircle
-    default: return AlertCircle
-  }
-}
-
-function getPriorityIcon(prioritycode: number) {
-  switch (prioritycode) {
-    case 1: return ArrowUp
-    case 2: return Minus
-    case 3: return ArrowDown
-    default: return Minus
-  }
-}
-
-function getStatusVariant(statecode: number): 'default' | 'success' | 'secondary' {
-  switch (statecode) {
-    case 0: return 'default'
-    case 1: return 'success'
-    case 2: return 'secondary'
-    default: return 'secondary'
-  }
-}
-
-function getPriorityLabel(prioritycode: number) {
-  switch (prioritycode) {
-    case 1: return 'High'
-    case 2: return 'Normal'
-    case 3: return 'Low'
-    default: return 'Unknown'
-  }
-}
-
-function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | 'secondary' {
-  switch (prioritycode) {
-    case 1: return 'destructive'
-    case 2: return 'warning'
-    case 3: return 'secondary'
-    default: return 'secondary'
-  }
-}
-
-function formatDate(dateString: string | null | undefined) {
-  return formatTimeAgo(dateString)
-}
 </script>
 
 <template>
@@ -345,63 +288,29 @@ function formatDate(dateString: string | null | undefined) {
       </div>
 
       <!-- Recent Cases -->
-      <UiCard v-if="recentCases.length > 0 || !isLoading">
-        <UiCardHeader>
-          <UiCardTitle class="flex items-center gap-2">
-            <TrendingUp class="h-5 w-5" />
-            Recent Cases
-          </UiCardTitle>
-          <UiCardDescription>
+      <div v-if="recentCases.length > 0 || !isLoading" class="space-y-4">
+        <div>
+          <h2 class="text-lg font-semibold tracking-tight">Recent Cases</h2>
+          <p class="text-sm text-muted-foreground">
             <template v-if="isAdmin()">
               Latest 10 cases from the selected user's Dynamics CRM
             </template>
             <template v-else>
               Latest 10 cases from your Dynamics CRM
             </template>
-          </UiCardDescription>
-        </UiCardHeader>
-        <UiCardContent>
-          <UiTable v-if="recentCases.length > 0">
-            <UiTableHeader>
-              <UiTableRow>
-                <UiTableHead><span class="flex items-center gap-1.5"><Hash class="h-3.5 w-3.5 text-muted-foreground" />Ticket #</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><FileText class="h-3.5 w-3.5 text-muted-foreground" />Title</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><CircleDot class="h-3.5 w-3.5 text-muted-foreground" />Status</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><Flag class="h-3.5 w-3.5 text-muted-foreground" />Priority</span></UiTableHead>
-                <UiTableHead><span class="flex items-center gap-1.5"><Calendar class="h-3.5 w-3.5 text-muted-foreground" />Created</span></UiTableHead>
-              </UiTableRow>
-            </UiTableHeader>
-            <UiTableBody>
-              <UiTableRow v-for="c in recentCases" :key="c.incidentid">
-                <UiTableCell class="font-medium">
-                  <NuxtLink :to="isAdmin() ? `/admin/cases/${selectedUserId}/${c.incidentid}` : `/cases/${c.incidentid}`" class="hover:underline text-primary">
-                    {{ c.ticketnumber }}
-                  </NuxtLink>
-                </UiTableCell>
-                <UiTableCell class="max-w-[300px] truncate">{{ c.title }}</UiTableCell>
-                <UiTableCell>
-                  <UiBadge :variant="getStatusVariant(c.statecode)" class="gap-1">
-                    <component :is="getStatusIcon(c.statecode)" class="h-3 w-3" />
-                    {{ getStatusLabel(c.statecode) }}
-                  </UiBadge>
-                </UiTableCell>
-                <UiTableCell>
-                  <UiBadge :variant="getPriorityVariant(c.prioritycode)" class="gap-1">
-                    <component :is="getPriorityIcon(c.prioritycode)" class="h-3 w-3" />
-                    {{ getPriorityLabel(c.prioritycode) }}
-                  </UiBadge>
-                </UiTableCell>
-                <UiTableCell :title="formatDate(c.createdon).tooltip">{{ formatDate(c.createdon).text }}</UiTableCell>
-              </UiTableRow>
-            </UiTableBody>
-          </UiTable>
-
-          <div v-else class="text-center py-8 text-muted-foreground">
-            <FolderOpen class="mx-auto h-12 w-12 mb-4 opacity-50" />
-            <p>No cases found</p>
-          </div>
-        </UiCardContent>
-      </UiCard>
+          </p>
+        </div>
+        <UiCard class="overflow-hidden">
+          <UiCardContent class="p-0 overflow-x-auto">
+            <CasesTable
+              :cases="recentCases"
+              :base-path="isAdmin() ? `/admin/cases/${selectedUserId}` : '/cases'"
+              :show-modified="false"
+              empty-title="No cases found"
+            />
+          </UiCardContent>
+        </UiCard>
+      </div>
     </template>
   </div>
 </template>
