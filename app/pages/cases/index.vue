@@ -165,10 +165,7 @@ function handleClearFilters() {
           <!-- Status Filter -->
           <UiSelect v-model="statusFilter">
             <UiSelectTrigger class="h-9 w-auto min-w-[130px] bg-background">
-              <div class="flex items-center gap-2">
-                <CircleDot class="h-3.5 w-3.5 text-muted-foreground" />
-                <UiSelectValue placeholder="Status" />
-              </div>
+              <UiSelectValue placeholder="Status" />
             </UiSelectTrigger>
             <UiSelectContent>
               <UiSelectItem
@@ -187,10 +184,7 @@ function handleClearFilters() {
           <!-- Priority Filter -->
           <UiSelect v-model="priorityFilter">
             <UiSelectTrigger class="h-9 w-auto min-w-[130px] bg-background">
-              <div class="flex items-center gap-2">
-                <Flag class="h-3.5 w-3.5 text-muted-foreground" />
-                <UiSelectValue placeholder="Priority" />
-              </div>
+              <UiSelectValue placeholder="Priority" />
             </UiSelectTrigger>
             <UiSelectContent>
               <UiSelectItem
