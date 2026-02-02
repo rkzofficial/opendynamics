@@ -8,6 +8,7 @@ const CACHE_MAX_AGE = 300 // 5 minutes in seconds
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
+  console.log('env', JSON.stringify(process.env, null, 2))
 
   // Generate cache key with hashed query params (avoids invalid filesystem chars)
   const effectiveUserId = getEffectiveUserIdFromEvent(event)
