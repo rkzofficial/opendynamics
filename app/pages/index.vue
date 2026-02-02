@@ -216,7 +216,7 @@ const statCards = computed(() => [
     </template>
 
     <!-- Regular User Not Connected State -->
-    <UiCard v-else-if="!connectionStatus?.connected" class="border-dashed">
+    <UiCard v-else-if="connectionStatus?.connected === false" class="border-dashed">
       <UiCardContent class="flex flex-col items-center justify-center py-12 text-center">
         <div class="rounded-full bg-muted p-3 mb-4">
           <Link2 class="h-8 w-8 text-muted-foreground" />
@@ -234,8 +234,8 @@ const statCards = computed(() => [
       </UiCardContent>
     </UiCard>
 
-    <!-- Loading state -->
-    <div v-if="isLoading && (isAdmin() ? selectedUserId : connectionStatus?.connected)" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <!-- Loading state (show skeleton while checking connection or loading data) -->
+    <div v-if="(isAdmin() && selectedUserId && isLoading) || (!isAdmin() && connectionStatus?.connected !== false && (connectionStatus === null || isLoading))" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <UiCard v-for="i in 4" :key="i">
         <UiCardContent class="pt-6">
           <UiSkeleton class="h-4 w-24 mb-2" />

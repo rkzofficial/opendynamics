@@ -3,7 +3,7 @@ import { Save, Link2, Unlink, AlertCircle, CheckCircle, Copy, Shield, User } fro
 import type { OIDCConfig, DynamicsConfig } from '~/types'
 
 const { user, isAdmin } = useAuth()
-const { connectionStatus, fetchConnectionStatus, startDeviceCodeFlow, pollForToken, disconnect, cancelConnect, deviceCode, isConnecting } = useDynamics()
+const { connectionStatus, fetchConnectionStatus, startDeviceCodeFlow, pollForToken, disconnect, cancelConnect, deviceCode, isConnecting, isLoading: connectionLoading } = useDynamics()
 
 // OIDC Config
 const oidcConfig = reactive<OIDCConfig>({
@@ -344,45 +344,60 @@ onUnmounted(() => {
 
         <!-- Connection Status -->
         <div class="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div class="flex items-center gap-4">
-            <div
-              :class="[
-                'flex h-12 w-12 items-center justify-center rounded-full',
-                connectionStatus?.connected ? 'bg-green-100' : 'bg-background'
-              ]"
-            >
-              <Link2
-                :class="[
-                  'h-6 w-6',
-                  connectionStatus?.connected ? 'text-green-600' : 'text-muted-foreground'
-                ]"
-              />
+          <!-- Loading State -->
+          <template v-if="connectionLoading">
+            <div class="flex items-center gap-4">
+              <UiSkeleton class="h-12 w-12 rounded-full" />
+              <div class="space-y-2">
+                <UiSkeleton class="h-5 w-24" />
+                <UiSkeleton class="h-4 w-32" />
+              </div>
             </div>
-            <div>
-              <p class="font-medium">
-                {{ connectionStatus?.connected ? 'Connected' : 'Not Connected' }}
-              </p>
-              <p v-if="connectionStatus?.email" class="text-sm text-muted-foreground">
-                {{ connectionStatus.email }}
-              </p>
-            </div>
-          </div>
+            <UiSkeleton class="h-10 w-28" />
+          </template>
 
-          <UiButton
-            v-if="connectionStatus?.connected"
-            variant="outline"
-            @click="handleDisconnect"
-          >
-            <Unlink class="mr-2 h-4 w-4" />
-            Disconnect
-          </UiButton>
-          <UiButton
-            v-else-if="!isConnecting"
-            @click="handleConnect"
-          >
-            <Link2 class="mr-2 h-4 w-4" />
-            Connect
-          </UiButton>
+          <!-- Loaded State -->
+          <template v-else>
+            <div class="flex items-center gap-4">
+              <div
+                :class="[
+                  'flex h-12 w-12 items-center justify-center rounded-full',
+                  connectionStatus?.connected ? 'bg-green-100' : 'bg-background'
+                ]"
+              >
+                <Link2
+                  :class="[
+                    'h-6 w-6',
+                    connectionStatus?.connected ? 'text-green-600' : 'text-muted-foreground'
+                  ]"
+                />
+              </div>
+              <div>
+                <p class="font-medium">
+                  {{ connectionStatus?.connected ? 'Connected' : 'Not Connected' }}
+                </p>
+                <p v-if="connectionStatus?.email" class="text-sm text-muted-foreground">
+                  {{ connectionStatus.email }}
+                </p>
+              </div>
+            </div>
+
+            <UiButton
+              v-if="connectionStatus?.connected"
+              variant="outline"
+              @click="handleDisconnect"
+            >
+              <Unlink class="mr-2 h-4 w-4" />
+              Disconnect
+            </UiButton>
+            <UiButton
+              v-else-if="!isConnecting"
+              @click="handleConnect"
+            >
+              <Link2 class="mr-2 h-4 w-4" />
+              Connect
+            </UiButton>
+          </template>
         </div>
 
         <!-- Device Code Dialog -->
