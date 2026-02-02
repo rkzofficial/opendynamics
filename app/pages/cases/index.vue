@@ -29,19 +29,20 @@ const {
   setPageSize,
 } = useCases()
 
-// Fetch status reason options when connected
+// Fetch filter options when connected
 watch(connectionStatus, (status) => {
   if (status?.connected) {
     fetchStatusReasonOptions()
   }
 }, { immediate: true })
 
-function handleFilterChange(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+function handleFilterChange(filters: { search: string; status: string; statusReason: string; priority: string; dxPendingRelease: boolean; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   setFilters({
     search: filters.search,
     status: (filters.status === 'all' ? '' : filters.status) as '' | 'active' | 'resolved' | 'cancelled',
     statusReason: filters.statusReason === 'all' ? '' : filters.statusReason,
     priority: (filters.priority === 'all' ? '' : filters.priority) as '' | 'high' | 'normal' | 'low',
+    dxPendingRelease: filters.dxPendingRelease,
     orderBy: filters.orderBy,
     orderDirection: filters.orderDirection,
     skipToken: undefined,

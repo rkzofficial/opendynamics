@@ -82,6 +82,9 @@ export interface Case {
   ent_custworkhrsendtime?: number
   ent_threestrikepreference?: number
   'ent_threestrikepreference@OData.Community.Display.V1.FormattedValue'?: string
+  // Queue
+  _ent_queueid_value?: string
+  '_ent_queueid_value@OData.Community.Display.V1.FormattedValue'?: string
 }
 
 export interface ActivityAttachment {
@@ -238,6 +241,7 @@ export interface CaseFilters {
   status?: 'active' | 'resolved' | 'cancelled' | ''
   statusReason?: string // statuscode value as string
   priority?: 'high' | 'normal' | 'low' | ''
+  dxPendingRelease?: boolean
   search?: string
   dateFrom?: string
   dateTo?: string

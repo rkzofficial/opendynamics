@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, RefreshCw, AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, CircleDot, Flag, X, Timer } from 'lucide-vue-next'
+import { Search, RefreshCw, AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, CircleDot, Flag, X, Timer, Inbox } from 'lucide-vue-next'
 import { useDebounceFn } from '@vueuse/core'
 import type { Case, StatusReasonOption, CaseSLAInfo } from '~/types'
 import { getSLABadgeStatus } from '~/utils/caseHelpers'
@@ -24,6 +24,7 @@ interface Props {
   initialSortColumn?: string
   initialSortDirection?: 'asc' | 'desc'
   statusReasonOptions?: StatusReasonOption[]
+  initialDxPendingRelease?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -37,14 +38,15 @@ const props = withDefaults(defineProps<Props>(), {
   initialSortColumn: 'modifiedon',
   initialSortDirection: 'desc',
   statusReasonOptions: () => [],
+  initialDxPendingRelease: false,
   caseSLAData: () => ({}),
 })
 
 const emit = defineEmits<{
-  refresh: [filters: { search: string; status: string; statusReason: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
+  refresh: [filters: { search: string; status: string; statusReason: string; priority: string; dxPendingRelease: boolean; orderBy: string; orderDirection: 'asc' | 'desc' }]
   previous: []
   next: []
-  filterChange: [filters: { search: string; status: string; statusReason: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
+  filterChange: [filters: { search: string; status: string; statusReason: string; priority: string; dxPendingRelease: boolean; orderBy: string; orderDirection: 'asc' | 'desc' }]
   pageSizeChange: [size: number]
 }>()
 
@@ -52,6 +54,7 @@ const searchQuery = ref(props.initialSearch)
 const statusFilter = ref(props.initialStatus)
 const statusReasonFilter = ref(props.initialStatusReason)
 const priorityFilter = ref(props.initialPriority)
+const dxPendingReleaseFilter = ref(props.initialDxPendingRelease)
 const slaFilter = ref('all')
 const sortColumn = ref(props.initialSortColumn)
 const sortDirection = ref<'asc' | 'desc'>(props.initialSortDirection)
@@ -167,7 +170,7 @@ watch(searchQuery, () => {
 
 // Watch dropdowns for immediate filter application
 // immediate: true ensures initial filters are synced to parent on mount
-watch([statusFilter, statusReasonFilter, priorityFilter], () => {
+watch([statusFilter, statusReasonFilter, priorityFilter, dxPendingReleaseFilter], () => {
   emitFilterChange()
 }, { immediate: true })
 
@@ -193,6 +196,7 @@ function emitFilterChange() {
     status: statusFilter.value,
     statusReason: statusReasonFilter.value,
     priority: priorityFilter.value,
+    dxPendingRelease: dxPendingReleaseFilter.value,
     orderBy: sortColumn.value,
     orderDirection: sortDirection.value,
   })
@@ -209,6 +213,7 @@ function handleClearFilters() {
   statusFilter.value = 'all'
   statusReasonFilter.value = 'all'
   priorityFilter.value = 'all'
+  dxPendingReleaseFilter.value = false
   slaFilter.value = 'all'
   sortColumn.value = props.initialSortColumn
   sortDirection.value = props.initialSortDirection
@@ -221,6 +226,7 @@ function handleRefresh() {
     status: statusFilter.value,
     statusReason: statusReasonFilter.value,
     priority: priorityFilter.value,
+    dxPendingRelease: dxPendingReleaseFilter.value,
     orderBy: sortColumn.value,
     orderDirection: sortDirection.value,
   })
@@ -319,6 +325,19 @@ function handlePageSizeChange(size: number) {
             </UiSelectItem>
           </UiSelectContent>
         </UiSelect>
+
+        <!-- DX Pending Release Filter -->
+        <label class="flex items-center gap-2 h-9 px-3 rounded-md border bg-background cursor-pointer hover:bg-accent/50 transition-colors">
+          <input
+            v-model="dxPendingReleaseFilter"
+            type="checkbox"
+            class="h-4 w-4 rounded border-input accent-primary"
+          />
+          <span class="flex items-center gap-1.5 text-sm">
+            <Inbox class="h-3.5 w-3.5 text-muted-foreground" />
+            DX Pending Release
+          </span>
+        </label>
 
         <!-- SLA Filter - only shown when "In Progress" status reason is selected -->
         <UiSelect v-if="showSLAFilter" v-model="slaFilter">

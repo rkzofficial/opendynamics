@@ -136,7 +136,7 @@ export class DynamicsApiClient {
     const { top, ...restOptions } = queryOptions || {}
 
     const query = buildODataQuery({
-      select: ['incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode', 'createdon', 'modifiedon', '_customerid_value', '_ownerid_value'],
+      select: ['incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode', 'createdon', 'modifiedon', '_customerid_value', '_ownerid_value', '_ent_queueid_value'],
       ...restOptions,
       filter,
     })

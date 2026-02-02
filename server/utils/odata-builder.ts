@@ -47,10 +47,14 @@ export function buildODataQuery(options: ODataQueryOptions): string {
   return params.length > 0 ? `?${params.join('&')}` : ''
 }
 
+// Known queue GUIDs
+const DX_PENDING_RELEASE_QUEUE_ID = '7a65e553-911d-ed11-b83e-000d3a1f2265'
+
 export function buildCaseFilter(filters: {
   status?: string
   statusReason?: string
   priority?: string
+  dxPendingRelease?: boolean
   search?: string
   dateFrom?: string
   dateTo?: string
@@ -93,6 +97,10 @@ export function buildCaseFilter(filters: {
         conditions.push('prioritycode eq 4')
         break
     }
+  }
+
+  if (filters.dxPendingRelease) {
+    conditions.push(`_ent_queueid_value eq ${DX_PENDING_RELEASE_QUEUE_ID}`)
   }
 
   if (filters.search) {

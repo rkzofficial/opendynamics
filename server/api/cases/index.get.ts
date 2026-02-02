@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
   const status = query.status as string | undefined
   const statusReason = query.statusReason as string | undefined
   const priority = query.priority as string | undefined
+  const dxPendingRelease = query.dxPendingRelease === 'true'
   const search = query.search as string | undefined
   const dateFrom = query.dateFrom as string | undefined
   const dateTo = query.dateTo as string | undefined
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const orderBy = query.orderBy as string || 'createdon'
   const orderDirection = query.orderDirection as string || 'desc'
 
-  const filter = buildCaseFilter({ status, statusReason, priority, search, dateFrom, dateTo })
+  const filter = buildCaseFilter({ status, statusReason, priority, dxPendingRelease, search, dateFrom, dateTo })
 
   try {
     const response = await client.getCases({

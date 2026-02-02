@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Hash, FileText, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown, Info } from 'lucide-vue-next'
+import { Hash, FileText, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown, Info, Inbox } from 'lucide-vue-next'
 import type { Case, CaseSLAInfo } from '~/types'
 import {
   getStatusReasonLabel,
@@ -64,6 +64,7 @@ const columns: ColumnConfig[] = [
   { key: 'prioritycode', label: 'Priority', icon: Flag, width: 'w-[150px]' },
   { key: 'createdon', label: 'Created', icon: Calendar, width: 'w-[120px]' },
   { key: 'modifiedon', label: 'Modified', icon: Clock, width: 'w-[120px]' },
+  { key: '_ent_queueid_value', label: 'Queue', icon: Inbox, width: 'w-[160px]' },
 ]
 
 // Get status reason badge class - uses SLA colors for "In Progress" cases
@@ -110,7 +111,7 @@ function getCaseSLA(caseId: string) {
 
 <template>
   <div v-if="cases.length > 0" class="overflow-x-auto">
-    <table class="w-full min-w-[940px] table-fixed">
+    <table class="w-full min-w-[1100px] table-fixed">
       <thead>
         <tr class="border-b bg-muted/50">
           <th
@@ -188,6 +189,11 @@ function getCaseSLA(caseId: string) {
           <td class="h-14 px-3 align-middle">
             <span :title="formatCaseDate(c.modifiedon, true).tooltip" class="text-sm text-muted-foreground">
               {{ formatCaseDate(c.modifiedon, true).text }}
+            </span>
+          </td>
+          <td class="h-14 px-3 align-middle">
+            <span class="text-sm text-muted-foreground">
+              {{ c['_ent_queueid_value@OData.Community.Display.V1.FormattedValue'] || '—' }}
             </span>
           </td>
         </tr>

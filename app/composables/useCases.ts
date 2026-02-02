@@ -47,6 +47,7 @@ export function useCases() {
       if (mergedFilters.status) params.set('status', mergedFilters.status)
       if (mergedFilters.statusReason) params.set('statusReason', mergedFilters.statusReason)
       if (mergedFilters.priority) params.set('priority', mergedFilters.priority)
+      if (mergedFilters.dxPendingRelease) params.set('dxPendingRelease', 'true')
       if (mergedFilters.search) params.set('search', mergedFilters.search)
       if (mergedFilters.dateFrom) params.set('dateFrom', mergedFilters.dateFrom)
       if (mergedFilters.dateTo) params.set('dateTo', mergedFilters.dateTo)
