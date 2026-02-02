@@ -77,6 +77,18 @@ const customerCurrentTime = computed(() => {
     return '--:--'
   }
 })
+
+function formatDatePart(dateString: string | null | undefined): string {
+  if (!dateString) return '--'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function formatTimePart(dateString: string | null | undefined): string {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
 </script>
 
 <template>
@@ -91,82 +103,107 @@ const customerCurrentTime = computed(() => {
       </UiCardHeader>
       <UiCardContent class="space-y-4">
         <!-- Status & Priority -->
-        <div class="flex items-center gap-2 flex-wrap">
-          <UiBadge :variant="getStatusVariant(props.case.statecode)" class="gap-1">
-            <component :is="getStatusIcon(props.case.statecode)" class="h-3 w-3" />
+        <div class="flex items-center justify-center gap-2">
+          <UiBadge :variant="getStatusVariant(props.case.statecode)" class="gap-1.5 px-3 py-1">
+            <component :is="getStatusIcon(props.case.statecode)" class="h-3.5 w-3.5" />
             {{ getStatusLabel(props.case.statecode) }}
           </UiBadge>
-          <UiBadge :variant="getPriorityVariant(props.case.prioritycode)" class="gap-1">
-            <component :is="getPriorityIcon(props.case.prioritycode)" class="h-3 w-3" />
+          <UiBadge :variant="getPriorityVariant(props.case.prioritycode)" class="gap-1.5 px-3 py-1">
+            <component :is="getPriorityIcon(props.case.prioritycode)" class="h-3.5 w-3.5" />
             {{ getPriorityLabel(props.case.prioritycode) }}
           </UiBadge>
         </div>
 
-        <!-- Basic Info -->
-        <div class="space-y-3 rounded-md bg-muted/50 p-3">
-          <div class="flex items-center gap-3">
-            <Hash class="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <div class="min-w-0">
-              <p class="text-xs text-muted-foreground">Ticket Number</p>
-              <p class="text-sm font-medium">{{ props.case.ticketnumber }}</p>
+        <!-- Ticket Number -->
+        <div class="flex items-center gap-3 rounded-md border bg-background p-3">
+          <div class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-500/10">
+            <Hash class="h-4 w-4 text-slate-500" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs text-muted-foreground">Ticket Number</p>
+            <p class="text-sm font-medium font-mono">{{ props.case.ticketnumber }}</p>
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="grid grid-cols-2 gap-2">
+          <div class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
+            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/10">
+              <Clock class="h-3.5 w-3.5 text-emerald-500" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-[10px] text-muted-foreground leading-none">Created</p>
+              <p :title="formatCaseDate(props.case.createdon).tooltip" class="mt-0.5">
+                <span class="text-xs font-medium">{{ formatDatePart(props.case.createdon) }}</span>
+                <span class="text-[10px] text-muted-foreground ml-1">{{ formatTimePart(props.case.createdon) }}</span>
+              </p>
             </div>
           </div>
-          <div class="flex items-center gap-3">
-            <Clock class="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <div class="min-w-0 flex-1">
-              <p class="text-xs text-muted-foreground">Created</p>
-              <p :title="formatCaseDate(props.case.createdon).tooltip" class="text-sm">{{ formatCaseDate(props.case.createdon).text }}</p>
+          <div class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
+            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/10">
+              <Clock class="h-3.5 w-3.5 text-amber-500" />
             </div>
-            <div class="min-w-0">
-              <p class="text-xs text-muted-foreground">Modified</p>
-              <p :title="formatCaseDate(props.case.modifiedon).tooltip" class="text-sm">{{ formatCaseDate(props.case.modifiedon).text }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-[10px] text-muted-foreground leading-none">Modified</p>
+              <p :title="formatCaseDate(props.case.modifiedon).tooltip" class="mt-0.5">
+                <span class="text-xs font-medium">{{ formatDatePart(props.case.modifiedon) }}</span>
+                <span class="text-[10px] text-muted-foreground ml-1">{{ formatTimePart(props.case.modifiedon) }}</span>
+              </p>
             </div>
           </div>
         </div>
 
         <!-- SLA Section -->
-        <div class="space-y-3 rounded-md bg-muted/50 p-3">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">SLA Status</p>
-          <div class="flex items-start gap-3">
-            <Timer class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <div class="min-w-0 flex-1">
-              <p class="text-xs text-muted-foreground">First Response</p>
-              <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
-              <template v-else>
-                <p v-if="firstResponseSLA?.succeeded" :title="formatCaseDate(firstResponseSLA?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
-                  Completed {{ formatCaseDate(firstResponseSLA?.succeeded).text }}
-                </p>
-                <p v-else-if="firstResponseSLA?.deadline" class="text-sm font-mono font-medium">
-                  {{ firstResponseCountdown || formatCaseDate(firstResponseSLA?.deadline).text }}
-                </p>
-                <p v-else class="text-sm text-muted-foreground">Not set</p>
-              </template>
+        <div class="space-y-2">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide px-1">SLA Status</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
+              <div class="flex h-7 w-7 items-center justify-center rounded-full flex-shrink-0" :class="firstResponseSLA?.succeeded ? 'bg-green-500/10' : 'bg-rose-500/10'">
+                <Timer class="h-3.5 w-3.5" :class="firstResponseSLA?.succeeded ? 'text-green-500' : 'text-rose-500'" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] text-muted-foreground leading-none">First Response</p>
+                <div v-if="isLoadingSLAKPIs" class="text-xs text-muted-foreground mt-0.5">Loading...</div>
+                <template v-else>
+                  <p v-if="firstResponseSLA?.succeeded" :title="formatCaseDate(firstResponseSLA?.succeeded).tooltip" class="text-xs font-medium mt-0.5 text-green-600">
+                    Done
+                  </p>
+                  <p v-else-if="firstResponseSLA?.deadline" class="text-xs font-medium mt-0.5 font-mono">
+                    {{ firstResponseCountdown || formatCaseDate(firstResponseSLA?.deadline).text }}
+                  </p>
+                  <p v-else class="text-xs text-muted-foreground mt-0.5">Not set</p>
+                </template>
+              </div>
             </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <Clock class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <div class="min-w-0 flex-1">
-              <p class="text-xs text-muted-foreground">Customer Update</p>
-              <div v-if="isLoadingSLAKPIs" class="text-sm text-muted-foreground">Loading...</div>
-              <template v-else>
-                <p v-if="customerUpdateSLA?.succeeded" :title="formatCaseDate(customerUpdateSLA?.succeeded).tooltip" class="text-sm text-green-600 font-medium">
-                  Completed {{ formatCaseDate(customerUpdateSLA?.succeeded).text }}
-                </p>
-                <p v-else-if="customerUpdateSLA?.deadline" class="text-sm font-mono font-medium">
-                  {{ customerUpdateCountdown || formatCaseDate(customerUpdateSLA?.deadline).text }}
-                </p>
-                <p v-else class="text-sm text-muted-foreground">Not set</p>
-              </template>
+            <div class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
+              <div class="flex h-7 w-7 items-center justify-center rounded-full flex-shrink-0" :class="customerUpdateSLA?.succeeded ? 'bg-green-500/10' : 'bg-rose-500/10'">
+                <Clock class="h-3.5 w-3.5" :class="customerUpdateSLA?.succeeded ? 'text-green-500' : 'text-rose-500'" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] text-muted-foreground leading-none">Customer Update</p>
+                <div v-if="isLoadingSLAKPIs" class="text-xs text-muted-foreground mt-0.5">Loading...</div>
+                <template v-else>
+                  <p v-if="customerUpdateSLA?.succeeded" :title="formatCaseDate(customerUpdateSLA?.succeeded).tooltip" class="text-xs font-medium mt-0.5 text-green-600">
+                    Done
+                  </p>
+                  <p v-else-if="customerUpdateSLA?.deadline" class="text-xs font-medium mt-0.5 font-mono">
+                    {{ customerUpdateCountdown || formatCaseDate(customerUpdateSLA?.deadline).text }}
+                  </p>
+                  <p v-else class="text-xs text-muted-foreground mt-0.5">Not set</p>
+                </template>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Support Plan -->
-        <div class="flex items-center gap-3 rounded-md bg-muted/50 p-3">
-          <Shield class="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <div class="min-w-0">
+        <div class="flex items-center gap-3 rounded-md border bg-background p-3">
+          <div class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/10">
+            <Shield class="h-4 w-4 text-purple-500" />
+          </div>
+          <div class="min-w-0 flex-1">
             <p class="text-xs text-muted-foreground">Support Plan</p>
-            <p class="text-sm">{{ props.case.ent_productentitlement?.['ent_supportlevel@OData.Community.Display.V1.FormattedValue'] || props.case.entitlementid?.name || 'Not set' }}</p>
+            <p class="text-sm font-medium">{{ props.case.ent_productentitlement?.['ent_supportlevel@OData.Community.Display.V1.FormattedValue'] || props.case.entitlementid?.name || 'Not set' }}</p>
           </div>
         </div>
       </UiCardContent>
