@@ -287,6 +287,24 @@ export class DynamicsApiClient {
     }
   }
 
+  async getStatusReasonOptions(): Promise<{ value: number; label: string; state: number }[]> {
+    const response = await this.fetch<{
+      OptionSet: {
+        Options: Array<{
+          Value: number
+          Label: { UserLocalizedLabel: { Label: string } }
+          State: number
+        }>
+      }
+    }>(`/EntityDefinitions(LogicalName='incident')/Attributes(LogicalName='statuscode')/Microsoft.Dynamics.CRM.StatusAttributeMetadata?$expand=OptionSet`)
+
+    return response.OptionSet.Options.map(opt => ({
+      value: opt.Value,
+      label: opt.Label.UserLocalizedLabel.Label,
+      state: opt.State
+    }))
+  }
+
   async getDashboardKPIs(ownerId?: string): Promise<{
     casesByStatus: { status: string; count: number }[]
     casesByPriority: { priority: string; count: number }[]

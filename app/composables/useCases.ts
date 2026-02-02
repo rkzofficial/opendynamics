@@ -1,4 +1,4 @@
-import type { Case, CasesResponse, CaseFilters, ActivitiesResponse, SLAKPIsResponse } from '~/types'
+import type { Case, CasesResponse, CaseFilters, ActivitiesResponse, SLAKPIsResponse, StatusReasonOption } from '~/types'
 
 interface CasesState {
   cases: Case[]
@@ -13,6 +13,7 @@ interface CasesState {
   isLoadingActivities: boolean
   isLoadingSLAKPIs: boolean
   filters: CaseFilters
+  statusReasonOptions: StatusReasonOption[]
 }
 
 const casesState = reactive<CasesState>({
@@ -28,6 +29,7 @@ const casesState = reactive<CasesState>({
   isLoadingActivities: false,
   isLoadingSLAKPIs: false,
   filters: {},
+  statusReasonOptions: [],
 })
 
 export function useCases() {
@@ -39,6 +41,7 @@ export function useCases() {
       const mergedFilters = { ...casesState.filters, ...filters }
 
       if (mergedFilters.status) params.set('status', mergedFilters.status)
+      if (mergedFilters.statusReason) params.set('statusReason', mergedFilters.statusReason)
       if (mergedFilters.priority) params.set('priority', mergedFilters.priority)
       if (mergedFilters.search) params.set('search', mergedFilters.search)
       if (mergedFilters.dateFrom) params.set('dateFrom', mergedFilters.dateFrom)
@@ -146,6 +149,17 @@ export function useCases() {
     }
   }
 
+  async function fetchStatusReasonOptions() {
+    try {
+      const options = await $fetch<StatusReasonOption[]>('/api/cases/status-reasons')
+      casesState.statusReasonOptions = options
+      return options
+    } catch (error) {
+      console.error('Failed to fetch status reason options:', error)
+      return []
+    }
+  }
+
   function setFilters(filters: CaseFilters) {
     casesState.filters = { ...casesState.filters, ...filters }
   }
@@ -180,6 +194,7 @@ export function useCases() {
     isLoadingActivities: computed(() => casesState.isLoadingActivities),
     isLoadingSLAKPIs: computed(() => casesState.isLoadingSLAKPIs),
     filters: computed(() => casesState.filters),
+    statusReasonOptions: computed(() => casesState.statusReasonOptions),
     canGoBack,
     fetchCases,
     fetchNextPage,
@@ -187,6 +202,7 @@ export function useCases() {
     fetchCase,
     fetchActivities,
     fetchSLAKPIs,
+    fetchStatusReasonOptions,
     addReply,
     setFilters,
     clearFilters,

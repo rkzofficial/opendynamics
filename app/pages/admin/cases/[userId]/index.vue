@@ -7,7 +7,7 @@ const route = useRoute()
 const userId = computed(() => route.params.userId as string)
 
 // Track current filters for refresh/pagination
-const currentFilters = ref({ search: '', status: 'active', priority: 'all', orderBy: 'modifiedon', orderDirection: 'desc' as 'asc' | 'desc' })
+const currentFilters = ref({ search: '', status: 'active', statusReason: 'all', priority: 'all', orderBy: 'modifiedon', orderDirection: 'desc' as 'asc' | 'desc' })
 
 const {
   users,
@@ -15,11 +15,13 @@ const {
   hasMore,
   loading: isLoading,
   canGoBack,
+  statusReasonOptions,
   resetPagination,
   fetchUsersWithDynamics,
   fetchUserCases,
   fetchNextPage,
   fetchPreviousPage,
+  fetchStatusReasonOptions,
 } = useAdminCases()
 
 // Get selected user info
@@ -34,9 +36,10 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
   return user.username
 }
 
-function getCurrentFilters(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+function getCurrentFilters(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   return {
     status: filters.status === 'all' ? undefined : filters.status,
+    statusReason: filters.statusReason === 'all' ? undefined : filters.statusReason,
     priority: filters.priority === 'all' ? undefined : filters.priority,
     search: filters.search || undefined,
     orderBy: filters.orderBy,
@@ -44,7 +47,7 @@ function getCurrentFilters(filters: { search: string; status: string; priority: 
   }
 }
 
-async function loadCases(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+async function loadCases(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   if (!userId.value) return
 
   currentFilters.value = { ...currentFilters.value, ...filters }
@@ -56,15 +59,16 @@ async function loadCases(filters: { search: string; status: string; priority: st
 // Load data on mount
 onMounted(async () => {
   await fetchUsersWithDynamics()
-  await loadCases({ search: '', status: 'active', priority: 'all', orderBy: 'modifiedon', orderDirection: 'desc' })
+  fetchStatusReasonOptions(userId.value)
+  await loadCases({ search: '', status: 'active', statusReason: 'all', priority: 'all', orderBy: 'modifiedon', orderDirection: 'desc' })
 })
 
-function handleFilterChange(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+function handleFilterChange(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   resetPagination()
   loadCases(filters)
 }
 
-function handleRefresh(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+function handleRefresh(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   loadCases(filters)
 }
 
@@ -128,6 +132,7 @@ function goBack() {
       :has-more="hasMore"
       :can-go-back="canGoBack"
       :base-path="`/admin/cases/${userId}`"
+      :status-reason-options="statusReasonOptions"
       initial-status="active"
       empty-title="No cases found for this user"
       @filter-change="handleFilterChange"

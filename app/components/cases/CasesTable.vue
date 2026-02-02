@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Hash, FileText, CircleDot, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-vue-next'
+import { Hash, FileText, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown, Info } from 'lucide-vue-next'
 import type { Case } from '~/types'
 import {
-  getStatusLabel,
-  getStatusBadgeClass,
+  getStatusReasonLabel,
+  getStatusReasonBadgeClass,
   getPriorityLabel,
   getPriorityBadgeClass,
   formatCaseDate,
@@ -44,7 +44,7 @@ interface ColumnConfig {
 const columns: ColumnConfig[] = [
   { key: 'ticketnumber', label: 'Ticket', icon: Hash, width: 'w-[130px]' },
   { key: 'title', label: 'Title', icon: FileText, width: '' },
-  { key: 'statecode', label: 'Status', icon: CircleDot, width: 'w-[100px]' },
+  { key: 'statuscode', label: 'Reason', icon: Info, width: 'w-[160px]' },
   { key: 'prioritycode', label: 'Priority', icon: Flag, width: 'w-[150px]' },
   { key: 'createdon', label: 'Created', icon: Calendar, width: 'w-[120px]' },
   { key: 'modifiedon', label: 'Modified', icon: Clock, width: 'w-[120px]' },
@@ -68,7 +68,7 @@ function getSortIcon(columnKey: string): Component {
 
 <template>
   <div v-if="cases.length > 0" class="overflow-x-auto">
-    <table class="w-full min-w-[880px] table-fixed">
+    <table class="w-full min-w-[940px] table-fixed">
       <thead>
         <tr class="border-b bg-muted/50">
           <th
@@ -121,11 +121,11 @@ function getSortIcon(columnKey: string): Component {
           <td class="h-14 px-3 align-middle">
             <span
               :class="[
-                'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
-                getStatusBadgeClass(c.statecode)
+                'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
+                getStatusReasonBadgeClass(c.statecode)
               ]"
             >
-              {{ getStatusLabel(c.statecode) }}
+              {{ getStatusReasonLabel(c['statuscode@OData.Community.Display.V1.FormattedValue']) }}
             </span>
           </td>
           <td class="h-14 px-3 align-middle">

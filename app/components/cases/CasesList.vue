@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Search, RefreshCw, AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, CircleDot, Flag, X } from 'lucide-vue-next'
 import { useDebounceFn } from '@vueuse/core'
-import type { Case } from '~/types'
+import type { Case, StatusReasonOption } from '~/types'
 
 interface Props {
   cases: Case[]
@@ -14,9 +14,11 @@ interface Props {
   emptyDescription?: string
   initialSearch?: string
   initialStatus?: string
+  initialStatusReason?: string
   initialPriority?: string
   initialSortColumn?: string
   initialSortDirection?: 'asc' | 'desc'
+  statusReasonOptions?: StatusReasonOption[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -25,24 +27,58 @@ const props = withDefaults(defineProps<Props>(), {
   emptyDescription: 'Try adjusting your filters',
   initialSearch: '',
   initialStatus: 'active',
+  initialStatusReason: 'all',
   initialPriority: 'all',
   initialSortColumn: 'modifiedon',
   initialSortDirection: 'desc',
+  statusReasonOptions: () => [],
 })
 
 const emit = defineEmits<{
-  refresh: [filters: { search: string; status: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
+  refresh: [filters: { search: string; status: string; statusReason: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
   previous: []
   next: []
-  filterChange: [filters: { search: string; status: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
+  filterChange: [filters: { search: string; status: string; statusReason: string; priority: string; orderBy: string; orderDirection: 'asc' | 'desc' }]
   pageSizeChange: [size: number]
 }>()
 
 const searchQuery = ref(props.initialSearch)
 const statusFilter = ref(props.initialStatus)
+const statusReasonFilter = ref(props.initialStatusReason)
 const priorityFilter = ref(props.initialPriority)
 const sortColumn = ref(props.initialSortColumn)
 const sortDirection = ref<'asc' | 'desc'>(props.initialSortDirection)
+
+// Map status filter values to state codes
+const statusToState: Record<string, number> = {
+  'active': 0,
+  'resolved': 1,
+  'cancelled': 2,
+}
+
+// Group status reason options by parent state, filtered by selected status
+const groupedStatusReasons = computed(() => {
+  const groups = [
+    { label: 'Active', state: 0, options: [] as StatusReasonOption[] },
+    { label: 'Resolved', state: 1, options: [] as StatusReasonOption[] },
+    { label: 'Cancelled', state: 2, options: [] as StatusReasonOption[] },
+  ]
+
+  for (const opt of props.statusReasonOptions) {
+    const group = groups.find(g => g.state === opt.state)
+    if (group) {
+      group.options.push(opt)
+    }
+  }
+
+  // Filter groups based on selected status
+  if (statusFilter.value !== 'all' && statusFilter.value in statusToState) {
+    const targetState = statusToState[statusFilter.value]
+    return groups.filter(g => g.state === targetState && g.options.length > 0)
+  }
+
+  return groups.filter(g => g.options.length > 0)
+})
 
 const statusOptions = [
   { value: 'all', label: 'All Statuses', icon: CircleDot },
@@ -71,14 +107,31 @@ watch(searchQuery, () => {
 
 // Watch dropdowns for immediate filter application
 // immediate: true ensures initial filters are synced to parent on mount
-watch([statusFilter, priorityFilter], () => {
+watch([statusFilter, statusReasonFilter, priorityFilter], () => {
   emitFilterChange()
 }, { immediate: true })
+
+// Reset status reason filter when status changes (if current selection is incompatible)
+watch(statusFilter, (newStatus) => {
+  if (newStatus === 'all') return // Keep current selection when showing all
+
+  if (statusReasonFilter.value !== 'all') {
+    const currentReasonState = props.statusReasonOptions.find(
+      opt => String(opt.value) === statusReasonFilter.value
+    )?.state
+
+    // If current reason doesn't match new status, reset to 'all'
+    if (currentReasonState !== undefined && currentReasonState !== statusToState[newStatus]) {
+      statusReasonFilter.value = 'all'
+    }
+  }
+})
 
 function emitFilterChange() {
   emit('filterChange', {
     search: searchQuery.value,
     status: statusFilter.value,
+    statusReason: statusReasonFilter.value,
     priority: priorityFilter.value,
     orderBy: sortColumn.value,
     orderDirection: sortDirection.value,
@@ -94,6 +147,7 @@ function handleSortChange(column: string, direction: 'asc' | 'desc') {
 function handleClearFilters() {
   searchQuery.value = ''
   statusFilter.value = 'all'
+  statusReasonFilter.value = 'all'
   priorityFilter.value = 'all'
   sortColumn.value = props.initialSortColumn
   sortDirection.value = props.initialSortDirection
@@ -104,6 +158,7 @@ function handleRefresh() {
   emit('refresh', {
     search: searchQuery.value,
     status: statusFilter.value,
+    statusReason: statusReasonFilter.value,
     priority: priorityFilter.value,
     orderBy: sortColumn.value,
     orderDirection: sortDirection.value,
@@ -156,6 +211,32 @@ function handlePageSizeChange(size: number) {
                 {{ option.label }}
               </span>
             </UiSelectItem>
+          </UiSelectContent>
+        </UiSelect>
+
+        <!-- Status Reason Filter -->
+        <UiSelect v-if="statusReasonOptions.length > 0" v-model="statusReasonFilter">
+          <UiSelectTrigger class="h-9 w-auto min-w-[160px] bg-background">
+            <UiSelectValue placeholder="Status Reason" />
+          </UiSelectTrigger>
+          <UiSelectContent>
+            <UiSelectItem value="all">All Reasons</UiSelectItem>
+            <UiSelectSeparator />
+            <template v-for="(group, index) in groupedStatusReasons" :key="group.label">
+              <UiSelectSeparator v-if="index > 0" />
+              <UiSelectGroup>
+                <UiSelectLabel class="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                  {{ group.label }}
+                </UiSelectLabel>
+                <UiSelectItem
+                  v-for="opt in group.options"
+                  :key="opt.value"
+                  :value="String(opt.value)"
+                >
+                  {{ opt.label }}
+                </UiSelectItem>
+              </UiSelectGroup>
+            </template>
           </UiSelectContent>
         </UiSelect>
 

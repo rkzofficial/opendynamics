@@ -26,6 +26,7 @@ export interface Case {
   description?: string
   statecode: 0 | 1 | 2 // Active, Resolved, Cancelled
   statuscode?: number
+  'statuscode@OData.Community.Display.V1.FormattedValue'?: string
   prioritycode: 1 | 2 | 3 // High, Normal, Low
   createdon: string
   modifiedon: string
@@ -211,9 +212,17 @@ export interface DeviceCodeResponse {
   message: string
 }
 
+// Status reason option from Dynamics metadata
+export interface StatusReasonOption {
+  value: number
+  label: string
+  state: number // parent statecode (0=Active, 1=Resolved, 2=Cancelled)
+}
+
 // Filter types
 export interface CaseFilters {
   status?: 'active' | 'resolved' | 'cancelled' | ''
+  statusReason?: string // statuscode value as string
   priority?: 'high' | 'normal' | 'low' | ''
   search?: string
   dateFrom?: string

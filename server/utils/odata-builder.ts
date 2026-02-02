@@ -49,6 +49,7 @@ export function buildODataQuery(options: ODataQueryOptions): string {
 
 export function buildCaseFilter(filters: {
   status?: string
+  statusReason?: string
   priority?: string
   search?: string
   dateFrom?: string
@@ -57,7 +58,13 @@ export function buildCaseFilter(filters: {
 }): string {
   const conditions: string[] = []
 
-  if (filters.status) {
+  // Status reason filter takes precedence over status filter
+  if (filters.statusReason && filters.statusReason !== 'all') {
+    const code = parseInt(filters.statusReason, 10)
+    if (!isNaN(code)) {
+      conditions.push(`statuscode eq ${code}`)
+    }
+  } else if (filters.status) {
     switch (filters.status) {
       case 'active':
         conditions.push('statecode eq 0')

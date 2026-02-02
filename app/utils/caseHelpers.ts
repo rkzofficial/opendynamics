@@ -205,6 +205,21 @@ export function getStatusBadgeClass(statecode: number): string {
   }
 }
 
+// Status Reason helpers - uses formatted value from Dynamics for label
+export function getStatusReasonLabel(formattedValue: string | undefined): string {
+  return formattedValue || 'Unknown'
+}
+
+// Badge styling based on parent statecode for consistent coloring
+export function getStatusReasonBadgeClass(statecode: number): string {
+  switch (statecode) {
+    case 0: return 'bg-blue-500/10 text-blue-500 border-blue-500/20'      // Active
+    case 1: return 'bg-green-500/10 text-green-500 border-green-500/20'   // Resolved
+    case 2: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'   // Cancelled
+    default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+  }
+}
+
 // Priority helpers
 // P1 = Critical, P2 = Urgent, P3 = Important, P4 = Minor
 export function getPriorityLabel(prioritycode: number): string {

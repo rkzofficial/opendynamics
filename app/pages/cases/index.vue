@@ -18,18 +18,28 @@ const {
   isLoading,
   canGoBack,
   pageSize,
+  statusReasonOptions,
   fetchCases,
   fetchNextPage,
   fetchPreviousPage,
+  fetchStatusReasonOptions,
   setFilters,
   clearFilters,
   setPageSize,
 } = useCases()
 
-function handleFilterChange(filters: { search: string; status: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+// Fetch status reason options when connected
+watch(connectionStatus, (status) => {
+  if (status?.connected) {
+    fetchStatusReasonOptions()
+  }
+}, { immediate: true })
+
+function handleFilterChange(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   setFilters({
     search: filters.search,
     status: (filters.status === 'all' ? '' : filters.status) as '' | 'active' | 'resolved' | 'cancelled',
+    statusReason: filters.statusReason === 'all' ? '' : filters.statusReason,
     priority: (filters.priority === 'all' ? '' : filters.priority) as '' | 'high' | 'normal' | 'low',
     orderBy: filters.orderBy,
     orderDirection: filters.orderDirection,
@@ -99,6 +109,7 @@ function handleClear() {
         :has-more="hasMore"
         :can-go-back="canGoBack"
         :page-size="pageSize"
+        :status-reason-options="statusReasonOptions"
         base-path="/cases"
         initial-status="active"
         empty-title="No cases found"

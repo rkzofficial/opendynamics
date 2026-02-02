@@ -8,6 +8,7 @@ export default defineEventHandler(async (event) => {
   // Fetch from Dynamics
   const { client, dynamicsUserId } = await getDynamicsClient(event, userId)
   const status = query.status as string | undefined
+  const statusReason = query.statusReason as string | undefined
   const priority = query.priority as string | undefined
   const search = query.search as string | undefined
   const dateFrom = query.dateFrom as string | undefined
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
   const orderBy = query.orderBy as string || 'createdon'
   const orderDirection = query.orderDirection as string || 'desc'
 
-  const filter = buildCaseFilter({ status, priority, search, dateFrom, dateTo })
+  const filter = buildCaseFilter({ status, statusReason, priority, search, dateFrom, dateTo })
 
   try {
     const response = await client.getCases({

@@ -19,6 +19,12 @@ interface SLAKPIsResponse {
   slakpis: any[]
 }
 
+interface StatusReasonOption {
+  value: number
+  label: string
+  state: number
+}
+
 export function useAdminCases() {
   const users = ref<UserWithDynamics[]>([])
   const cases = ref<any[]>([])
@@ -30,6 +36,7 @@ export function useAdminCases() {
   const error = ref('')
   const slaKPIs = ref<SLAKPIsResponse | null>(null)
   const isLoadingSLAKPIs = ref(false)
+  const statusReasonOptions = ref<StatusReasonOption[]>([])
 
   async function fetchUsersWithDynamics() {
     loading.value = true
@@ -46,10 +53,24 @@ export function useAdminCases() {
     }
   }
 
+  async function fetchStatusReasonOptions(userId: string) {
+    try {
+      const options = await $fetch<StatusReasonOption[]>('/api/cases/status-reasons', {
+        params: { userId },
+      })
+      statusReasonOptions.value = options
+      return options
+    } catch (e) {
+      console.error('Failed to fetch status reason options:', e)
+      return []
+    }
+  }
+
   async function fetchUserCases(userId: string, params?: {
     skipToken?: string
     pageSize?: number
     status?: string
+    statusReason?: string
     priority?: string
     search?: string
     orderBy?: string
@@ -81,6 +102,7 @@ export function useAdminCases() {
 
   async function fetchNextPage(userId: string, filters?: {
     status?: string
+    statusReason?: string
     priority?: string
     search?: string
     orderBy?: string
@@ -100,6 +122,7 @@ export function useAdminCases() {
 
   async function fetchPreviousPage(userId: string, filters?: {
     status?: string
+    statusReason?: string
     priority?: string
     search?: string
     orderBy?: string
@@ -177,6 +200,7 @@ export function useAdminCases() {
     loading: readonly(loading),
     isLoadingSLAKPIs: readonly(isLoadingSLAKPIs),
     error: readonly(error),
+    statusReasonOptions: readonly(statusReasonOptions),
     canGoBack,
     resetPagination,
     fetchUsersWithDynamics,
@@ -185,5 +209,6 @@ export function useAdminCases() {
     fetchPreviousPage,
     fetchCaseDetails,
     fetchSLAKPIs,
+    fetchStatusReasonOptions,
   }
 }
