@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as apiKeys from "../apiKeys.js";
 import type * as auth from "../auth.js";
 import type * as caseShares from "../caseShares.js";
 import type * as seedAdmin from "../seedAdmin.js";
@@ -22,6 +23,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  apiKeys: typeof apiKeys;
   auth: typeof auth;
   caseShares: typeof caseShares;
   seedAdmin: typeof seedAdmin;

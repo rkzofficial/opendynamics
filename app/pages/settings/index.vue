@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Save, Link2, Unlink, AlertCircle, CheckCircle, Copy, Shield, User } from 'lucide-vue-next'
+import { Save, Link2, Unlink, AlertCircle, CheckCircle, Copy, Shield, User, Key } from 'lucide-vue-next'
 import type { OIDCConfig, DynamicsConfig } from '~/types'
 
 const { user, isAdmin } = useAuth()
@@ -313,6 +313,34 @@ onUnmounted(() => {
             Save OIDC Configuration
           </UiButton>
         </form>
+      </UiCardContent>
+    </UiCard>
+
+    <!-- API Keys Section (for all users) -->
+    <UiCard>
+      <UiCardHeader>
+        <div class="flex items-center gap-3">
+          <div class="rounded-lg bg-primary/10 p-2">
+            <Key class="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <UiCardTitle>API Keys</UiCardTitle>
+            <UiCardDescription>
+              Manage API keys for MCP server access
+            </UiCardDescription>
+          </div>
+        </div>
+      </UiCardHeader>
+      <UiCardContent>
+        <p class="text-sm text-muted-foreground mb-4">
+          Create API keys to connect Claude and other AI assistants to your cases via the MCP protocol.
+        </p>
+        <NuxtLink to="/settings/api-keys">
+          <UiButton variant="outline">
+            <Key class="mr-2 h-4 w-4" />
+            Manage API Keys
+          </UiButton>
+        </NuxtLink>
       </UiCardContent>
     </UiCard>
 

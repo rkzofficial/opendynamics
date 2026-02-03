@@ -58,4 +58,18 @@ export default defineSchema({
   })
     .index("by_token", ["shareToken"])
     .index("by_case_user", ["caseId", "userId"]),
+
+  // API Keys (for MCP server access)
+  apiKeys: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    keyHash: v.string(),
+    keyPrefix: v.string(),
+    lastUsedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    isRevoked: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_prefix", ["keyPrefix"]),
 });

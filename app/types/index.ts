@@ -274,3 +274,13 @@ export interface CaseShare {
   isRevoked: boolean
   viewCount: number
 }
+
+// API Key types
+export interface ApiKey {
+  _id: string
+  name: string
+  keyPrefix: string
+  createdAt: number
+  expiresAt?: number
+  lastUsedAt?: number
+}
