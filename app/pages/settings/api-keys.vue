@@ -4,6 +4,10 @@ import type { ApiKey } from '~/types'
 
 const { user } = useAuth()
 
+// Get current URL for MCP config example
+const requestUrl = useRequestURL()
+const mcpUrl = computed(() => `${requestUrl.origin}/api/mcp`)
+
 // State
 const keys = ref<ApiKey[]>([])
 const isLoading = ref(true)
@@ -277,7 +281,7 @@ onMounted(() => {
           <pre class="bg-muted p-4 rounded-lg text-sm overflow-x-auto"><code>{
   "mcpServers": {
     "opendynamics": {
-      "url": "{{ $config.public.siteUrl || 'https://your-app.com' }}/api/mcp",
+      "url": "{{ mcpUrl }}",
       "headers": {
         "Authorization": "Bearer odk_your-api-key-here"
       }
