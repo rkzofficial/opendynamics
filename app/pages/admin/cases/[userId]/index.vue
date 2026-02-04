@@ -14,12 +14,14 @@ const {
   cases,
   hasMore,
   loading: isLoading,
+  isRefreshing,
   canGoBack,
   statusReasonOptions,
   caseSLAData,
   resetPagination,
   fetchUsersWithDynamics,
   fetchUserCases,
+  forceRefreshUserCases,
   fetchNextPage,
   fetchPreviousPage,
   fetchStatusReasonOptions,
@@ -81,8 +83,24 @@ function handleFilterChange(filters: { search: string; status: string; statusRea
   loadCases(filters)
 }
 
-function handleRefresh(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
-  loadCases(filters)
+async function handleRefresh(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
+  if (!userId.value) return
+  
+  currentFilters.value = { ...currentFilters.value, ...filters }
+  const response = await forceRefreshUserCases(userId.value, {
+    ...getCurrentFilters(filters),
+  })
+
+  // Fetch batch SLA data for "In Progress" cases (statuscode === 1)
+  if (response?.cases) {
+    const inProgressCaseIds = response.cases
+      .filter((c: { statuscode: number }) => c.statuscode === 1)
+      .map((c: { incidentid: string }) => c.incidentid)
+
+    if (inProgressCaseIds.length > 0) {
+      fetchBatchSLAData(userId.value, inProgressCaseIds)
+    }
+  }
 }
 
 async function goToNextPage() {
@@ -143,6 +161,7 @@ function goBack() {
       :cases="cases"
       :case-sla-data="caseSLAData"
       :is-loading="isLoading"
+      :is-refreshing="isRefreshing"
       :has-more="hasMore"
       :can-go-back="canGoBack"
       :base-path="`/admin/cases/${userId}`"

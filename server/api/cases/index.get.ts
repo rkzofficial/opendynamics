@@ -1,12 +1,13 @@
-import { getDynamicsClient } from '../../utils/dynamics'
+import { getDynamicsClientWithUser } from '../../utils/dynamics'
 import { buildCaseFilter } from '../../utils/odata-builder'
+import { cachedAuthHandler } from '../../utils/cache'
 
-export default defineCachedEventHandler(async (event) => {
+export default cachedAuthHandler(async (event, user) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
 
-  // Fetch from Dynamics
-  const { client, dynamicsUserId } = await getDynamicsClient(event, userId)
+  // User is already authenticated by cachedAuthHandler
+  const { client, dynamicsUserId } = await getDynamicsClientWithUser(user, userId)
   const status = query.status as string | undefined
   const statusReason = query.statusReason as string | undefined
   const priority = query.priority as string | undefined
@@ -44,24 +45,9 @@ export default defineCachedEventHandler(async (event) => {
   }
 }, {
   maxAge: 60 * 5, // Cache for 5 minutes
-  getKey: (event) => {
+  getKey: (event, user) => {
     const query = getQuery(event)
-    // Create a cache key that includes all query parameters to ensure proper cache separation
-    const keyParts = [
-      'cases',
-      query.userId || 'default',
-      query.status || 'all',
-      query.statusReason || 'all',
-      query.priority || 'all',
-      query.dxPendingRelease || 'false',
-      query.search || 'none',
-      query.dateFrom || 'none',
-      query.dateTo || 'none',
-      query.skipToken || 'first',
-      query.pageSize || '20',
-      query.orderBy || 'createdon',
-      query.orderDirection || 'desc',
-    ]
-    return keyParts.join(':')
-  },
+    // Include all query params in cache key to separate different filter combinations
+    return `cases:${user._id}:${JSON.stringify(query)}`
+  }
 })

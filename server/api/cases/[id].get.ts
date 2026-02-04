@@ -1,6 +1,7 @@
-import { getDynamicsClient } from '../../utils/dynamics'
+import { getDynamicsClientWithUser } from '../../utils/dynamics'
+import { cachedAuthHandler } from '../../utils/cache'
 
-export default defineCachedEventHandler(async (event) => {
+export default cachedAuthHandler(async (event, user) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
   const caseId = getRouterParam(event, 'id')
@@ -12,8 +13,8 @@ export default defineCachedEventHandler(async (event) => {
     })
   }
 
-  // Fetch from Dynamics
-  const { client } = await getDynamicsClient(event, userId)
+  // User is already authenticated by cachedAuthHandler
+  const { client } = await getDynamicsClientWithUser(user, userId)
 
   try {
     return await client.getCase(caseId)
@@ -26,10 +27,9 @@ export default defineCachedEventHandler(async (event) => {
   }
 }, {
   maxAge: 60 * 5, // Cache for 5 minutes
-  getKey: (event) => {
-    const query = getQuery(event)
-    const userId = query.userId as string | undefined
+  getKey: (event, user) => {
     const caseId = getRouterParam(event, 'id')
-    return `case:${userId || 'default'}:${caseId}`
-  },
+    const query = getQuery(event)
+    return `case:${user._id}:${caseId}:${query.userId || 'self'}`
+  }
 })

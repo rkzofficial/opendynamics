@@ -17,10 +17,12 @@ const {
   caseSLAData,
   hasMore,
   isLoading,
+  isRefreshing,
   canGoBack,
   pageSize,
   statusReasonOptions,
   fetchCases,
+  forceRefresh,
   fetchNextPage,
   fetchPreviousPage,
   fetchStatusReasonOptions,
@@ -109,6 +111,7 @@ function handleClear() {
         :cases="cases"
         :case-sla-data="caseSLAData"
         :is-loading="isLoading"
+        :is-refreshing="isRefreshing"
         :has-more="hasMore"
         :can-go-back="canGoBack"
         :page-size="pageSize"
@@ -118,7 +121,7 @@ function handleClear() {
         empty-title="No cases found"
         empty-description="Try adjusting your filters"
         @filter-change="handleFilterChange"
-        @refresh="fetchCases"
+        @refresh="forceRefresh"
         @previous="fetchPreviousPage"
         @next="fetchNextPage"
         @page-size-change="setPageSize"

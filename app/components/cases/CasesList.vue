@@ -11,6 +11,7 @@ interface Props {
   cases: Case[]
   caseSLAData?: Record<string, CaseSLAInfo>
   isLoading: boolean
+  isRefreshing?: boolean
   hasMore: boolean
   canGoBack: boolean
   basePath: string
@@ -40,7 +41,11 @@ const props = withDefaults(defineProps<Props>(), {
   statusReasonOptions: () => [],
   initialDxPendingRelease: false,
   caseSLAData: () => ({}),
+  isRefreshing: false,
 })
+
+// Show skeleton only for initial load, not for refresh
+const showSkeleton = computed(() => props.isLoading && !props.isRefreshing)
 
 const emit = defineEmits<{
   refresh: [filters: { search: string; status: string; statusReason: string; priority: string; dxPendingRelease: boolean; orderBy: string; orderDirection: 'asc' | 'desc' }]
@@ -366,9 +371,10 @@ function handlePageSizeChange(size: number) {
           variant="ghost"
           size="sm"
           class="h-9 px-3"
+          :disabled="isRefreshing"
           @click="handleRefresh"
         >
-          <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': isLoading }" />
+          <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': isRefreshing }" />
         </UiButton>
 
         <!-- Clear Button -->
@@ -379,8 +385,8 @@ function handlePageSizeChange(size: number) {
       </div>
     </div>
 
-    <!-- Loading state -->
-    <UiCard v-if="isLoading">
+    <!-- Loading state (skeleton only for initial load, not refresh) -->
+    <UiCard v-if="showSkeleton">
       <UiCardContent class="pt-6">
         <div class="space-y-4">
           <UiSkeleton v-for="i in 5" :key="i" class="h-12 w-full" />

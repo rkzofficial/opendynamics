@@ -11,6 +11,7 @@ interface CasesState {
   hasMore: boolean
   pageSize: number
   isLoading: boolean
+  isRefreshing: boolean
   isLoadingActivities: boolean
   isLoadingSLAKPIs: boolean
   isLoadingBatchSLA: boolean
@@ -34,6 +35,7 @@ const casesState = reactive<CasesState>({
   hasMore: false,
   pageSize: 20,
   isLoading: false,
+  isRefreshing: false,
   isLoadingActivities: false,
   isLoadingSLAKPIs: false,
   isLoadingBatchSLA: false,
@@ -44,8 +46,16 @@ const casesState = reactive<CasesState>({
 })
 
 export function useCases() {
-  async function fetchCases(filters?: CaseFilters) {
-    casesState.isLoading = true
+  async function fetchCases(filters?: CaseFilters, options?: { forceRefresh?: boolean }) {
+    const isForceRefresh = options?.forceRefresh ?? false
+    
+    // Use isRefreshing for force refresh (no skeleton), isLoading for initial load
+    if (isForceRefresh) {
+      casesState.isRefreshing = true
+    } else {
+      casesState.isLoading = true
+    }
+    
     try {
       const params = new URLSearchParams()
 
@@ -62,6 +72,11 @@ export function useCases() {
       if (mergedFilters.pageSize) params.set('pageSize', String(mergedFilters.pageSize))
       if (mergedFilters.orderBy) params.set('orderBy', mergedFilters.orderBy)
       if (mergedFilters.orderDirection) params.set('orderDirection', mergedFilters.orderDirection)
+      
+      // Add cache bypass parameter for force refresh
+      if (isForceRefresh) {
+        params.set('_noCache', '1')
+      }
 
       const response = await $fetch<CasesResponse>(`/api/cases?${params.toString()}`)
 
@@ -90,7 +105,12 @@ export function useCases() {
       casesState.caseSLAData = {}
     } finally {
       casesState.isLoading = false
+      casesState.isRefreshing = false
     }
+  }
+  
+  async function forceRefresh(filters?: CaseFilters) {
+    return fetchCases(filters, { forceRefresh: true })
   }
 
   async function fetchNextPage() {
@@ -315,6 +335,7 @@ export function useCases() {
     hasMore: computed(() => casesState.hasMore),
     pageSize: computed(() => casesState.pageSize),
     isLoading: computed(() => casesState.isLoading),
+    isRefreshing: computed(() => casesState.isRefreshing),
     isLoadingActivities: computed(() => casesState.isLoadingActivities),
     isLoadingSLAKPIs: computed(() => casesState.isLoadingSLAKPIs),
     isLoadingBatchSLA: computed(() => casesState.isLoadingBatchSLA),
@@ -324,6 +345,7 @@ export function useCases() {
     statusReasonOptions: computed(() => casesState.statusReasonOptions),
     canGoBack,
     fetchCases,
+    forceRefresh,
     fetchNextPage,
     fetchPreviousPage,
     fetchCase,

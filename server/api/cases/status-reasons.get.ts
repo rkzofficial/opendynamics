@@ -1,10 +1,12 @@
-import { getDynamicsClient } from '../../utils/dynamics'
+import { getDynamicsClientWithUser } from '../../utils/dynamics'
+import { cachedAuthHandler } from '../../utils/cache'
 
-export default defineCachedEventHandler(async (event) => {
+export default cachedAuthHandler(async (event, user) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
 
-  const { client } = await getDynamicsClient(event, userId)
+  // User is already authenticated by cachedAuthHandler
+  const { client } = await getDynamicsClientWithUser(user, userId)
 
   try {
     return await client.getStatusReasonOptions()
@@ -17,9 +19,9 @@ export default defineCachedEventHandler(async (event) => {
   }
 }, {
   maxAge: 60 * 60, // Cache for 1 hour - metadata rarely changes
-  getKey: (event) => {
+  getKey: (event, user) => {
     const query = getQuery(event)
     const userId = query.userId as string | undefined
-    return `status-reasons:${userId || 'default'}`
-  },
+    return `status-reasons:${user._id}:${userId || 'self'}`
+  }
 })

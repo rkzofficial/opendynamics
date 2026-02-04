@@ -1,12 +1,13 @@
-import { getDynamicsClient } from '../../utils/dynamics'
+import { getDynamicsClientWithUser } from '../../utils/dynamics'
+import { cachedAuthHandler } from '../../utils/cache'
 
-export default defineCachedEventHandler(async (event) => {
+export default cachedAuthHandler(async (event, user) => {
   const query = getQuery(event)
   const type = query.type as string | undefined
   const userId = query.userId as string | undefined
 
-  // Fetch from Dynamics
-  const { client, dynamicsUserId } = await getDynamicsClient(event, userId)
+  // User is already authenticated by cachedAuthHandler
+  const { client, dynamicsUserId } = await getDynamicsClientWithUser(user, userId)
 
   try {
     if (type === 'kpis') {
@@ -23,10 +24,10 @@ export default defineCachedEventHandler(async (event) => {
   }
 }, {
   maxAge: 60 * 5, // Cache for 5 minutes
-  getKey: (event) => {
+  getKey: (event, user) => {
     const query = getQuery(event)
     const type = query.type as string | undefined
     const userId = query.userId as string | undefined
-    return `dashboard:${userId || 'default'}:${type || 'stats'}`
-  },
+    return `dashboard:${user._id}:${type || 'stats'}:${userId || 'self'}`
+  }
 })

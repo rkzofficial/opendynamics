@@ -1,5 +1,25 @@
 import type { H3Event } from 'h3'
-import { requireAuth } from './auth'
+import { createHash } from 'crypto'
+import { requireAuth, type AuthUser } from './auth'
+
+/**
+ * Creates a filesystem-safe cache key by hashing complex parts.
+ * Keeps the prefix readable for debugging but hashes the rest.
+ */
+function toSafeCacheKey(key: string): string {
+  // Split into prefix and rest (e.g., "cases:userId:..." -> prefix="cases", rest="userId:...")
+  const colonIndex = key.indexOf(':')
+  if (colonIndex === -1) {
+    return key
+  }
+  
+  const prefix = key.substring(0, colonIndex)
+  const rest = key.substring(colonIndex + 1)
+  
+  // Hash the rest to make it filesystem-safe
+  const hash = createHash('sha256').update(rest).digest('hex').substring(0, 16)
+  return `${prefix}:${hash}`
+}
 
 export interface CacheKeyOptions {
   event: H3Event
@@ -100,4 +120,82 @@ export async function invalidateCacheByPrefix(event: H3Event, prefix: string): P
   const keysToRemove = keys.filter(key => key.includes(cacheKeyPrefix))
   
   await Promise.all(keysToRemove.map(key => storage.removeItem(key)))
+}
+
+// ============================================================================
+// Authentication-Aware Caching
+// ============================================================================
+// NOTE: Nuxt's defineCachedEventHandler cannot be used for authenticated routes
+// because it strips cookies from the event object. This utility provides caching
+// that authenticates first, then caches per-user responses.
+
+export interface CachedAuthHandlerOptions<T> {
+  /** Cache TTL in seconds */
+  maxAge: number
+  /** Custom cache key generator (defaults to userId:path:query) */
+  getKey?: (event: H3Event, user: AuthUser) => string
+}
+
+interface CacheEntry<T> {
+  data: T
+  expires: number
+}
+
+/**
+ * Creates an event handler with authentication-aware caching.
+ * 
+ * Unlike defineCachedEventHandler, this:
+ * 1. Authenticates first (preserving cookies)
+ * 2. Generates user-specific cache keys
+ * 3. Caches responses per-user to prevent data leakage
+ * 
+ * @example
+ * export default cachedAuthHandler(async (event, user) => {
+ *   return await fetchData()
+ * }, {
+ *   maxAge: 60 * 5, // 5 minutes
+ *   getKey: (event, user) => `my-data:${user._id}`
+ * })
+ */
+export function cachedAuthHandler<T>(
+  handler: (event: H3Event, user: AuthUser) => Promise<T>,
+  options: CachedAuthHandlerOptions<T>
+) {
+  return defineEventHandler(async (event) => {
+    // 1. Authenticate first (cookies are preserved with defineEventHandler)
+    const user = await requireAuth(event)
+    
+    // 2. Check for cache bypass (force refresh)
+    const query = getQuery(event)
+    const bypassCache = query._noCache === 'true' || query._noCache === '1'
+    
+    // 3. Generate user-specific cache key and make it filesystem-safe
+    // Remove _noCache from the key so it doesn't affect cache lookups
+    const queryForKey = { ...query }
+    delete queryForKey._noCache
+    const rawKey = options.getKey?.(event, user) 
+      ?? `${user._id}:${event.path}:${JSON.stringify(queryForKey)}`
+    const cacheKey = toSafeCacheKey(rawKey)
+    
+    const storage = useStorage('cache')
+    
+    // 4. Check cache for existing valid entry (unless bypassing)
+    if (!bypassCache) {
+      const cached = await storage.getItem<CacheEntry<T>>(cacheKey)
+      
+      if (cached && cached.expires > Date.now()) {
+        return cached.data
+      }
+    }
+    
+    // 5. Execute handler and cache the result
+    const result = await handler(event, user)
+    
+    await storage.setItem(cacheKey, {
+      data: result,
+      expires: Date.now() + options.maxAge * 1000
+    })
+    
+    return result
+  })
 }

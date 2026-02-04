@@ -44,6 +44,7 @@ export function useAdminCases() {
   const hasMore = ref(false)
   const pageSize = ref(20)
   const loading = ref(false)
+  const isRefreshing = ref(false)
   const error = ref('')
   const slaKPIs = ref<SLAKPIsResponse | null>(null)
   const isLoadingSLAKPIs = ref(false)
@@ -88,8 +89,15 @@ export function useAdminCases() {
     search?: string
     orderBy?: string
     orderDirection?: string
-  }) {
-    loading.value = true
+  }, options?: { forceRefresh?: boolean }) {
+    const isForceRefresh = options?.forceRefresh ?? false
+    
+    // Use isRefreshing for force refresh (no skeleton), loading for initial load
+    if (isForceRefresh) {
+      isRefreshing.value = true
+    } else {
+      loading.value = true
+    }
     error.value = ''
 
     try {
@@ -97,6 +105,8 @@ export function useAdminCases() {
         params: {
           userId,
           ...params,
+          // Add cache bypass parameter for force refresh
+          ...(isForceRefresh ? { _noCache: '1' } : {}),
         },
       })
       cases.value = response.cases
@@ -110,7 +120,21 @@ export function useAdminCases() {
       throw e
     } finally {
       loading.value = false
+      isRefreshing.value = false
     }
+  }
+  
+  async function forceRefreshUserCases(userId: string, params?: {
+    skipToken?: string
+    pageSize?: number
+    status?: string
+    statusReason?: string
+    priority?: string
+    search?: string
+    orderBy?: string
+    orderDirection?: string
+  }) {
+    return fetchUserCases(userId, params, { forceRefresh: true })
   }
 
   async function fetchNextPage(userId: string, filters?: {
@@ -232,6 +256,7 @@ export function useAdminCases() {
     hasMore: readonly(hasMore),
     pageSize: readonly(pageSize),
     loading: readonly(loading),
+    isRefreshing: readonly(isRefreshing),
     isLoadingSLAKPIs: readonly(isLoadingSLAKPIs),
     isLoadingBatchSLA: readonly(isLoadingBatchSLA),
     error: readonly(error),
@@ -240,6 +265,7 @@ export function useAdminCases() {
     resetPagination,
     fetchUsersWithDynamics,
     fetchUserCases,
+    forceRefreshUserCases,
     fetchNextPage,
     fetchPreviousPage,
     fetchCaseDetails,
