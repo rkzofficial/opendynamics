@@ -1,6 +1,6 @@
 import { getDynamicsClient } from '../../utils/dynamics'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
   const caseId = getRouterParam(event, 'id')
@@ -24,4 +24,12 @@ export default defineEventHandler(async (event) => {
       message: err.message || 'Failed to fetch case',
     })
   }
+}, {
+  maxAge: 60 * 5, // Cache for 5 minutes
+  getKey: (event) => {
+    const query = getQuery(event)
+    const userId = query.userId as string | undefined
+    const caseId = getRouterParam(event, 'id')
+    return `case:${userId || 'default'}:${caseId}`
+  },
 })

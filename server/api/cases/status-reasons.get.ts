@@ -1,6 +1,6 @@
 import { getDynamicsClient } from '../../utils/dynamics'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
 
@@ -15,4 +15,11 @@ export default defineEventHandler(async (event) => {
       message: err.message || 'Failed to fetch status reason options',
     })
   }
+}, {
+  maxAge: 60 * 60, // Cache for 1 hour - metadata rarely changes
+  getKey: (event) => {
+    const query = getQuery(event)
+    const userId = query.userId as string | undefined
+    return `status-reasons:${userId || 'default'}`
+  },
 })

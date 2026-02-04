@@ -67,6 +67,15 @@ export default defineNuxtConfig({
     },
     routeRules: {
       '/api/**': { cors: true },
+      // Cache static assets
+      '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+      // Don't cache auth endpoints
+      '/api/auth/**': { cache: false },
+      // Don't cache mutation endpoints
+      '/api/**/**.post': { cache: false },
+      '/api/**/**.put': { cache: false },
+      '/api/**/**.patch': { cache: false },
+      '/api/**/**.delete': { cache: false },
     },
   },
 
