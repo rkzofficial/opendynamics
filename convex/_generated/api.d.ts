@@ -11,6 +11,7 @@
 import type * as apiKeys from "../apiKeys.js";
 import type * as auth from "../auth.js";
 import type * as caseShares from "../caseShares.js";
+import type * as oauth from "../oauth.js";
 import type * as seedAdmin from "../seedAdmin.js";
 import type * as settings from "../settings.js";
 import type * as tokens from "../tokens.js";
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   apiKeys: typeof apiKeys;
   auth: typeof auth;
   caseShares: typeof caseShares;
+  oauth: typeof oauth;
   seedAdmin: typeof seedAdmin;
   settings: typeof settings;
   tokens: typeof tokens;

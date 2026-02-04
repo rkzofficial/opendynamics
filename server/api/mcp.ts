@@ -1,6 +1,6 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createMcpServer } from '../mcp/server'
-import { validateApiKey } from '../mcp/utils/auth'
+import { validateAuth } from '../mcp/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
@@ -30,24 +30,17 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Extract API key from Authorization header
+  // Extract and validate auth from Authorization header
+  // Supports both API keys (odk_) and OAuth tokens (oat_)
   const authHeader = getHeader(event, 'authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    throw createError({
-      statusCode: 401,
-      message: 'Missing or invalid Authorization header. Expected: Bearer <api-key>',
-    })
-  }
-
-  const apiKey = authHeader.slice(7)
   let userId: string
 
   try {
-    userId = await validateApiKey(apiKey)
+    userId = await validateAuth(authHeader)
   } catch (error) {
     throw createError({
       statusCode: 401,
-      message: (error as Error).message || 'Invalid API key',
+      message: (error as Error).message || 'Invalid authorization',
     })
   }
 

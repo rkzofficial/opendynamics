@@ -71,6 +71,9 @@ export default defineNuxtConfig({
       '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
       // Don't cache auth endpoints
       '/api/auth/**': { cache: false },
+      // OAuth endpoints - don't cache and enable CORS
+      '/api/oauth/**': { cors: true, cache: false },
+      '/.well-known/**': { cors: true, cache: false },
       // Don't cache mutation endpoints
       '/api/**/**.post': { cache: false },
       '/api/**/**.put': { cache: false },
