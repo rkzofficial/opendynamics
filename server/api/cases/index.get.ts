@@ -1,7 +1,7 @@
 import { getDynamicsClient } from '../../utils/dynamics'
 import { buildCaseFilter } from '../../utils/odata-builder'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
 
@@ -42,4 +42,26 @@ export default defineEventHandler(async (event) => {
       message: err.message || 'Failed to fetch cases',
     })
   }
+}, {
+  maxAge: 60 * 5, // Cache for 5 minutes
+  getKey: (event) => {
+    const query = getQuery(event)
+    // Create a cache key that includes all query parameters to ensure proper cache separation
+    const keyParts = [
+      'cases',
+      query.userId || 'default',
+      query.status || 'all',
+      query.statusReason || 'all',
+      query.priority || 'all',
+      query.dxPendingRelease || 'false',
+      query.search || 'none',
+      query.dateFrom || 'none',
+      query.dateTo || 'none',
+      query.skipToken || 'first',
+      query.pageSize || '20',
+      query.orderBy || 'createdon',
+      query.orderDirection || 'desc',
+    ]
+    return keyParts.join(':')
+  },
 })

@@ -1,6 +1,6 @@
 import { getDynamicsClient } from '../../utils/dynamics'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(async (event) => {
   const query = getQuery(event)
   const type = query.type as string | undefined
   const userId = query.userId as string | undefined
@@ -21,4 +21,12 @@ export default defineEventHandler(async (event) => {
       message: err.message || 'Failed to fetch dashboard data',
     })
   }
+}, {
+  maxAge: 60 * 5, // Cache for 5 minutes
+  getKey: (event) => {
+    const query = getQuery(event)
+    const type = query.type as string | undefined
+    const userId = query.userId as string | undefined
+    return `dashboard:${userId || 'default'}:${type || 'stats'}`
+  },
 })
