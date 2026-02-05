@@ -76,7 +76,7 @@ async function handleAuthorize(action: 'approve' | 'deny') {
   error.value = ''
 
   try {
-    const response = await $fetch<{ redirect: string }>('/api/oauth/authorize', {
+    const response = await $fetch<{ redirect: string }>('/oauth/authorize', {
       method: 'POST',
       body: {
         client_id: clientId.value,
