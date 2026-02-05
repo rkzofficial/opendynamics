@@ -11,6 +11,8 @@ export default defineEventHandler(async (event) => {
 
   const setting = await convex.query(api.settings.get, { key: 'dynamics' })
 
+  console.log({config})
+
   if (!setting) {
     return {
       clientId: '51f81489-12ee-4a9e-aaae-a2591f45987d',
