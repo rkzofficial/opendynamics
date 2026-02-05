@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  # ===========================================
+  # Convex Backend (Self-Hosted)
+  # ===========================================
+  convex:
+    image: ghcr.io/get-convex/convex-backend:latest
+    container_name: opendynamics-convex
+    restart: unless-stopped
+    ports:
+      - "3210:3210"
+    environment:
+      CONVEX_SITE_URL: "https://${CONVEX_DOMAIN}"
+      CONVEX_ADMIN_KEY: "${CONVEX_ADMIN_KEY}"
+      CONVEX_STORAGE_DIR: "/data"
+      # Allow connections from OpenDynamics app
+      CONVEX_ALLOWED_ORIGINS: "https://${APP_DOMAIN},http://localhost:3000"
+    volumes:
+      - convex_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3210/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================================
+  # OpenDynamics App
+  # ===========================================
+  opendynamics:
+    image: aithen.ved.yt/rkzofficial/opendynamics:latest
+    container_name: opendynamics-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Convex connection (points to self-hosted instance)
+      NUXT_CONVEX_URL: "https://${CONVEX_DOMAIN}"
+
+      # Security keys (required)
+      SESSION_SECRET: "${SESSION_SECRET}"
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+
+      # Optional: PWA Push Notifications
+      VAPID_PUBLIC_KEY: "${VAPID_PUBLIC_KEY:-}"
+      VAPID_PRIVATE_KEY: "${VAPID_PRIVATE_KEY:-}"
+      VAPID_SUBJECT: "${VAPID_SUBJECT:-}"
+
+      # Node environment
+      NODE_ENV: "production"
+    depends_on:
+      convex:
+        condition: service_healthy
+
+volumes:
+  convex_data:
+    driver: local
+
+networks:
+  default:
+    name: nginxproxymanager_default
+    external: true

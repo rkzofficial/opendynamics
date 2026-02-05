@@ -12,7 +12,10 @@
     "postinstall": "nuxt prepare",
     "start": "bun run .output/server/index.mjs",
     "deploy": "bun run build:cf && wrangler pages deploy dist",
-    "deploy:prod": "bun run build:cf && wrangler pages deploy dist --branch main"
+    "deploy:prod": "bun run build:cf && wrangler pages deploy dist --branch main",
+    "convex:deploy": "bunx convex deploy --url https://${CONVEX_DOMAIN} --admin-key ${CONVEX_ADMIN_KEY}",
+    "convex:seed": "bunx convex run seedAdmin:seed --url https://${CONVEX_DOMAIN} --admin-key ${CONVEX_ADMIN_KEY}",
+    "convex:run": "bunx convex run --url https://${CONVEX_DOMAIN} --admin-key ${CONVEX_ADMIN_KEY}"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
