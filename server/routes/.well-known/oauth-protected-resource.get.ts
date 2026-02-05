@@ -14,7 +14,10 @@ export default defineEventHandler((event) => {
 
   return {
     resource: `${baseUrl}/api/mcp`,
-    authorization_servers: [baseUrl],
+    authorization_servers: [
+      `${baseUrl}/.well-known/oauth-authorization-server`,
+      baseUrl,
+    ],
     scopes_supported: ['openid', 'profile', 'mcp'],
     bearer_methods_supported: ['header'],
     resource_documentation: `${baseUrl}`,

@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Mcp-Session-Id',
+      'Access-Control-Expose-Headers': 'WWW-Authenticate',
       'Access-Control-Max-Age': '86400',
     })
     return null
@@ -20,6 +21,7 @@ export default defineEventHandler(async (event) => {
   setResponseHeaders(event, {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Mcp-Session-Id',
+    'Access-Control-Expose-Headers': 'WWW-Authenticate',
   })
 
   // Only allow POST, GET, DELETE methods for MCP
@@ -42,11 +44,16 @@ export default defineEventHandler(async (event) => {
     const url = getRequestURL(event)
     const baseUrl = `${url.protocol}//${url.host}`
 
-    setResponseHeader(
-      event,
-      'WWW-Authenticate',
-      `Bearer realm="opendynamics", resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"`
-    )
+    const challenge = [
+      'Bearer realm="opendynamics"',
+      `authorization_uri="${baseUrl}/oauth/authorize"`,
+      `token_endpoint="${baseUrl}/api/oauth/token"`,
+      `resource="${baseUrl}/api/mcp"`,
+      `resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"`,
+      'scope="openid profile mcp"',
+    ].join(', ')
+
+    setResponseHeader(event, 'WWW-Authenticate', challenge)
 
     throw createError({
       statusCode: 401,
