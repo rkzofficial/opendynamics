@@ -50,6 +50,11 @@ services:
     ports:
       - "3000:3000"
     environment:
+      # Server binding (required for Docker)
+      HOST: "0.0.0.0"
+      NITRO_HOST: "0.0.0.0"
+      NITRO_PORT: "3000"
+
       # Convex connection (points to self-hosted instance)
       NUXT_CONVEX_URL: "https://${CONVEX_DOMAIN}"
 
@@ -67,6 +72,12 @@ services:
     depends_on:
       convex-backend:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   convex_data:
