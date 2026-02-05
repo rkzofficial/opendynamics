@@ -28,8 +28,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    sessionSecret: process.env.SESSION_SECRET || 'default-session-secret-change-in-production',
-    encryptionKey: process.env.ENCRYPTION_KEY || 'default-encryption-key-32chars!',
+    sessionSecret: process.env.NUXT_SESSION_SECRET || 'default-session-secret-change-in-production',
+    encryptionKey: process.env.NUXT_ENCRYPTION_KEY || 'default-encryption-key-32chars!',
     public: {
       convexUrl: process.env.NUXT_PUBLIC_CONVEX_URL || '',
     },

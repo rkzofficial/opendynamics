@@ -203,8 +203,9 @@ types/
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` for local development:
-- `CONVEX_DEPLOYMENT` - Convex deployment name
-- `NUXT_CONVEX_URL` - Convex API URL
-- `SESSION_SECRET` - Min 32 chars
-- `ENCRYPTION_KEY` - Exactly 32 chars for token encryption
+Copy `.env.example` to `.env` and fill in values.
+
+**Important:** Nuxt runtime config requires `NUXT_` prefix for runtime overrides:
+- `NUXT_PUBLIC_CONVEX_URL` - Convex API URL (public, exposed to client)
+- `NUXT_SESSION_SECRET` - Session secret, min 32 chars (server-only)
+- `NUXT_ENCRYPTION_KEY` - Exactly 32 chars for token encryption (server-only)

@@ -56,11 +56,11 @@ services:
       NITRO_PORT: "3000"
 
       # Convex connection (points to self-hosted instance)
-      NUXT_PUBLIC_CONVEX_URL: "${CONVEX_SELF_HOSTED_URL}"
+      NUXT_PUBLIC_CONVEX_URL: "${NUXT_PUBLIC_CONVEX_URL}"
 
       # Security keys (required)
-      SESSION_SECRET: "${SESSION_SECRET}"
-      ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+      NUXT_SESSION_SECRET: "${NUXT_SESSION_SECRET}"
+      NUXT_ENCRYPTION_KEY: "${NUXT_ENCRYPTION_KEY}"
 
       # Optional: PWA Push Notifications
       VAPID_PUBLIC_KEY: "${VAPID_PUBLIC_KEY:-}"
