@@ -2,25 +2,43 @@ services:
   # ===========================================
   # Convex Backend (Self-Hosted)
   # ===========================================
-  convex:
+  convex-backend:
     image: ghcr.io/get-convex/convex-backend:latest
-    container_name: opendynamics-convex
+    container_name: opendynamics-convex-backend
     restart: unless-stopped
     ports:
       - "3210:3210"
+      - "3211:3211"
     environment:
       CONVEX_SITE_URL: "https://${CONVEX_DOMAIN}"
-      CONVEX_ADMIN_KEY: "${CONVEX_ADMIN_KEY}"
-      CONVEX_STORAGE_DIR: "/data"
-      # Allow connections from OpenDynamics app
       CONVEX_ALLOWED_ORIGINS: "https://${APP_DOMAIN},http://localhost:3000"
     volumes:
-      - convex_data:/data
+      - convex_data:/convex/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3210/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "curl", "-f", "http://localhost:3210/version"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+
+  # ===========================================
+  # Convex Dashboard
+  # ===========================================
+  convex-dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    container_name: opendynamics-convex-dashboard
+    restart: unless-stopped
+    ports:
+      - "6791:6791"
+    environment:
+      CONVEX_BACKEND_DEPLOYMENT_URL: "http://convex-backend:3210"
+      CONVEX_DASHBOARD_LOAD_MONACO_FROM_CDN: "false"
+    depends_on:
+      convex-backend:
+        condition: service_healthy
+    stop_grace_period: 10s
+    stop_signal: SIGINT
 
   # ===========================================
   # OpenDynamics App
@@ -47,7 +65,7 @@ services:
       # Node environment
       NODE_ENV: "production"
     depends_on:
-      convex:
+      convex-backend:
         condition: service_healthy
 
 volumes:
