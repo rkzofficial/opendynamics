@@ -253,43 +253,38 @@ onUnmounted(() => {
             <UiAlertDescription>{{ error }}</UiAlertDescription>
           </UiAlert>
 
-          <div class="p-4 border rounded-lg bg-muted/50">
-            <h4 class="font-medium mb-2">Complete Authentication</h4>
-            <p class="text-sm text-muted-foreground mb-4">
-              {{ deviceCode.message }}
-            </p>
-
-            <div class="flex items-center gap-4 mb-4">
-              <div class="flex-1">
-                <p class="text-sm text-muted-foreground mb-1">Your code:</p>
-                <div class="flex items-center gap-2">
-                  <code class="text-2xl font-bold tracking-widest bg-background px-4 py-2 rounded">
-                    {{ deviceCode.user_code }}
-                  </code>
-                  <UiButton variant="outline" size="icon" @click="copyCode">
-                    <Copy v-if="!copied" class="h-4 w-4" />
-                    <CheckCircle v-else class="h-4 w-4 text-green-600" />
-                  </UiButton>
-                </div>
+          <div class="space-y-4">
+            <div class="text-center">
+              <p class="text-sm text-muted-foreground mb-3">Your code:</p>
+              <div class="flex items-center justify-center gap-2 mb-3">
+                <code class="text-2xl font-bold tracking-widest bg-muted px-4 py-2 rounded">
+                  {{ deviceCode.user_code }}
+                </code>
+                <UiButton variant="outline" size="icon" @click="copyCode">
+                  <Copy v-if="!copied" class="h-4 w-4" />
+                  <CheckCircle v-else class="h-4 w-4 text-green-600" />
+                </UiButton>
               </div>
-            </div>
-
-            <div class="flex items-center gap-2">
               <a
                 :href="deviceCode.verification_uri"
                 target="_blank"
-                class="text-primary hover:underline"
+                class="text-primary hover:underline text-sm"
               >
                 Open {{ deviceCode.verification_uri }}
               </a>
+            </div>
+
+            <div class="flex items-center justify-center gap-2 pt-2">
               <UiSpinner size="sm" />
               <span class="text-sm text-muted-foreground">Waiting for authentication...</span>
             </div>
 
-            <UiButton variant="outline" class="mt-4" @click="handleCancel">
-              <ArrowLeft class="mr-2 h-4 w-4" />
-              Cancel
-            </UiButton>
+            <div class="flex justify-center pt-2">
+              <UiButton variant="outline" @click="handleCancel">
+                <ArrowLeft class="mr-2 h-4 w-4" />
+                Cancel
+              </UiButton>
+            </div>
           </div>
         </div>
       </UiCardContent>
