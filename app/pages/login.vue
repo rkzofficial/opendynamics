@@ -86,6 +86,13 @@ async function handleSubmit() {
           </UiButton>
         </form>
       </UiCardContent>
+
+      <UiCardFooter class="flex justify-center">
+        <p class="text-sm text-muted-foreground">
+          Don't have an account?
+          <NuxtLink to="/signup" class="text-primary hover:underline">Create one</NuxtLink>
+        </p>
+      </UiCardFooter>
     </UiCard>
   </div>
 </template>

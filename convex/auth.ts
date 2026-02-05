@@ -152,6 +152,31 @@ export const getUserByUsername = query({
   },
 });
 
+// Get user by email (for signup uniqueness check)
+export const getUserByEmail = query({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+  },
+});
+
 // Create session after OIDC login or password verification
 export const createSession = mutation({
   args: {
