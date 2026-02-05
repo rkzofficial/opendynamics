@@ -35,19 +35,44 @@ export function useTheme() {
     updateThemeColor(isCurrentlyDark)
   }
 
-  function updateThemeColor(isDark: boolean) {
-    // Colors from main.css - background colors
-    // Light mode: hsl(0 0% 100%) = #ffffff (white)
-    // Dark mode: hsl(0 0% 7%) = #121212 (dark gray)
-    const themeColor = isDark ? '#121212' : '#ffffff'
-
-    let metaThemeColor = document.querySelector('meta[name="theme-color"]')
-    if (!metaThemeColor) {
-      metaThemeColor = document.createElement('meta')
-      metaThemeColor.setAttribute('name', 'theme-color')
-      document.head.appendChild(metaThemeColor)
+  function ensureMetaTag(name: string) {
+    let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.setAttribute('name', name)
+      document.head.appendChild(meta)
     }
-    metaThemeColor.setAttribute('content', themeColor)
+    return meta
+  }
+
+  function getSurfaceColor(isDark: boolean) {
+    const backgroundValue = getComputedStyle(document.documentElement)
+      .getPropertyValue('--background')
+      .trim()
+
+    if (backgroundValue) {
+      if (backgroundValue.includes('(') || backgroundValue.startsWith('#')) {
+        return backgroundValue
+      }
+      return `hsl(${backgroundValue})`
+    }
+
+    return isDark ? '#121212' : '#ffffff'
+  }
+
+  function updateThemeColor(isDark: boolean) {
+    const themeColor = getSurfaceColor(isDark)
+    const metaTags = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+
+    if (metaTags.length === 0) {
+      const metaThemeColor = ensureMetaTag('theme-color')
+      metaThemeColor.setAttribute('content', themeColor)
+    } else {
+      metaTags.forEach((meta) => meta.setAttribute('content', themeColor))
+    }
+
+    ensureMetaTag('apple-mobile-web-app-capable').setAttribute('content', 'yes')
+    ensureMetaTag('apple-mobile-web-app-status-bar-style').setAttribute('content', isDark ? 'black' : 'default')
   }
 
   function initTheme() {
