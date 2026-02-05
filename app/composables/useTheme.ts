@@ -24,12 +24,30 @@ export function useTheme() {
   function applyTheme() {
     const html = document.documentElement
     const isCurrentlyDark = resolvedTheme.value === 'dark'
-    
+
     if (isCurrentlyDark) {
       html.classList.add('dark')
     } else {
       html.classList.remove('dark')
     }
+
+    // Update theme-color meta tag for PWA status bar
+    updateThemeColor(isCurrentlyDark)
+  }
+
+  function updateThemeColor(isDark: boolean) {
+    // Colors from main.css - background colors
+    // Light mode: hsl(0 0% 100%) = #ffffff (white)
+    // Dark mode: hsl(0 0% 7%) = #121212 (dark gray)
+    const themeColor = isDark ? '#121212' : '#ffffff'
+
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta')
+      metaThemeColor.setAttribute('name', 'theme-color')
+      document.head.appendChild(metaThemeColor)
+    }
+    metaThemeColor.setAttribute('content', themeColor)
   }
 
   function initTheme() {
