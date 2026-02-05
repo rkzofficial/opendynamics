@@ -30,8 +30,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     sessionSecret: process.env.NUXT_SESSION_SECRET || 'default-session-secret-change-in-production',
     encryptionKey: process.env.NUXT_ENCRYPTION_KEY || 'default-encryption-key-32chars!',
+    // VAPID keys for server-side push notifications
+    vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
+    vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',
     public: {
       convexUrl: process.env.NUXT_PUBLIC_CONVEX_URL || '',
+      vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
     },
   },
 

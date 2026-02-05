@@ -63,9 +63,9 @@ services:
       NUXT_ENCRYPTION_KEY: "${NUXT_ENCRYPTION_KEY}"
 
       # Optional: PWA Push Notifications
-      VAPID_PUBLIC_KEY: "${VAPID_PUBLIC_KEY:-}"
-      VAPID_PRIVATE_KEY: "${VAPID_PRIVATE_KEY:-}"
-      VAPID_SUBJECT: "${VAPID_SUBJECT:-}"
+      NUXT_PUBLIC_VAPID_PUBLIC_KEY: "${NUXT_PUBLIC_VAPID_PUBLIC_KEY:-}"
+      NUXT_VAPID_PRIVATE_KEY: "${NUXT_VAPID_PRIVATE_KEY:-}"
+      NUXT_VAPID_SUBJECT: "${NUXT_VAPID_SUBJECT:-}"
 
       # Node environment
       NODE_ENV: "production"

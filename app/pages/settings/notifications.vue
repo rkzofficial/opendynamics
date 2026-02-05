@@ -27,8 +27,8 @@ const showTestNotification = async () => {
 const handleSubscribe = async () => {
   isLoading.value = true
   try {
-    // In production, get this from your environment/API
-    const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || ''
+    const config = useRuntimeConfig()
+    const vapidPublicKey = config.public.vapidPublicKey
     if (!vapidPublicKey) {
       console.warn('VAPID public key not configured')
       return
