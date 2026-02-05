@@ -38,6 +38,16 @@ export default defineEventHandler(async (event) => {
   try {
     userId = await validateAuth(authHeader)
   } catch (error) {
+    // RFC 9728: Include WWW-Authenticate header for OAuth discovery
+    const url = getRequestURL(event)
+    const baseUrl = `${url.protocol}//${url.host}`
+
+    setResponseHeader(
+      event,
+      'WWW-Authenticate',
+      `Bearer realm="opendynamics", resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"`
+    )
+
     throw createError({
       statusCode: 401,
       message: (error as Error).message || 'Invalid authorization',
