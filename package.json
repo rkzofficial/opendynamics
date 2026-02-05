@@ -13,9 +13,10 @@
     "start": "bun run .output/server/index.mjs",
     "deploy": "bun run build:cf && wrangler pages deploy dist",
     "deploy:prod": "bun run build:cf && wrangler pages deploy dist --branch main",
-    "convex:deploy": "CONVEX_SELF_HOSTED_URL=https://${CONVEX_DOMAIN} CONVEX_SELF_HOSTED_ADMIN_KEY=${CONVEX_ADMIN_KEY} bunx convex deploy",
-    "convex:seed": "CONVEX_SELF_HOSTED_URL=https://${CONVEX_DOMAIN} CONVEX_SELF_HOSTED_ADMIN_KEY=${CONVEX_ADMIN_KEY} bunx convex run seedAdmin:seed",
-    "convex:run": "CONVEX_SELF_HOSTED_URL=https://${CONVEX_DOMAIN} CONVEX_SELF_HOSTED_ADMIN_KEY=${CONVEX_ADMIN_KEY} bunx convex run",
+    "convex:dev": "bunx convex dev",
+    "convex:deploy": "bunx convex deploy",
+    "convex:seed": "bunx convex run seedAdmin:seed",
+    "convex:run": "bunx convex run",
     "convex:gen-key": "docker compose exec convex-backend ./generate_admin_key.sh"
   },
   "dependencies": {
