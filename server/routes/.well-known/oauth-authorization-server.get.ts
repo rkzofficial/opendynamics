@@ -1,4 +1,12 @@
 export default defineEventHandler((event) => {
+  // Set CORS headers for MCP client discovery
+  setResponseHeaders(event, {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Cache-Control': 'public, max-age=3600',
+  })
+
   // Get the base URL from the request
   const url = getRequestURL(event)
   const baseUrl = `${url.protocol}//${url.host}`
