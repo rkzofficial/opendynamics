@@ -51,6 +51,7 @@ export default defineEventHandler(async (event) => {
     /^https:\/\/chatgpt\.com\/connector_platform_oauth_redirect$/,
     /^https?:\/\/localhost(:\d+)?\/.*$/, // Allow localhost for development
     /^https?:\/\/127\.0\.0\.1(:\d+)?\/.*$/, // Allow 127.0.0.1 for development
+    /^[a-z][a-z0-9+.-]*:\/\/[^\/]+\/.*$/, // Allow custom URI schemes (cursor://, vscode://, etc.) for MCP clients
   ]
 
   for (const uri of redirect_uris) {
