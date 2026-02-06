@@ -1,5 +1,6 @@
 import { getDynamicsClientWithUser } from '../../utils/dynamics'
 import { cachedAuthHandler } from '../../utils/cache'
+import { buildCaseDetail } from '../../utils/mappers'
 
 export default cachedAuthHandler(async (event, user) => {
   const query = getQuery(event)
@@ -13,11 +14,10 @@ export default cachedAuthHandler(async (event, user) => {
     })
   }
 
-  // User is already authenticated by cachedAuthHandler
   const { client } = await getDynamicsClientWithUser(user, userId)
 
   try {
-    return await client.getCase(caseId)
+    return await buildCaseDetail(client, caseId)
   } catch (error: unknown) {
     const err = error as Error
     throw createError({
@@ -26,7 +26,7 @@ export default cachedAuthHandler(async (event, user) => {
     })
   }
 }, {
-  maxAge: 60 * 5, // Cache for 5 minutes
+  maxAge: 60 * 5,
   getKey: (event, user) => {
     const caseId = getRouterParam(event, 'id')
     const query = getQuery(event)

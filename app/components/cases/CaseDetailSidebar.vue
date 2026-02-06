@@ -12,7 +12,7 @@ import {
   Globe,
   Timer,
 } from 'lucide-vue-next'
-import type { Case } from '~/types'
+import type { CaseDetail } from '~/types'
 import {
   formatCaseDate,
   getTimezoneName,
@@ -26,16 +26,14 @@ interface SLAData {
 }
 
 interface Props {
-  case: Case
+  case: CaseDetail
   firstResponseSLA?: SLAData | null
   customerUpdateSLA?: SLAData | null
   firstResponseCountdown?: string
   customerUpdateCountdown?: string
-  isLoadingSLAKPIs?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isLoadingSLAKPIs: false,
   firstResponseCountdown: '',
   customerUpdateCountdown: '',
 })
@@ -57,7 +55,7 @@ onUnmounted(() => {
 })
 
 const customerCurrentTime = computed(() => {
-  const ianaTimezone = getTimezoneIANA(props.case.ent_preferredcustomertimezone)
+  const ianaTimezone = getTimezoneIANA(props.case.customerPreferences?.timezoneCode)
   if (!ianaTimezone) return '--:--'
 
   try {
@@ -103,7 +101,7 @@ function formatTimePart(dateString: string | null | undefined): string {
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-xs text-muted-foreground">Ticket Number</p>
-            <p class="text-sm font-medium font-mono">{{ props.case.ticketnumber }}</p>
+            <p class="text-sm font-medium font-mono">{{ props.case.ticketNumber }}</p>
           </div>
         </div>
 
@@ -115,9 +113,9 @@ function formatTimePart(dateString: string | null | undefined): string {
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-[10px] text-muted-foreground leading-none">Created</p>
-              <p :title="formatCaseDate(props.case.createdon).tooltip" class="mt-0.5">
-                <span class="text-xs font-medium">{{ formatDatePart(props.case.createdon) }}</span>
-                <span class="text-[10px] text-muted-foreground ml-1">{{ formatTimePart(props.case.createdon) }}</span>
+              <p :title="formatCaseDate(props.case.createdAt).tooltip" class="mt-0.5">
+                <span class="text-xs font-medium">{{ formatDatePart(props.case.createdAt) }}</span>
+                <span class="text-[10px] text-muted-foreground ml-1">{{ formatTimePart(props.case.createdAt) }}</span>
               </p>
             </div>
           </div>
@@ -127,9 +125,9 @@ function formatTimePart(dateString: string | null | undefined): string {
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-[10px] text-muted-foreground leading-none">Modified</p>
-              <p :title="formatCaseDate(props.case.modifiedon).tooltip" class="mt-0.5">
-                <span class="text-xs font-medium">{{ formatDatePart(props.case.modifiedon) }}</span>
-                <span class="text-[10px] text-muted-foreground ml-1">{{ formatTimePart(props.case.modifiedon) }}</span>
+              <p :title="formatCaseDate(props.case.modifiedAt).tooltip" class="mt-0.5">
+                <span class="text-xs font-medium">{{ formatDatePart(props.case.modifiedAt) }}</span>
+                <span class="text-[10px] text-muted-foreground ml-1">{{ formatTimePart(props.case.modifiedAt) }}</span>
               </p>
             </div>
           </div>
@@ -145,16 +143,13 @@ function formatTimePart(dateString: string | null | undefined): string {
               </div>
               <div class="min-w-0 flex-1">
                 <p class="text-[10px] text-muted-foreground leading-none">First Response</p>
-                <div v-if="isLoadingSLAKPIs" class="text-xs text-muted-foreground mt-0.5">Loading...</div>
-                <template v-else>
-                  <p v-if="firstResponseSLA?.succeeded" :title="formatCaseDate(firstResponseSLA?.succeeded).tooltip" class="text-xs font-medium mt-0.5 text-green-600">
-                    Done
-                  </p>
-                  <p v-else-if="firstResponseSLA?.deadline" class="text-xs font-medium mt-0.5 font-mono">
-                    {{ firstResponseCountdown || formatCaseDate(firstResponseSLA?.deadline).text }}
-                  </p>
-                  <p v-else class="text-xs text-muted-foreground mt-0.5">Not set</p>
-                </template>
+                <p v-if="firstResponseSLA?.succeeded" :title="formatCaseDate(firstResponseSLA?.succeeded).tooltip" class="text-xs font-medium mt-0.5 text-green-600">
+                  Done
+                </p>
+                <p v-else-if="firstResponseSLA?.deadline" class="text-xs font-medium mt-0.5 font-mono">
+                  {{ firstResponseCountdown || formatCaseDate(firstResponseSLA?.deadline).text }}
+                </p>
+                <p v-else class="text-xs text-muted-foreground mt-0.5">Not set</p>
               </div>
             </div>
             <div class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
@@ -163,16 +158,13 @@ function formatTimePart(dateString: string | null | undefined): string {
               </div>
               <div class="min-w-0 flex-1">
                 <p class="text-[10px] text-muted-foreground leading-none">Customer Update</p>
-                <div v-if="isLoadingSLAKPIs" class="text-xs text-muted-foreground mt-0.5">Loading...</div>
-                <template v-else>
-                  <p v-if="customerUpdateSLA?.succeeded" :title="formatCaseDate(customerUpdateSLA?.succeeded).tooltip" class="text-xs font-medium mt-0.5 text-green-600">
-                    Done
-                  </p>
-                  <p v-else-if="customerUpdateSLA?.deadline" class="text-xs font-medium mt-0.5 font-mono">
-                    {{ customerUpdateCountdown || formatCaseDate(customerUpdateSLA?.deadline).text }}
-                  </p>
-                  <p v-else class="text-xs text-muted-foreground mt-0.5">Not set</p>
-                </template>
+                <p v-if="customerUpdateSLA?.succeeded" :title="formatCaseDate(customerUpdateSLA?.succeeded).tooltip" class="text-xs font-medium mt-0.5 text-green-600">
+                  Done
+                </p>
+                <p v-else-if="customerUpdateSLA?.deadline" class="text-xs font-medium mt-0.5 font-mono">
+                  {{ customerUpdateCountdown || formatCaseDate(customerUpdateSLA?.deadline).text }}
+                </p>
+                <p v-else class="text-xs text-muted-foreground mt-0.5">Not set</p>
               </div>
             </div>
           </div>
@@ -185,7 +177,7 @@ function formatTimePart(dateString: string | null | undefined): string {
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-xs text-muted-foreground">Support Plan</p>
-            <p class="text-sm font-medium">{{ props.case.ent_productentitlement?.['ent_supportlevel@OData.Community.Display.V1.FormattedValue'] || props.case.entitlementid?.name || 'Not set' }}</p>
+            <p class="text-sm font-medium">{{ props.case.supportLevel || props.case.entitlement?.name || 'Not set' }}</p>
           </div>
         </div>
       </UiCardContent>
@@ -203,25 +195,25 @@ function formatTimePart(dateString: string | null | undefined): string {
         <!-- Contact Header -->
         <div class="text-center pb-2">
           <div class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white font-semibold text-lg shadow-md">
-            {{ (props.case['_ent_contact_value@OData.Community.Display.V1.FormattedValue'] || props.case.customerid_contact?.fullname || '?').charAt(0).toUpperCase() }}
+            {{ (props.case.contact?.name || props.case.customer?.name || '?').charAt(0).toUpperCase() }}
           </div>
           <h3 class="mt-3 font-semibold text-base">
-            {{ props.case['_ent_contact_value@OData.Community.Display.V1.FormattedValue'] || props.case.customerid_contact?.fullname || 'Not set' }}
+            {{ props.case.contact?.name || props.case.customer?.name || 'Not set' }}
           </h3>
-          <div v-if="props.case.customerid_account?.name" class="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-full bg-muted text-sm font-medium">
+          <div v-if="props.case.account?.name" class="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-full bg-muted text-sm font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
-            {{ props.case.customerid_account.name }}
+            {{ props.case.account.name }}
           </div>
-          <p v-if="props.case['_ent_customer_value@OData.Community.Display.V1.FormattedValue']" class="text-xs text-muted-foreground mt-2">
-            {{ props.case['_ent_customer_value@OData.Community.Display.V1.FormattedValue'] }}
+          <p v-if="props.case.customer360" class="text-xs text-muted-foreground mt-2">
+            {{ props.case.customer360 }}
           </p>
         </div>
 
         <!-- Contact Details -->
         <div class="grid gap-2">
           <a
-            v-if="props.case.ent_preferredemail || props.case.customerid_contact?.emailaddress1"
-            :href="`mailto:${props.case.ent_preferredemail || props.case.customerid_contact?.emailaddress1}`"
+            v-if="props.case.customerPreferences?.email || props.case.customer?.email"
+            :href="`mailto:${props.case.customerPreferences?.email || props.case.customer?.email}`"
             class="flex items-center gap-3 rounded-md border bg-background p-3 transition-colors hover:bg-muted/50"
           >
             <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10">
@@ -229,7 +221,7 @@ function formatTimePart(dateString: string | null | undefined): string {
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-xs text-muted-foreground">Email</p>
-              <p class="text-sm font-medium truncate">{{ props.case.ent_preferredemail || props.case.customerid_contact?.emailaddress1 }}</p>
+              <p class="text-sm font-medium truncate">{{ props.case.customerPreferences?.email || props.case.customer?.email }}</p>
             </div>
           </a>
           <div
@@ -245,8 +237,8 @@ function formatTimePart(dateString: string | null | undefined): string {
             </div>
           </div>
           <a
-            v-if="props.case.ent_preferredphonenumber"
-            :href="`tel:${props.case.ent_preferredphonenumber}`"
+            v-if="props.case.customerPreferences?.phone"
+            :href="`tel:${props.case.customerPreferences.phone}`"
             class="flex items-center gap-3 rounded-md border bg-background p-3 transition-colors hover:bg-muted/50"
           >
             <div class="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/10">
@@ -254,43 +246,43 @@ function formatTimePart(dateString: string | null | undefined): string {
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-xs text-muted-foreground">Phone</p>
-              <p class="text-sm font-medium">{{ props.case.ent_preferredphonenumber }}</p>
+              <p class="text-sm font-medium">{{ props.case.customerPreferences.phone }}</p>
             </div>
           </a>
         </div>
 
         <!-- Preferences -->
         <div
-          v-if="props.case['ent_supportedlanguage@OData.Community.Display.V1.FormattedValue'] || getTimezoneName(props.case.ent_preferredcustomertimezone) || (props.case.ent_custworkhrsstarttime !== undefined && props.case.ent_custworkhrsendtime !== undefined)"
+          v-if="props.case.customerPreferences?.language || getTimezoneName(props.case.customerPreferences?.timezoneCode) || (props.case.customerPreferences?.workHoursStart !== undefined && props.case.customerPreferences?.workHoursEnd !== undefined)"
           class="space-y-2"
         >
           <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide px-1">Preferences</p>
           <div class="grid grid-cols-2 gap-2">
-            <div v-if="props.case['ent_supportedlanguage@OData.Community.Display.V1.FormattedValue']" class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
+            <div v-if="props.case.customerPreferences?.language" class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
               <div class="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500/10">
                 <Languages class="h-3.5 w-3.5 text-indigo-500" />
               </div>
               <div class="min-w-0 flex-1">
                 <p class="text-[10px] text-muted-foreground leading-none">Language</p>
-                <p class="text-xs font-medium mt-0.5 truncate">{{ props.case['ent_supportedlanguage@OData.Community.Display.V1.FormattedValue'] }}</p>
+                <p class="text-xs font-medium mt-0.5 truncate">{{ props.case.customerPreferences.language }}</p>
               </div>
             </div>
-            <div v-if="props.case.ent_custworkhrsstarttime !== undefined && props.case.ent_custworkhrsendtime !== undefined" class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
+            <div v-if="props.case.customerPreferences?.workHoursStart !== undefined && props.case.customerPreferences?.workHoursEnd !== undefined" class="flex items-center gap-2.5 rounded-md border bg-background p-2.5">
               <div class="flex h-7 w-7 items-center justify-center rounded-full bg-orange-500/10">
                 <Clock class="h-3.5 w-3.5 text-orange-500" />
               </div>
               <div class="min-w-0 flex-1">
                 <p class="text-[10px] text-muted-foreground leading-none">Work Hours</p>
-                <p class="text-xs font-medium mt-0.5">{{ props.case.ent_custworkhrsstarttime }}:00 - {{ props.case.ent_custworkhrsendtime }}:00</p>
+                <p class="text-xs font-medium mt-0.5">{{ props.case.customerPreferences.workHoursStart }}:00 - {{ props.case.customerPreferences.workHoursEnd }}:00</p>
               </div>
             </div>
-            <div v-if="getTimezoneName(props.case.ent_preferredcustomertimezone)" class="col-span-2 flex items-center gap-2.5 rounded-md border bg-background p-2.5">
+            <div v-if="getTimezoneName(props.case.customerPreferences?.timezoneCode)" class="col-span-2 flex items-center gap-2.5 rounded-md border bg-background p-2.5">
               <div class="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/10 flex-shrink-0">
                 <Globe class="h-3.5 w-3.5 text-cyan-500" />
               </div>
               <div class="min-w-0 flex-1">
                 <p class="text-[10px] text-muted-foreground leading-none">Timezone</p>
-                <p class="text-xs font-medium mt-0.5">{{ getTimezoneName(props.case.ent_preferredcustomertimezone) }}</p>
+                <p class="text-xs font-medium mt-0.5">{{ getTimezoneName(props.case.customerPreferences?.timezoneCode) }}</p>
               </div>
               <div class="text-right flex-shrink-0">
                 <p class="text-[10px] text-muted-foreground leading-none">Current Time</p>
@@ -302,14 +294,5 @@ function formatTimePart(dateString: string | null | undefined): string {
       </UiCardContent>
     </UiCard>
 
-    <!-- Owner info -->
-    <UiCard v-if="props.case.ownerid">
-      <UiCardHeader>
-        <UiCardTitle>Owner</UiCardTitle>
-      </UiCardHeader>
-      <UiCardContent>
-        <p class="font-medium">{{ props.case.ownerid.fullname }}</p>
-      </UiCardContent>
-    </UiCard>
   </div>
 </template>

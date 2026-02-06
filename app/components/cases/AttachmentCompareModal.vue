@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { X, ZoomIn, ZoomOut, RotateCcw, Download, Loader2, FileQuestion, XCircle } from 'lucide-vue-next'
-import type { CaseAttachment } from '~/types'
+import type { AttachmentItem } from '~/types'
 
 interface CompareItem {
-  attachment: CaseAttachment
+  attachment: AttachmentItem
   previewUrl: string | null
   isLoading: boolean
 }
@@ -17,7 +17,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   close: []
-  download: [attachment: CaseAttachment]
+  download: [attachment: AttachmentItem]
   remove: [index: number]
 }>()
 
@@ -98,7 +98,7 @@ function resetZoom(index: number) {
 
 function handleWheel(e: WheelEvent, index: number) {
   const item = props.items[index]
-  if (!item || !isImage(item.attachment.mimetype)) return
+  if (!item || !isImage(item.attachment.mimeType)) return
   e.preventDefault()
   if (e.deltaY < 0) {
     zoomIn(index)
@@ -110,7 +110,7 @@ function handleWheel(e: WheelEvent, index: number) {
 function handleMouseDown(e: MouseEvent, index: number) {
   const state = itemStates.value[index]
   const item = props.items[index]
-  if (!state || !item || state.scale <= 1 || !isImage(item.attachment.mimetype)) return
+  if (!state || !item || state.scale <= 1 || !isImage(item.attachment.mimeType)) return
   state.isDragging = true
   state.dragStart = {
     x: e.clientX - state.position.x,
@@ -143,7 +143,7 @@ function handleClose() {
   emit('close')
 }
 
-function handleDownload(attachment: CaseAttachment) {
+function handleDownload(attachment: AttachmentItem) {
   emit('download', attachment)
 }
 
@@ -211,7 +211,7 @@ onUnmounted(() => {
         >
           <div
             v-for="(item, index) in items"
-            :key="item.attachment.annotationid"
+            :key="item.attachment.id"
             class="relative flex flex-col bg-black/30 rounded-lg overflow-hidden"
           >
             <!-- Item header -->
@@ -244,7 +244,7 @@ onUnmounted(() => {
               </div>
 
               <!-- Image preview -->
-              <template v-else-if="item.previewUrl && isImage(item.attachment.mimetype)">
+              <template v-else-if="item.previewUrl && isImage(item.attachment.mimeType)">
                 <img
                   :src="item.previewUrl"
                   :alt="item.attachment.filename"
@@ -255,7 +255,7 @@ onUnmounted(() => {
               </template>
 
               <!-- Video preview -->
-              <template v-else-if="item.previewUrl && isVideo(item.attachment.mimetype)">
+              <template v-else-if="item.previewUrl && isVideo(item.attachment.mimeType)">
                 <video
                   :src="item.previewUrl"
                   controls
@@ -266,7 +266,7 @@ onUnmounted(() => {
               </template>
 
               <!-- Unsupported preview -->
-              <div v-else-if="!canPreview(item.attachment.mimetype) && !item.isLoading" class="flex flex-col items-center gap-2 text-white/70">
+              <div v-else-if="!canPreview(item.attachment.mimeType) && !item.isLoading" class="flex flex-col items-center gap-2 text-white/70">
                 <FileQuestion class="h-10 w-10" />
                 <span class="text-sm">Preview not available</span>
               </div>
@@ -275,7 +275,7 @@ onUnmounted(() => {
             <!-- Item footer controls -->
             <div class="flex items-center justify-center gap-1 px-2 py-2 bg-black/50">
               <!-- Zoom controls (only for images) -->
-              <template v-if="isImage(item.attachment.mimetype) && item.previewUrl">
+              <template v-if="isImage(item.attachment.mimeType) && item.previewUrl">
                 <button
                   class="p-1.5 rounded text-white hover:bg-white/10 transition-colors"
                   @click="zoomOut(index)"

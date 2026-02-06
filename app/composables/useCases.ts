@@ -1,20 +1,14 @@
-import type { Case, CasesResponse, CaseFilters, ActivitiesResponse, SLAKPIsResponse, StatusReasonOption, CaseSLAInfo, BatchSLAResponse } from '~/types'
+import type { CaseListItem, CaseDetail, CasesResponse, CaseFilters, StatusReasonOption, SLASummary } from '~/types'
 
 interface CasesState {
-  cases: Case[]
-  currentCase: Case | null
-  activities: ActivitiesResponse | null
-  slaKPIs: SLAKPIsResponse | null
-  caseSLAData: Record<string, CaseSLAInfo>
+  cases: CaseListItem[]
+  currentCase: CaseDetail | null
   skipToken: string | null
   skipTokenHistory: string[]
   hasMore: boolean
   pageSize: number
   isLoading: boolean
   isRefreshing: boolean
-  isLoadingActivities: boolean
-  isLoadingSLAKPIs: boolean
-  isLoadingBatchSLA: boolean
   isDownloadingAttachment: boolean
   isLoadingPreview: boolean
   filters: CaseFilters
@@ -27,18 +21,12 @@ const previewCache = new Map<string, string>()
 const casesState = reactive<CasesState>({
   cases: [],
   currentCase: null,
-  activities: null,
-  slaKPIs: null,
-  caseSLAData: {},
   skipToken: null,
   skipTokenHistory: [],
   hasMore: false,
   pageSize: 20,
   isLoading: false,
   isRefreshing: false,
-  isLoadingActivities: false,
-  isLoadingSLAKPIs: false,
-  isLoadingBatchSLA: false,
   isDownloadingAttachment: false,
   isLoadingPreview: false,
   filters: {},
@@ -48,14 +36,13 @@ const casesState = reactive<CasesState>({
 export function useCases() {
   async function fetchCases(filters?: CaseFilters, options?: { forceRefresh?: boolean }) {
     const isForceRefresh = options?.forceRefresh ?? false
-    
-    // Use isRefreshing for force refresh (no skeleton), isLoading for initial load
+
     if (isForceRefresh) {
       casesState.isRefreshing = true
     } else {
       casesState.isLoading = true
     }
-    
+
     try {
       const params = new URLSearchParams()
 
@@ -72,8 +59,7 @@ export function useCases() {
       if (mergedFilters.pageSize) params.set('pageSize', String(mergedFilters.pageSize))
       if (mergedFilters.orderBy) params.set('orderBy', mergedFilters.orderBy)
       if (mergedFilters.orderDirection) params.set('orderDirection', mergedFilters.orderDirection)
-      
-      // Add cache bypass parameter for force refresh
+
       if (isForceRefresh) {
         params.set('_noCache', '1')
       }
@@ -85,30 +71,17 @@ export function useCases() {
       casesState.hasMore = response.hasMore
       casesState.pageSize = response.pageSize
       casesState.filters = mergedFilters
-
-      // Fetch batch SLA data for "In Progress" cases (statuscode === 1)
-      const inProgressCaseIds = response.cases
-        .filter(c => c.statuscode === 1)
-        .map(c => c.incidentid)
-
-      if (inProgressCaseIds.length > 0) {
-        // Don't await - fetch SLA data in background
-        fetchBatchSLAData(inProgressCaseIds)
-      } else {
-        casesState.caseSLAData = {}
-      }
     } catch (error) {
       console.error('Failed to fetch cases:', error)
       casesState.cases = []
       casesState.skipToken = null
       casesState.hasMore = false
-      casesState.caseSLAData = {}
     } finally {
       casesState.isLoading = false
       casesState.isRefreshing = false
     }
   }
-  
+
   async function forceRefresh(filters?: CaseFilters) {
     return fetchCases(filters, { forceRefresh: true })
   }
@@ -116,7 +89,6 @@ export function useCases() {
   async function fetchNextPage() {
     if (!casesState.skipToken) return
 
-    // Save current skip token to history before navigating
     if (casesState.filters.skipToken) {
       casesState.skipTokenHistory.push(casesState.filters.skipToken)
     }
@@ -126,13 +98,11 @@ export function useCases() {
 
   async function fetchPreviousPage() {
     if (casesState.skipTokenHistory.length === 0) {
-      // Go back to first page
       await fetchCases({ skipToken: undefined })
       casesState.skipTokenHistory = []
       return
     }
 
-    // Pop the previous skip token from history
     const previousSkipToken = casesState.skipTokenHistory.pop()
     await fetchCases({ skipToken: previousSkipToken })
   }
@@ -140,7 +110,7 @@ export function useCases() {
   async function fetchCase(id: string) {
     casesState.isLoading = true
     try {
-      const response = await $fetch<Case>(`/api/cases/${id}`)
+      const response = await $fetch<CaseDetail>(`/api/cases/${id}`)
       casesState.currentCase = response
       return response
     } catch (error) {
@@ -151,42 +121,14 @@ export function useCases() {
     }
   }
 
-  async function fetchActivities(caseId: string) {
-    casesState.isLoadingActivities = true
-    try {
-      const response = await $fetch<ActivitiesResponse>(`/api/cases/${caseId}/activities`)
-      casesState.activities = response
-      return response
-    } catch (error) {
-      console.error('Failed to fetch activities:', error)
-      return null
-    } finally {
-      casesState.isLoadingActivities = false
-    }
-  }
-
-  async function fetchSLAKPIs(caseId: string) {
-    casesState.isLoadingSLAKPIs = true
-    try {
-      const response = await $fetch<SLAKPIsResponse>(`/api/cases/${caseId}/sla-kpis`)
-      casesState.slaKPIs = response
-      return response
-    } catch (error) {
-      console.error('Failed to fetch SLA KPIs:', error)
-      return null
-    } finally {
-      casesState.isLoadingSLAKPIs = false
-    }
-  }
-
   async function addReply(caseId: string, noteText: string, subject?: string) {
     try {
       await $fetch(`/api/cases/${caseId}/reply`, {
         method: 'POST',
         body: { noteText, subject },
       })
-      // Refresh activities after adding reply
-      await fetchActivities(caseId)
+      // Refresh case to get updated activities
+      await fetchCase(caseId)
       return { success: true }
     } catch (error) {
       console.error('Failed to add reply:', error)
@@ -205,26 +147,6 @@ export function useCases() {
     }
   }
 
-  async function fetchBatchSLAData(caseIds: string[]) {
-    if (caseIds.length === 0) {
-      casesState.caseSLAData = {}
-      return
-    }
-
-    casesState.isLoadingBatchSLA = true
-    try {
-      const response = await $fetch<BatchSLAResponse>(
-        `/api/cases/sla-batch?caseIds=${caseIds.join(',')}`
-      )
-      casesState.caseSLAData = response.slaData
-    } catch (error) {
-      console.error('Failed to fetch batch SLA data:', error)
-      casesState.caseSLAData = {}
-    } finally {
-      casesState.isLoadingBatchSLA = false
-    }
-  }
-
   async function downloadAttachment(caseId: string, annotationId: string, filename: string) {
     casesState.isDownloadingAttachment = true
     try {
@@ -232,7 +154,6 @@ export function useCases() {
         `/api/cases/${caseId}/attachments/${annotationId}`
       )
 
-      // Convert base64 to blob
       const byteCharacters = atob(response.documentbody)
       const byteNumbers = new Array(byteCharacters.length)
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -241,7 +162,6 @@ export function useCases() {
       const byteArray = new Uint8Array(byteNumbers)
       const blob = new Blob([byteArray], { type: response.mimetype })
 
-      // Trigger download
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -261,7 +181,6 @@ export function useCases() {
   }
 
   async function getAttachmentPreviewUrl(caseId: string, annotationId: string): Promise<string | null> {
-    // Check cache first
     const cacheKey = `${caseId}:${annotationId}`
     if (previewCache.has(cacheKey)) {
       return previewCache.get(cacheKey)!
@@ -273,7 +192,6 @@ export function useCases() {
         `/api/cases/${caseId}/attachments/${annotationId}`
       )
 
-      // Convert base64 to blob
       const byteCharacters = atob(response.documentbody)
       const byteNumbers = new Array(byteCharacters.length)
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -282,7 +200,6 @@ export function useCases() {
       const byteArray = new Uint8Array(byteNumbers)
       const blob = new Blob([byteArray], { type: response.mimetype })
 
-      // Create blob URL and cache it
       const url = URL.createObjectURL(blob)
       previewCache.set(cacheKey, url)
 
@@ -296,7 +213,6 @@ export function useCases() {
   }
 
   function clearPreviewCache() {
-    // Revoke all cached blob URLs
     for (const url of previewCache.values()) {
       URL.revokeObjectURL(url)
     }
@@ -328,17 +244,11 @@ export function useCases() {
   return {
     cases: computed(() => casesState.cases),
     currentCase: computed(() => casesState.currentCase),
-    activities: computed(() => casesState.activities),
-    slaKPIs: computed(() => casesState.slaKPIs),
-    caseSLAData: computed(() => casesState.caseSLAData),
     skipToken: computed(() => casesState.skipToken),
     hasMore: computed(() => casesState.hasMore),
     pageSize: computed(() => casesState.pageSize),
     isLoading: computed(() => casesState.isLoading),
     isRefreshing: computed(() => casesState.isRefreshing),
-    isLoadingActivities: computed(() => casesState.isLoadingActivities),
-    isLoadingSLAKPIs: computed(() => casesState.isLoadingSLAKPIs),
-    isLoadingBatchSLA: computed(() => casesState.isLoadingBatchSLA),
     isDownloadingAttachment: computed(() => casesState.isDownloadingAttachment),
     isLoadingPreview: computed(() => casesState.isLoadingPreview),
     filters: computed(() => casesState.filters),
@@ -349,9 +259,6 @@ export function useCases() {
     fetchNextPage,
     fetchPreviousPage,
     fetchCase,
-    fetchActivities,
-    fetchSLAKPIs,
-    fetchBatchSLAData,
     fetchStatusReasonOptions,
     addReply,
     downloadAttachment,

@@ -17,7 +17,6 @@ const {
   isRefreshing,
   canGoBack,
   statusReasonOptions,
-  caseSLAData,
   resetPagination,
   fetchUsersWithDynamics,
   fetchUserCases,
@@ -25,7 +24,6 @@ const {
   fetchNextPage,
   fetchPreviousPage,
   fetchStatusReasonOptions,
-  fetchBatchSLAData,
 } = useAdminCases()
 
 // Get selected user info
@@ -55,20 +53,9 @@ async function loadCases(filters: { search: string; status: string; statusReason
   if (!userId.value) return
 
   currentFilters.value = { ...currentFilters.value, ...filters }
-  const response = await fetchUserCases(userId.value, {
+  await fetchUserCases(userId.value, {
     ...getCurrentFilters(filters),
   })
-
-  // Fetch batch SLA data for "In Progress" cases (statuscode === 1)
-  if (response?.cases) {
-    const inProgressCaseIds = response.cases
-      .filter((c: { statuscode: number }) => c.statuscode === 1)
-      .map((c: { incidentid: string }) => c.incidentid)
-
-    if (inProgressCaseIds.length > 0) {
-      fetchBatchSLAData(userId.value, inProgressCaseIds)
-    }
-  }
 }
 
 // Load data on mount
@@ -85,22 +72,11 @@ function handleFilterChange(filters: { search: string; status: string; statusRea
 
 async function handleRefresh(filters: { search: string; status: string; statusReason: string; priority: string; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   if (!userId.value) return
-  
+
   currentFilters.value = { ...currentFilters.value, ...filters }
-  const response = await forceRefreshUserCases(userId.value, {
+  await forceRefreshUserCases(userId.value, {
     ...getCurrentFilters(filters),
   })
-
-  // Fetch batch SLA data for "In Progress" cases (statuscode === 1)
-  if (response?.cases) {
-    const inProgressCaseIds = response.cases
-      .filter((c: { statuscode: number }) => c.statuscode === 1)
-      .map((c: { incidentid: string }) => c.incidentid)
-
-    if (inProgressCaseIds.length > 0) {
-      fetchBatchSLAData(userId.value, inProgressCaseIds)
-    }
-  }
 }
 
 async function goToNextPage() {
@@ -159,7 +135,6 @@ function goBack() {
     <!-- Cases List -->
     <CasesList
       :cases="cases"
-      :case-sla-data="caseSLAData"
       :is-loading="isLoading"
       :is-refreshing="isRefreshing"
       :has-more="hasMore"

@@ -6,10 +6,7 @@ import {
   caseTools,
   handleListCases,
   handleGetCase,
-  handleGetCaseActivities,
   handleAddCaseNote,
-  handleGetSlaKpis,
-  handleGetBatchSla,
 } from './cases'
 import {
   dashboardTools,
@@ -49,14 +46,8 @@ export async function handleToolCall(
       return handleListCases(args as any, context)
     case 'get_case':
       return handleGetCase(args as any, context)
-    case 'get_case_activities':
-      return handleGetCaseActivities(args as any, context)
     case 'add_case_note':
       return handleAddCaseNote(args as any, context)
-    case 'get_sla_kpis':
-      return handleGetSlaKpis(args as any, context)
-    case 'get_batch_sla':
-      return handleGetBatchSla(args as any, context)
 
     // Dashboard tools
     case 'get_dashboard_stats':

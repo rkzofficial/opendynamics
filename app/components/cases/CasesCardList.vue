@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { FolderOpen, Calendar, Clock, Inbox } from 'lucide-vue-next'
-import type { Case, CaseSLAInfo } from '~/types'
+import type { CaseListItem } from '~/types'
 import {
   getStatusReasonLabel,
   getStatusReasonBadgeClass,
@@ -12,8 +12,7 @@ import {
 } from '~/utils/caseHelpers'
 
 interface Props {
-  cases: Case[]
-  caseSLAData?: Record<string, CaseSLAInfo>
+  cases: CaseListItem[]
   basePath?: string
   emptyTitle?: string
   emptyDescription?: string
@@ -25,31 +24,14 @@ const props = withDefaults(defineProps<Props>(), {
   emptyDescription: '',
 })
 
-// Use composable as fallback for SLA data when prop not provided
-const { caseSLAData: composableSLAData } = useCases()
-
-const effectiveSLAData = computed(() => {
-  if (props.caseSLAData && Object.keys(props.caseSLAData).length > 0) {
-    return props.caseSLAData
-  }
-  return composableSLAData.value
-})
-
-function getCaseSLA(caseId: string) {
-  const data = effectiveSLAData.value
-  if (data[caseId]) return data[caseId]
-  return data[caseId.toLowerCase()]
-}
-
-function getStatusBadgeClass(caseItem: Case) {
-  if (caseItem.statuscode === 1) {
-    const slaInfo = getCaseSLA(caseItem.incidentid)
-    const slaStatus = getSLABadgeStatus(slaInfo, caseItem.statuscode)
+function getStatusBadgeClass(caseItem: CaseListItem) {
+  if (caseItem.statusCode === 1) {
+    const slaStatus = getSLABadgeStatus(caseItem.sla, caseItem.statusCode)
     if (slaStatus !== 'none') {
       return getSLABadgeClass(slaStatus)
     }
   }
-  return getStatusReasonBadgeClass(caseItem.statecode)
+  return getStatusReasonBadgeClass(caseItem.state)
 }
 
 </script>
@@ -58,8 +40,8 @@ function getStatusBadgeClass(caseItem: Case) {
   <div v-if="cases.length > 0" class="divide-y">
     <NuxtLink
       v-for="(c, index) in cases"
-      :key="c.incidentid"
-      :to="`${basePath}/${c.incidentid}`"
+      :key="c.id"
+      :to="`${basePath}/${c.id}`"
       class="block px-4 py-3 active:bg-muted/50 cursor-pointer transition-colors"
     >
       <!-- Row 1: Priority badge (left) + Status reason badge (right) -->
@@ -67,10 +49,10 @@ function getStatusBadgeClass(caseItem: Case) {
         <span
           :class="[
             'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium',
-            getPriorityBadgeClass(c.prioritycode)
+            getPriorityBadgeClass(c.priority)
           ]"
         >
-          {{ getPriorityLabel(c.prioritycode) }}
+          {{ getPriorityLabel(c.priority) }}
         </span>
         <span
           :class="[
@@ -78,7 +60,7 @@ function getStatusBadgeClass(caseItem: Case) {
             getStatusBadgeClass(c)
           ]"
         >
-          {{ getStatusReasonLabel(c['statuscode@OData.Community.Display.V1.FormattedValue']) }}
+          {{ getStatusReasonLabel(c.statusLabel) }}
         </span>
       </div>
 
@@ -86,7 +68,7 @@ function getStatusBadgeClass(caseItem: Case) {
       <p class="mt-2 font-mono text-sm font-medium text-primary">
         <span class="text-muted-foreground">{{ index + 1 }}</span>
         <span class="text-muted-foreground mx-1">&middot;</span>
-        {{ c.ticketnumber }}
+        {{ c.ticketNumber }}
       </p>
 
       <!-- Row 3: Title -->
@@ -102,21 +84,21 @@ function getStatusBadgeClass(caseItem: Case) {
       <!-- Row 5: Dates + Queue -->
       <div class="mt-2 flex items-center justify-between text-xs text-muted-foreground">
         <span class="flex items-center gap-3">
-          <span class="flex items-center gap-1" :title="formatCaseDate(c.createdon, true).tooltip">
+          <span class="flex items-center gap-1" :title="formatCaseDate(c.createdAt, true).tooltip">
             <Calendar class="h-3 w-3" />
-            {{ formatCaseDate(c.createdon, true).text }}
+            {{ formatCaseDate(c.createdAt, true).text }}
           </span>
-          <span class="flex items-center gap-1" :title="formatCaseDate(c.modifiedon, true).tooltip">
+          <span class="flex items-center gap-1" :title="formatCaseDate(c.modifiedAt, true).tooltip">
             <Clock class="h-3 w-3" />
-            {{ formatCaseDate(c.modifiedon, true).text }}
+            {{ formatCaseDate(c.modifiedAt, true).text }}
           </span>
         </span>
         <span
-          v-if="c['_ent_queueid_value@OData.Community.Display.V1.FormattedValue']"
+          v-if="c.queue?.name"
           class="flex items-center gap-1"
         >
           <Inbox class="h-3 w-3" />
-          {{ c['_ent_queueid_value@OData.Community.Display.V1.FormattedValue'] }}
+          {{ c.queue?.name }}
         </span>
       </div>
     </NuxtLink>

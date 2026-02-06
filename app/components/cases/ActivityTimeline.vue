@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Mail, Phone, FileText, MessageSquare, Calendar, Clock, User } from 'lucide-vue-next'
-import type { Activity, Annotation } from '~/types'
+import type { ActivityItem, NoteItem } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
 import {
   formatCaseDate,
@@ -11,8 +11,8 @@ import {
 
 export interface TimelineItem {
   id: string
-  type: 'activity' | 'annotation'
-  data: Activity | Annotation
+  type: 'activity' | 'note'
+  data: ActivityItem | NoteItem
   date: string
 }
 
@@ -27,8 +27,8 @@ const props = withDefaults(defineProps<Props>(), {
   variant: 'detailed',
 })
 
-function getActivityContent(activity: Activity): string {
-  if (activity.activitytypecode === 'email' && activity.attachments) {
+function getActivityContent(activity: ActivityItem): string {
+  if (activity.type === 'email' && activity.attachments) {
     return processEmailHtml(activity.description || '', activity.attachments)
   }
   if (props.variant === 'detailed') {
@@ -38,7 +38,7 @@ function getActivityContent(activity: Activity): string {
 }
 
 function getActivityColorClasses(item: TimelineItem): { border: string; header: string; badge: string; dot: string } {
-  if (item.type === 'annotation') {
+  if (item.type === 'note') {
     return {
       border: 'border-l-4 border-l-amber-400 dark:border-l-amber-500',
       header: 'bg-amber-50/50 dark:bg-amber-900/10',
@@ -47,7 +47,7 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
     }
   }
 
-  const activityType = (item.data as Activity).activitytypecode
+  const activityType = (item.data as ActivityItem).type
   switch (activityType) {
     case 'email':
       return {
@@ -71,7 +71,7 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
         dot: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
       }
     case 'ent_customernote': {
-      const subject = (item.data as Activity).subject?.toLowerCase() || ''
+      const subject = (item.data as ActivityItem).subject?.toLowerCase() || ''
       if (subject.includes('from: adobe') || subject.startsWith('from:adobe')) {
         return {
           border: 'border-l-4 border-l-rose-400 dark:border-l-rose-500',
@@ -146,7 +146,7 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
                 ]"
               >
                 <component
-                  :is="item.type === 'annotation' ? FileText : getActivityIcon((item.data as Activity).activitytypecode)"
+                  :is="item.type === 'note' ? FileText : getActivityIcon((item.data as ActivityItem).type)"
                   class="h-4 w-4"
                 />
               </div>
@@ -162,12 +162,12 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
                         getActivityColorClasses(item).badge
                       ]"
                     >
-                      {{ item.type === 'annotation' ? 'Note' : getActivityLabel((item.data as Activity).activitytypecode) }}
+                      {{ item.type === 'note' ? 'Note' : getActivityLabel((item.data as ActivityItem).type) }}
                     </span>
                     <span class="font-medium truncate">
-                      {{ item.type === 'annotation'
-                        ? ((item.data as Annotation).subject || 'Untitled Note')
-                        : ((item.data as Activity).subject || 'No subject')
+                      {{ item.type === 'note'
+                        ? ((item.data as NoteItem).subject || 'Untitled Note')
+                        : ((item.data as ActivityItem).subject || 'No subject')
                       }}
                     </span>
                   </div>
@@ -183,26 +183,26 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
                     v-if="item.type === 'activity'"
                     :class="[
                       'prose prose-sm max-w-full break-words overflow-x-auto [&_img]:max-w-full [&_table]:max-w-full [&_pre]:max-w-full [&_pre]:overflow-x-auto dark:prose-invert',
-                      (item.data as Activity).activitytypecode === 'email'
+                      (item.data as ActivityItem).type === 'email'
                         ? 'bg-gray-50 dark:bg-zinc-800/50 rounded-md p-4 border border-gray-200 dark:border-zinc-700'
                         : ''
                     ]"
-                    v-html="getActivityContent(item.data as Activity)"
+                    v-html="getActivityContent(item.data as ActivityItem)"
                   />
                   <div
                     v-else
                     class="text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden text-foreground"
-                    v-html="linkifyText((item.data as Annotation).notetext || '')"
+                    v-html="linkifyText((item.data as NoteItem).text || '')"
                   />
                 </div>
 
                 <!-- Footer (if has author) -->
                 <div
-                  v-if="item.type === 'annotation' && (item.data as Annotation).createdby?.fullname"
+                  v-if="item.type === 'note' && (item.data as NoteItem).createdBy"
                   class="flex items-center gap-2 px-4 py-2 bg-muted/30 border-t text-xs text-muted-foreground"
                 >
                   <User class="h-3 w-3" />
-                  <span>{{ (item.data as Annotation).createdby?.fullname }}</span>
+                  <span>{{ (item.data as NoteItem).createdBy }}</span>
                 </div>
               </div>
             </div>
@@ -221,7 +221,7 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
             <div class="flex-shrink-0">
               <div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                 <component
-                  :is="item.type === 'annotation' ? FileText : getActivityIcon((item.data as Activity).activitytypecode)"
+                  :is="item.type === 'note' ? FileText : getActivityIcon((item.data as ActivityItem).type)"
                   class="h-5 w-5"
                 />
               </div>
@@ -229,9 +229,9 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
                 <span class="font-medium">
-                  {{ item.type === 'annotation'
-                    ? ((item.data as Annotation).subject || 'Note')
-                    : ((item.data as Activity).subject || (item.data as Activity).activitytypecode)
+                  {{ item.type === 'note'
+                    ? ((item.data as NoteItem).subject || 'Note')
+                    : ((item.data as ActivityItem).subject || (item.data as ActivityItem).type)
                   }}
                 </span>
                 <span :title="formatCaseDate(item.date).tooltip" class="text-xs text-muted-foreground">
@@ -242,20 +242,20 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
                 v-if="item.type === 'activity'"
                 :class="[
                   'text-sm prose prose-sm max-w-full overflow-x-auto [&_img]:max-w-full [&_table]:max-w-full [&_pre]:max-w-full [&_pre]:overflow-x-auto p-3 rounded border',
-                  (item.data as Activity).activitytypecode === 'email'
+                  (item.data as ActivityItem).type === 'email'
                     ? 'bg-white text-gray-900 border-gray-200'
                     : 'text-muted-foreground border-transparent'
                 ]"
-                v-html="getActivityContent(item.data as Activity)"
+                v-html="getActivityContent(item.data as ActivityItem)"
               />
               <p
                 v-else
                 class="text-sm text-muted-foreground whitespace-pre-wrap"
               >
-                {{ (item.data as Annotation).notetext }}
+                {{ (item.data as NoteItem).text }}
               </p>
-              <div v-if="item.type === 'annotation' && (item.data as Annotation).createdby?.fullname" class="mt-1 text-xs text-muted-foreground">
-                By {{ (item.data as Annotation).createdby?.fullname }}
+              <div v-if="item.type === 'note' && (item.data as NoteItem).createdBy" class="mt-1 text-xs text-muted-foreground">
+                By {{ (item.data as NoteItem).createdBy }}
               </div>
             </div>
           </div>

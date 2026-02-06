@@ -1,7 +1,7 @@
 import { AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, Mail, Phone, FileText, MessageSquare } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import { formatTimeAgo } from './timeAgo'
-import type { CaseSLAInfo, SLABadgeStatus } from '~/types'
+import type { SLASummary, SLABadgeStatus } from '~/types'
 
 // Windows timezone code to readable name mapping
 export const timezoneCodeMap: Record<number, string> = {
@@ -131,11 +131,11 @@ export function formatCountdown(targetDate: string): string {
 
 // SLA Badge helpers for CasesTable
 export function getSLABadgeStatus(
-  slaInfo: CaseSLAInfo | undefined,
-  statuscode?: number
+  slaInfo: SLASummary | undefined,
+  statusCode?: number
 ): SLABadgeStatus {
-  // Only show for "In Progress" case status (statuscode === 1)
-  if (statuscode !== 1 || !slaInfo) return 'none'
+  // Only show for "In Progress" case status (statusCode === 1)
+  if (statusCode !== 1 || !slaInfo) return 'none'
 
   // Use Dynamics SLA KPI status directly
   // status: 0=InProgress, 1=Noncompliant, 2=NearingNoncompliance, 4=Succeeded
@@ -152,21 +152,21 @@ export function getSLABadgeStatus(
     case 0: // In Progress - determine based on time elapsed
     default: {
       const now = Date.now()
-      const startTime = slaInfo.createdon
-        ? new Date(slaInfo.createdon).getTime()
+      const startTime = slaInfo.createdAt
+        ? new Date(slaInfo.createdAt).getTime()
         : null
-      const failureTime = slaInfo.failuretime
-        ? new Date(slaInfo.failuretime).getTime()
+      const failTime = slaInfo.failureTime
+        ? new Date(slaInfo.failureTime).getTime()
         : null
 
-      if (!failureTime) return 'none'
+      if (!failTime) return 'none'
 
       // If past failure time, show error
-      if (now >= failureTime) return 'error'
+      if (now >= failTime) return 'error'
 
       // If we have start time, check if 50% of SLA time has passed
       if (startTime) {
-        const totalDuration = failureTime - startTime
+        const totalDuration = failTime - startTime
         const halfwayPoint = startTime + (totalDuration / 2)
 
         // If past halfway point, show warning
@@ -250,48 +250,48 @@ export function linkifyText(text: string): string {
   return escaped.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary dark:text-white underline hover:no-underline break-all">$1</a>')
 }
 
-// Status helpers
-export function getStatusLabel(statecode: number): string {
-  switch (statecode) {
-    case 0: return 'Active'
-    case 1: return 'Resolved'
-    case 2: return 'Cancelled'
+// Status helpers - accept string state ('active' | 'resolved' | 'cancelled')
+export function getStatusLabel(state: string): string {
+  switch (state) {
+    case 'active': return 'Active'
+    case 'resolved': return 'Resolved'
+    case 'cancelled': return 'Cancelled'
     default: return 'Unknown'
   }
 }
 
-export function getStatusVariant(statecode: number): 'default' | 'success' | 'secondary' {
-  switch (statecode) {
-    case 0: return 'default'
-    case 1: return 'success'
-    case 2: return 'secondary'
+export function getStatusVariant(state: string): 'default' | 'success' | 'secondary' {
+  switch (state) {
+    case 'active': return 'default'
+    case 'resolved': return 'success'
+    case 'cancelled': return 'secondary'
     default: return 'secondary'
   }
 }
 
-export function getStatusIcon(statecode: number): Component {
-  switch (statecode) {
-    case 0: return AlertCircle
-    case 1: return CheckCircle
-    case 2: return XCircle
+export function getStatusIcon(state: string): Component {
+  switch (state) {
+    case 'active': return AlertCircle
+    case 'resolved': return CheckCircle
+    case 'cancelled': return XCircle
     default: return AlertCircle
   }
 }
 
-export function getStatusDotColor(statecode: number): string {
-  switch (statecode) {
-    case 0: return 'bg-blue-500'
-    case 1: return 'bg-green-500'
-    case 2: return 'bg-gray-400'
+export function getStatusDotColor(state: string): string {
+  switch (state) {
+    case 'active': return 'bg-blue-500'
+    case 'resolved': return 'bg-green-500'
+    case 'cancelled': return 'bg-gray-400'
     default: return 'bg-gray-400'
   }
 }
 
-export function getStatusBadgeClass(statecode: number): string {
-  switch (statecode) {
-    case 0: return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-    case 1: return 'bg-green-500/10 text-green-500 border-green-500/20'
-    case 2: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+export function getStatusBadgeClass(state: string): string {
+  switch (state) {
+    case 'active': return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+    case 'resolved': return 'bg-green-500/10 text-green-500 border-green-500/20'
+    case 'cancelled': return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
     default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
   }
 }
@@ -301,20 +301,20 @@ export function getStatusReasonLabel(formattedValue: string | undefined): string
   return formattedValue || 'Unknown'
 }
 
-// Badge styling based on parent statecode for consistent coloring
-export function getStatusReasonBadgeClass(statecode: number): string {
-  switch (statecode) {
-    case 0: return 'bg-blue-500/10 text-blue-500 border-blue-500/20'      // Active
-    case 1: return 'bg-green-500/10 text-green-500 border-green-500/20'   // Resolved
-    case 2: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'   // Cancelled
+// Badge styling based on state string for consistent coloring
+export function getStatusReasonBadgeClass(state: string): string {
+  switch (state) {
+    case 'active': return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+    case 'resolved': return 'bg-green-500/10 text-green-500 border-green-500/20'
+    case 'cancelled': return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
     default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
   }
 }
 
 // Priority helpers
 // P1 = Critical, P2 = Urgent, P3 = Important, P4 = Minor
-export function getPriorityLabel(prioritycode: number): string {
-  switch (prioritycode) {
+export function getPriorityLabel(priority: number): string {
+  switch (priority) {
     case 1: return 'P1 - Critical'
     case 2: return 'P2 - Urgent'
     case 3: return 'P3 - Important'
@@ -323,8 +323,8 @@ export function getPriorityLabel(prioritycode: number): string {
   }
 }
 
-export function getPriorityVariant(prioritycode: number): 'destructive' | 'warning' | 'secondary' | 'outline' {
-  switch (prioritycode) {
+export function getPriorityVariant(priority: number): 'destructive' | 'warning' | 'secondary' | 'outline' {
+  switch (priority) {
     case 1: return 'destructive'
     case 2: return 'warning'
     case 3: return 'secondary'
@@ -333,8 +333,8 @@ export function getPriorityVariant(prioritycode: number): 'destructive' | 'warni
   }
 }
 
-export function getPriorityIcon(prioritycode: number): Component {
-  switch (prioritycode) {
+export function getPriorityIcon(priority: number): Component {
+  switch (priority) {
     case 1: return AlertOctagon
     case 2: return AlertTriangle
     case 3: return AlertCircle
@@ -343,8 +343,8 @@ export function getPriorityIcon(prioritycode: number): Component {
   }
 }
 
-export function getPriorityIconColor(prioritycode: number): string {
-  switch (prioritycode) {
+export function getPriorityIconColor(priority: number): string {
+  switch (priority) {
     case 1: return 'text-red-600'
     case 2: return 'text-amber-600'
     case 3: return 'text-blue-600'
@@ -353,8 +353,8 @@ export function getPriorityIconColor(prioritycode: number): string {
   }
 }
 
-export function getPriorityBadgeClass(prioritycode: number): string {
-  switch (prioritycode) {
+export function getPriorityBadgeClass(priority: number): string {
+  switch (priority) {
     case 1: return 'bg-red-500/10 text-red-500 border-red-500/20'
     case 2: return 'bg-orange-500/10 text-orange-500 border-orange-500/20'
     case 3: return 'bg-blue-500/10 text-blue-500 border-blue-500/20'

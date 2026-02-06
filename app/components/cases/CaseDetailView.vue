@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User, Share2 } from 'lucide-vue-next'
-import type { Case, ActivitiesResponse, CaseAttachment } from '~/types'
+import type { CaseDetail, AttachmentItem, ActivityItem, NoteItem } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
 import {
   getStatusReasonLabel,
@@ -9,24 +9,21 @@ import {
   getPriorityBadgeClass,
 } from '~/utils/caseHelpers'
 
+interface CompareItem {
+  attachment: AttachmentItem
+  previewUrl: string | null
+  isLoading: boolean
+}
+
 interface SLAData {
   deadline?: string
   status?: number
   succeeded?: string
 }
 
-interface CompareItem {
-  attachment: CaseAttachment
-  previewUrl: string | null
-  isLoading: boolean
-}
-
 interface Props {
-  case: Case | null
-  activities: ActivitiesResponse | null
+  case: CaseDetail | null
   isLoading: boolean
-  isLoadingActivities: boolean
-  isLoadingSLAKPIs: boolean
   isDownloadingAttachment?: boolean
   isPreviewOpen?: boolean
   previewIndex?: number
@@ -59,7 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   back: []
-  downloadAttachment: [attachment: CaseAttachment]
+  downloadAttachment: [attachment: AttachmentItem]
   previewAttachment: [index: number]
   navigatePreview: [index: number]
   closePreview: []
@@ -107,24 +104,24 @@ const linkedDescription = computed(() => {
 const timelineItems = computed<TimelineItem[]>(() => {
   const items: TimelineItem[] = []
 
-  if (props.activities?.activities) {
-    for (const activity of props.activities.activities) {
+  if (props.case?.activities) {
+    for (const activity of props.case.activities) {
       items.push({
-        id: activity.activityid,
+        id: activity.id,
         type: 'activity',
         data: activity,
-        date: activity.createdon,
+        date: activity.createdAt,
       })
     }
   }
 
-  if (props.activities?.annotations) {
-    for (const annotation of props.activities.annotations) {
+  if (props.case?.notes) {
+    for (const note of props.case.notes) {
       items.push({
-        id: annotation.annotationid,
-        type: 'annotation',
-        data: annotation,
-        date: annotation.createdon,
+        id: note.id,
+        type: 'note',
+        data: note,
+        date: note.createdAt,
       })
     }
   }
@@ -183,37 +180,37 @@ const timelineItems = computed<TimelineItem[]>(() => {
           <div class="space-y-3">
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-mono text-sm text-muted-foreground">
-                {{ props.case.ticketnumber }}
+                {{ props.case.ticketNumber }}
               </span>
               <span class="text-muted-foreground/40">•</span>
               <span
                 :class="[
                   'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
-                  getStatusReasonBadgeClass(props.case.statecode)
+                  getStatusReasonBadgeClass(props.case.state)
                 ]"
               >
-                {{ getStatusReasonLabel(props.case['statuscode@OData.Community.Display.V1.FormattedValue']) }}
+                {{ getStatusReasonLabel(props.case.statusLabel) }}
               </span>
               <span
                 :class="[
                   'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
-                  getPriorityBadgeClass(props.case.prioritycode)
+                  getPriorityBadgeClass(props.case.priority)
                 ]"
               >
-                {{ getPriorityLabel(props.case.prioritycode) }}
+                {{ getPriorityLabel(props.case.priority) }}
               </span>
             </div>
             <h1 class="text-xl font-bold tracking-tight lg:text-2xl">{{ props.case.title }}</h1>
           </div>
 
           <!-- Support Engineer -->
-          <div v-if="props.case.owninguser?.fullname" class="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2.5">
+          <div v-if="props.case.owner?.name" class="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2.5">
             <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
               <User class="h-4 w-4 text-primary" />
             </div>
             <div>
               <p class="text-xs text-muted-foreground">Support Engineer</p>
-              <p class="text-sm font-medium">{{ props.case.owninguser.fullname }}</p>
+              <p class="text-sm font-medium">{{ props.case.owner.name }}</p>
             </div>
           </div>
         </div>
@@ -256,8 +253,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
 
           <!-- Attachments -->
           <CasesCaseAttachments
-            :attachments="activities?.attachments || []"
-            :is-loading="isLoadingActivities"
+            :attachments="props.case?.attachments || []"
             :is-downloading="isDownloadingAttachment"
             @download="emit('downloadAttachment', $event)"
             @preview="emit('previewAttachment', $event)"
@@ -267,7 +263,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
           <!-- Attachment Preview Modal -->
           <CasesAttachmentPreviewModal
             :is-open="isPreviewOpen"
-            :attachments="activities?.attachments || []"
+            :attachments="props.case?.attachments || []"
             :current-index="previewIndex"
             :preview-url="previewUrl"
             :is-loading="isLoadingPreview"
@@ -288,7 +284,6 @@ const timelineItems = computed<TimelineItem[]>(() => {
           <!-- Activity timeline -->
           <CasesActivityTimeline
             :items="timelineItems"
-            :is-loading="isLoadingActivities"
             variant="detailed"
           />
         </div>
@@ -300,7 +295,6 @@ const timelineItems = computed<TimelineItem[]>(() => {
           :customer-update-s-l-a="customerUpdateSLA"
           :first-response-countdown="firstResponseCountdown"
           :customer-update-countdown="customerUpdateCountdown"
-          :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
         />
       </div>
     </template>

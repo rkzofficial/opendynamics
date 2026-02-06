@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { Search, RefreshCw, AlertCircle, AlertOctagon, AlertTriangle, CheckCircle, XCircle, Circle, CircleDot, Flag, X, Timer, Inbox } from 'lucide-vue-next'
 import { useDebounceFn } from '@vueuse/core'
-import type { Case, StatusReasonOption, CaseSLAInfo } from '~/types'
+import type { CaseListItem, StatusReasonOption } from '~/types'
 import { getSLABadgeStatus } from '~/utils/caseHelpers'
 
-// Get SLA data from composable as fallback (for regular user flow)
-const { caseSLAData: composableSLAData } = useCases()
-
 interface Props {
-  cases: Case[]
-  caseSLAData?: Record<string, CaseSLAInfo>
+  cases: CaseListItem[]
   isLoading: boolean
   isRefreshing?: boolean
   hasMore: boolean
@@ -40,7 +36,6 @@ const props = withDefaults(defineProps<Props>(), {
   initialSortDirection: 'desc',
   statusReasonOptions: () => [],
   initialDxPendingRelease: false,
-  caseSLAData: () => ({}),
   isRefreshing: false,
 })
 
@@ -129,20 +124,8 @@ watch(statusReasonFilter, (newValue) => {
   }
 })
 
-// Get effective SLA data - use prop if available, otherwise fall back to composable
-const effectiveSLAData = computed(() => {
-  const propData = toValue(props.caseSLAData) || {}
-  // If prop has data, use it
-  if (Object.keys(propData).length > 0) {
-    return propData
-  }
-  // Fall back to composable data (for regular user flow)
-  return composableSLAData.value || {}
-})
-
 // Filter cases by SLA status (client-side filter)
 const filteredCases = computed(() => {
-  const rawSlaData = effectiveSLAData.value
   const cases = props.cases
   const filter = slaFilter.value
 
@@ -150,15 +133,8 @@ const filteredCases = computed(() => {
     return cases
   }
 
-  // Normalize SLA data keys to lowercase for consistent lookup
-  const slaData: Record<string, CaseSLAInfo> = {}
-  for (const [key, value] of Object.entries(rawSlaData)) {
-    slaData[key.toLowerCase()] = value
-  }
-
   return cases.filter(c => {
-    const slaInfo = slaData[c.incidentid.toLowerCase()]
-    const slaStatus = getSLABadgeStatus(slaInfo, c.statuscode)
+    const slaStatus = getSLABadgeStatus(c.sla, c.statusCode)
     return slaStatus === filter
   })
 })
@@ -399,7 +375,6 @@ function handlePageSizeChange(size: number) {
       <UiCardContent class="p-0 overflow-x-auto">
         <CasesTable
           :cases="filteredCases"
-          :case-sla-data="effectiveSLAData"
           :base-path="basePath"
           :sortable="true"
           :sort-column="sortColumn"

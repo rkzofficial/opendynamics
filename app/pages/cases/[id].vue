@@ -10,16 +10,10 @@ const caseId = route.params.id as string
 
 const {
   currentCase,
-  activities,
-  slaKPIs,
   isLoading,
-  isLoadingActivities,
-  isLoadingSLAKPIs,
   isDownloadingAttachment,
   isLoadingPreview,
   fetchCase,
-  fetchActivities,
-  fetchSLAKPIs,
   addReply,
   downloadAttachment,
   getAttachmentPreviewUrl,
@@ -37,7 +31,7 @@ const previewUrl = ref<string | null>(null)
 
 // Compare state
 interface CompareItem {
-  attachment: { annotationid: string; filename: string; mimetype: string }
+  attachment: { id: string; filename: string; mimeType: string }
   previewUrl: string | null
   isLoading: boolean
 }
@@ -59,8 +53,6 @@ const urlCopied = ref(false)
 
 onMounted(async () => {
   await fetchCase(caseId)
-  await fetchActivities(caseId)
-  await fetchSLAKPIs(caseId)
   startCountdownTimer()
 })
 
@@ -70,16 +62,16 @@ onUnmounted(() => {
 })
 
 function getSLAKPIByName(name: string) {
-  return slaKPIs.value?.slakpis?.find((kpi) => kpi.name?.toLowerCase().includes(name.toLowerCase()))
+  return currentCase.value?.slaKpis?.find((kpi) => kpi.name?.toLowerCase().includes(name.toLowerCase()))
 }
 
 function getFirstResponseSLA() {
   const kpi = getSLAKPIByName('first response')
   if (kpi) {
     return {
-      deadline: kpi.failuretime || kpi.computedfailuretime,
+      deadline: kpi.failureTime || kpi.computedFailureTime,
       status: kpi.status,
-      succeeded: kpi.succeededon,
+      succeeded: kpi.succeededAt,
     }
   }
   return null
@@ -89,9 +81,9 @@ function getCustomerUpdateSLA() {
   const kpi = getSLAKPIByName('customer update')
   if (kpi) {
     return {
-      deadline: kpi.failuretime || kpi.computedfailuretime,
+      deadline: kpi.failureTime || kpi.computedFailureTime,
       status: kpi.status,
-      succeeded: kpi.succeededon,
+      succeeded: kpi.succeededAt,
     }
   }
   return null
@@ -141,12 +133,12 @@ function handleBack() {
   router.push('/cases')
 }
 
-async function handleDownloadAttachment(attachment: { annotationid: string; filename: string }) {
-  await downloadAttachment(caseId, attachment.annotationid, attachment.filename)
+async function handleDownloadAttachment(attachment: { id: string; filename: string }) {
+  await downloadAttachment(caseId, attachment.id, attachment.filename)
 }
 
 async function handlePreviewAttachment(index: number) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (index < 0 || index >= attachments.length) return
 
   previewIndex.value = index
@@ -154,19 +146,19 @@ async function handlePreviewAttachment(index: number) {
   previewUrl.value = null
 
   const attachment = attachments[index]
-  const url = await getAttachmentPreviewUrl(caseId, attachment.annotationid)
+  const url = await getAttachmentPreviewUrl(caseId, attachment.id)
   previewUrl.value = url
 }
 
 async function handleNavigatePreview(index: number) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (index < 0 || index >= attachments.length) return
 
   previewIndex.value = index
   previewUrl.value = null
 
   const attachment = attachments[index]
-  const url = await getAttachmentPreviewUrl(caseId, attachment.annotationid)
+  const url = await getAttachmentPreviewUrl(caseId, attachment.id)
   previewUrl.value = url
 }
 
@@ -176,10 +168,9 @@ function handleClosePreview() {
 }
 
 async function handleCompareAttachments(indices: number[]) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (indices.length < 2) return
 
-  // Initialize compare items with loading state
   compareItems.value = indices.map(index => ({
     attachment: attachments[index],
     previewUrl: null,
@@ -187,11 +178,10 @@ async function handleCompareAttachments(indices: number[]) {
   }))
   isCompareOpen.value = true
 
-  // Fetch preview URLs in parallel
   await Promise.all(
     indices.map(async (index, i) => {
       const attachment = attachments[index]
-      const url = await getAttachmentPreviewUrl(caseId, attachment.annotationid)
+      const url = await getAttachmentPreviewUrl(caseId, attachment.id)
       if (compareItems.value[i]) {
         compareItems.value[i].previewUrl = url
         compareItems.value[i].isLoading = false
@@ -207,7 +197,6 @@ function handleCloseCompare() {
 
 function handleRemoveFromCompare(index: number) {
   compareItems.value = compareItems.value.filter((_, i) => i !== index)
-  // Close compare modal if less than 2 items remain
   if (compareItems.value.length < 2) {
     handleCloseCompare()
   }
@@ -289,10 +278,7 @@ async function copyExistingShareUrl(token: string) {
   <div>
     <CasesCaseDetailView
       :case="currentCase"
-      :activities="activities"
       :is-loading="isLoading"
-      :is-loading-activities="isLoadingActivities"
-      :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
       :is-downloading-attachment="isDownloadingAttachment"
       :is-preview-open="isPreviewOpen"
       :preview-index="previewIndex"

@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import { Paperclip, Download, FileText, FileImage, FileArchive, File, Loader2, Columns2 } from 'lucide-vue-next'
-import type { CaseAttachment } from '~/types'
+import type { AttachmentItem } from '~/types'
 import { formatCaseDate } from '~/utils/caseHelpers'
 
 interface Props {
-  attachments: CaseAttachment[]
-  isLoading?: boolean
+  attachments: AttachmentItem[]
   isDownloading?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
   isDownloading: false,
 })
 
 const emit = defineEmits<{
-  download: [attachment: CaseAttachment]
+  download: [attachment: AttachmentItem]
   preview: [index: number]
   compare: [indices: number[]]
 }>()
@@ -82,14 +80,14 @@ function handleRowClick(index: number, mimetype: string) {
   }
 }
 
-function handleDownloadClick(e: Event, attachment: CaseAttachment) {
+function handleDownloadClick(e: Event, attachment: AttachmentItem) {
   e.stopPropagation()
   emit('download', attachment)
 }
 </script>
 
 <template>
-  <UiCard v-if="isLoading || attachments.length > 0">
+  <UiCard v-if="attachments.length > 0">
     <UiCardHeader class="pb-3">
       <div class="flex items-center justify-between">
         <UiCardTitle class="flex items-center gap-2">
@@ -123,11 +121,7 @@ function handleDownloadClick(e: Event, attachment: CaseAttachment) {
       </div>
     </UiCardHeader>
     <UiCardContent>
-      <div v-if="isLoading" class="space-y-3">
-        <UiSkeleton v-for="i in 2" :key="i" class="h-16 w-full" />
-      </div>
-
-      <div v-else-if="attachments.length === 0" class="flex flex-col items-center justify-center py-8 text-muted-foreground">
+      <div v-if="attachments.length === 0" class="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <Paperclip class="h-10 w-10 mb-3 opacity-40" />
         <p class="text-sm">No attachments</p>
       </div>
@@ -135,17 +129,17 @@ function handleDownloadClick(e: Event, attachment: CaseAttachment) {
       <div v-else class="space-y-3">
         <div
           v-for="(attachment, index) in attachments"
-          :key="attachment.annotationid"
+          :key="attachment.id"
           :class="[
             'flex items-center gap-3 p-3 rounded-lg border transition-colors',
-            canPreview(attachment.mimetype) ? 'cursor-pointer' : '',
+            canPreview(attachment.mimeType) ? 'cursor-pointer' : '',
             isSelected(index) ? 'bg-primary/10 border-primary/30' : 'bg-muted/30 hover:bg-muted/50'
           ]"
-          @click="handleRowClick(index, attachment.mimetype)"
+          @click="handleRowClick(index, attachment.mimeType)"
         >
           <!-- Checkbox for previewable attachments -->
           <div
-            v-if="canPreview(attachment.mimetype)"
+            v-if="canPreview(attachment.mimeType)"
             class="flex-shrink-0"
             @click="toggleSelection(index, $event)"
           >
@@ -158,7 +152,7 @@ function handleDownloadClick(e: Event, attachment: CaseAttachment) {
           <!-- File icon -->
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
             <component
-              :is="getFileIcon(attachment.mimetype)"
+              :is="getFileIcon(attachment.mimeType)"
               class="h-5 w-5 text-primary"
             />
           </div>
@@ -169,14 +163,14 @@ function handleDownloadClick(e: Event, attachment: CaseAttachment) {
               {{ attachment.filename }}
             </p>
             <div class="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-              <span v-if="attachment.filesize">{{ formatFileSize(attachment.filesize) }}</span>
-              <span v-if="attachment.filesize && attachment.createdon" class="text-muted-foreground/40">|</span>
-              <span :title="formatCaseDate(attachment.createdon).tooltip">
-                {{ formatCaseDate(attachment.createdon).text }}
+              <span v-if="attachment.fileSize">{{ formatFileSize(attachment.fileSize) }}</span>
+              <span v-if="attachment.fileSize && attachment.createdAt" class="text-muted-foreground/40">|</span>
+              <span :title="formatCaseDate(attachment.createdAt).tooltip">
+                {{ formatCaseDate(attachment.createdAt).text }}
               </span>
-              <template v-if="attachment.createdby?.fullname">
+              <template v-if="attachment.createdBy">
                 <span class="text-muted-foreground/40">|</span>
-                <span>{{ attachment.createdby.fullname }}</span>
+                <span>{{ attachment.createdBy }}</span>
               </template>
             </div>
           </div>

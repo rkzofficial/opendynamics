@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw, Download, Loader2, FileQuestion } from 'lucide-vue-next'
-import type { CaseAttachment } from '~/types'
+import type { AttachmentItem } from '~/types'
 
 interface Props {
   isOpen: boolean
-  attachments: CaseAttachment[]
+  attachments: AttachmentItem[]
   currentIndex: number
   previewUrl: string | null
   isLoading: boolean
@@ -15,7 +15,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
   navigate: [index: number]
-  download: [attachment: CaseAttachment]
+  download: [attachment: AttachmentItem]
 }>()
 
 // Zoom state
@@ -34,11 +34,11 @@ const currentAttachment = computed(() => {
 })
 
 const isImage = computed(() => {
-  return currentAttachment.value?.mimetype?.startsWith('image/')
+  return currentAttachment.value?.mimeType?.startsWith('image/')
 })
 
 const isVideo = computed(() => {
-  return currentAttachment.value?.mimetype?.startsWith('video/')
+  return currentAttachment.value?.mimeType?.startsWith('video/')
 })
 
 const canPreview = computed(() => {
@@ -270,7 +270,7 @@ watch(() => props.currentIndex, () => {
           <div v-else-if="!canPreview && !isLoading" class="flex flex-col items-center gap-4 text-white/70">
             <FileQuestion class="h-16 w-16" />
             <span class="text-lg">Preview not available for this file type</span>
-            <span class="text-sm">{{ currentAttachment?.mimetype }}</span>
+            <span class="text-sm">{{ currentAttachment?.mimeType }}</span>
             <UiButton variant="outline" class="mt-4" @click="handleDownload">
               <Download class="h-4 w-4 mr-2" />
               Download File

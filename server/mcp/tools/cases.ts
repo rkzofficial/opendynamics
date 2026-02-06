@@ -1,13 +1,14 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import { getDynamicsClientForUser } from '../../utils/dynamics'
 import { buildCaseFilter } from '../../utils/odata-builder'
-import type { McpToolContext, ToolResult, ListCasesArgs, GetCaseArgs, GetCaseActivitiesArgs, AddCaseNoteArgs, GetSlaKpisArgs, GetBatchSlaArgs } from '../types'
+import { mapCaseToListItem, mapBatchSLA, buildCaseDetail } from '../../utils/mappers'
+import type { McpToolContext, ToolResult, ListCasesArgs, GetCaseArgs, AddCaseNoteArgs } from '../types'
 
 // Tool definitions
 export const caseTools: Tool[] = [
   {
     name: 'list_cases',
-    description: 'List cases from Dynamics 365 CRM with optional filters. Returns case ID, title, ticket number, status, priority, and creation date.',
+    description: 'List cases from Dynamics 365 CRM with optional filters. Returns cases with embedded SLA data for in-progress cases.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -46,21 +47,7 @@ export const caseTools: Tool[] = [
   },
   {
     name: 'get_case',
-    description: 'Get detailed information about a specific case by ID, including customer info, owner, SLA deadlines, and contact preferences.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        caseId: {
-          type: 'string',
-          description: 'The case ID (incidentid GUID)',
-        },
-      },
-      required: ['caseId'],
-    },
-  },
-  {
-    name: 'get_case_activities',
-    description: 'Get activities (emails, phone calls, tasks) and notes/annotations for a case.',
+    description: 'Get full case details including activities, notes, attachments, and SLA KPIs in a single call.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -94,35 +81,6 @@ export const caseTools: Tool[] = [
       required: ['caseId', 'noteText'],
     },
   },
-  {
-    name: 'get_sla_kpis',
-    description: 'Get SLA KPI instances for a specific case, showing response/resolution deadlines and compliance status.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        caseId: {
-          type: 'string',
-          description: 'The case ID (incidentid GUID)',
-        },
-      },
-      required: ['caseId'],
-    },
-  },
-  {
-    name: 'get_batch_sla',
-    description: 'Get SLA data for multiple cases at once (max 20 cases per request).',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        caseIds: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Array of case IDs (max 20)',
-        },
-      },
-      required: ['caseIds'],
-    },
-  },
 ]
 
 // Tool handlers
@@ -149,34 +107,36 @@ export async function handleListCases(args: ListCasesArgs, context: McpToolConte
       dynamicsUserId
     )
 
-    const cases = response.value as Array<{
-      incidentid: string
-      title: string
-      ticketnumber: string
-      statecode: number
-      prioritycode: number
-      createdon: string
-    }>
+    const rawCases = response.value as any[]
 
-    const statusMap: Record<number, string> = { 0: 'Active', 1: 'Resolved', 2: 'Cancelled' }
-    const priorityMap: Record<number, string> = { 1: 'High', 2: 'Normal', 3: 'Low' }
+    // Fetch SLA data for in-progress cases
+    const inProgressCaseIds = rawCases
+      .filter((c: any) => c.statuscode === 1)
+      .map((c: any) => c.incidentid)
 
-    const formattedCases = cases.map((c) => ({
-      id: c.incidentid,
-      title: c.title,
-      ticketNumber: c.ticketnumber,
-      status: statusMap[c.statecode] || 'Unknown',
-      priority: priorityMap[c.prioritycode] || 'Unknown',
-      createdOn: c.createdon,
-    }))
+    let slaData: Record<string, any> = {}
+    if (inProgressCaseIds.length > 0) {
+      try {
+        const rawSLA = await client.getBatchCaseSLAKPIs(inProgressCaseIds)
+        slaData = mapBatchSLA(rawSLA)
+      } catch {
+        // Silent fail for SLA data
+      }
+    }
+
+    const cases = rawCases.map((c: any) => {
+      const caseId = c.incidentid
+      const sla = slaData[caseId.toLowerCase()]
+      return mapCaseToListItem(c, sla)
+    })
 
     return {
       content: [
         {
           type: 'text',
           text: JSON.stringify({
-            cases: formattedCases,
-            count: formattedCases.length,
+            cases,
+            count: cases.length,
             hasMore: !!response.nextSkipToken,
             skipToken: response.nextSkipToken,
           }, null, 2),
@@ -201,54 +161,19 @@ export async function handleGetCase(args: GetCaseArgs, context: McpToolContext):
     }
 
     const { client } = await getDynamicsClientForUser(context.userId)
-    const caseData = await client.getCase(args.caseId)
+    const caseDetail = await buildCaseDetail(client, args.caseId)
 
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(caseData, null, 2),
+          text: JSON.stringify(caseDetail, null, 2),
         },
       ],
     }
   } catch (error) {
     return {
       content: [{ type: 'text', text: `Error getting case: ${(error as Error).message}` }],
-      isError: true,
-    }
-  }
-}
-
-export async function handleGetCaseActivities(args: GetCaseActivitiesArgs, context: McpToolContext): Promise<ToolResult> {
-  try {
-    if (!args.caseId) {
-      return {
-        content: [{ type: 'text', text: 'Error: caseId is required' }],
-        isError: true,
-      }
-    }
-
-    const { client } = await getDynamicsClientForUser(context.userId)
-
-    const [activities, annotations] = await Promise.all([
-      client.getCaseActivities(args.caseId),
-      client.getCaseAnnotations(args.caseId),
-    ])
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            activities: activities.value,
-            annotations: annotations.value,
-          }, null, 2),
-        },
-      ],
-    }
-  } catch (error) {
-    return {
-      content: [{ type: 'text', text: `Error getting case activities: ${(error as Error).message}` }],
       isError: true,
     }
   }
@@ -277,94 +202,6 @@ export async function handleAddCaseNote(args: AddCaseNoteArgs, context: McpToolC
   } catch (error) {
     return {
       content: [{ type: 'text', text: `Error adding note: ${(error as Error).message}` }],
-      isError: true,
-    }
-  }
-}
-
-export async function handleGetSlaKpis(args: GetSlaKpisArgs, context: McpToolContext): Promise<ToolResult> {
-  try {
-    if (!args.caseId) {
-      return {
-        content: [{ type: 'text', text: 'Error: caseId is required' }],
-        isError: true,
-      }
-    }
-
-    const { client } = await getDynamicsClientForUser(context.userId)
-    const slaData = await client.getCaseSLAKPIs(args.caseId)
-
-    const statusMap: Record<number, string> = {
-      0: 'In Progress',
-      1: 'Noncompliant',
-      2: 'Nearing Noncompliance',
-      3: 'Paused',
-      4: 'Succeeded',
-      5: 'Canceled',
-    }
-
-    const formattedKpis = (slaData.value as Array<{
-      slakpiinstanceid: string
-      name: string
-      status: number
-      failuretime?: string
-      warningtime?: string
-      succeededon?: string
-    }>).map((kpi) => ({
-      id: kpi.slakpiinstanceid,
-      name: kpi.name,
-      status: statusMap[kpi.status] || 'Unknown',
-      failureTime: kpi.failuretime,
-      warningTime: kpi.warningtime,
-      succeededOn: kpi.succeededon,
-    }))
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({ slaKpis: formattedKpis }, null, 2),
-        },
-      ],
-    }
-  } catch (error) {
-    return {
-      content: [{ type: 'text', text: `Error getting SLA KPIs: ${(error as Error).message}` }],
-      isError: true,
-    }
-  }
-}
-
-export async function handleGetBatchSla(args: GetBatchSlaArgs, context: McpToolContext): Promise<ToolResult> {
-  try {
-    if (!args.caseIds || !Array.isArray(args.caseIds) || args.caseIds.length === 0) {
-      return {
-        content: [{ type: 'text', text: 'Error: caseIds array is required' }],
-        isError: true,
-      }
-    }
-
-    if (args.caseIds.length > 20) {
-      return {
-        content: [{ type: 'text', text: 'Error: Maximum 20 case IDs per request' }],
-        isError: true,
-      }
-    }
-
-    const { client } = await getDynamicsClientForUser(context.userId)
-    const slaData = await client.getBatchCaseSLAKPIs(args.caseIds)
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({ slaData }, null, 2),
-        },
-      ],
-    }
-  } catch (error) {
-    return {
-      content: [{ type: 'text', text: `Error getting batch SLA data: ${(error as Error).message}` }],
       isError: true,
     }
   }

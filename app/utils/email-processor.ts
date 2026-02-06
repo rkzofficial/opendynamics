@@ -1,10 +1,10 @@
-import type { ActivityAttachment } from '~/types'
+import type { ActivityAttachmentItem } from '~/types'
 
 /**
  * Process email HTML to replace cid: references with base64 data URLs
  * This resolves inline images in email content
  */
-export function processEmailHtml(html: string, attachments: ActivityAttachment[] | undefined): string {
+export function processEmailHtml(html: string, attachments: ActivityAttachmentItem[] | undefined): string {
   if (!html || !attachments || attachments.length === 0) {
     return html || ''
   }
@@ -16,7 +16,7 @@ export function processEmailHtml(html: string, attachments: ActivityAttachment[]
     if (!attachment.body) continue
 
     // Create data URL from base64 body
-    const dataUrl = `data:${attachment.mimetype};base64,${attachment.body}`
+    const dataUrl = `data:${attachment.mimeType};base64,${attachment.body}`
 
     // Replace various cid reference patterns
     const cidPatterns = [

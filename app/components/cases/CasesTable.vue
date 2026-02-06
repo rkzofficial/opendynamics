@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Hash, FileText, Flag, Calendar, Clock, FolderOpen, ArrowUp, ArrowDown, ArrowUpDown, Info, Inbox } from 'lucide-vue-next'
-import type { Case, CaseSLAInfo } from '~/types'
+import type { CaseListItem } from '~/types'
 import {
   getStatusReasonLabel,
   getStatusReasonBadgeClass,
@@ -12,8 +12,7 @@ import {
 } from '~/utils/caseHelpers'
 
 interface Props {
-  cases: Case[]
-  caseSLAData?: Record<string, CaseSLAInfo>
+  cases: CaseListItem[]
   basePath?: string
   emptyTitle?: string
   emptyDescription?: string
@@ -29,19 +28,6 @@ const props = withDefaults(defineProps<Props>(), {
   sortable: false,
   sortColumn: '',
   sortDirection: 'desc',
-})
-
-// Use composable as fallback for SLA data when prop not provided
-const { caseSLAData: composableSLAData } = useCases()
-
-// Use prop if provided, otherwise fall back to composable
-const effectiveSLAData = computed(() => {
-  // If prop has data, use it
-  if (props.caseSLAData && Object.keys(props.caseSLAData).length > 0) {
-    return props.caseSLAData
-  }
-  // Fall back to composable data
-  return composableSLAData.value
 })
 
 const emit = defineEmits<{
@@ -67,17 +53,16 @@ const columns: ColumnConfig[] = [
 ]
 
 // Get status reason badge class - uses SLA colors for "In Progress" cases
-function getStatusBadgeClass(caseItem: Case) {
-  // For "In Progress" cases (statuscode === 1), use SLA-based colors
-  if (caseItem.statuscode === 1) {
-    const slaInfo = getCaseSLA(caseItem.incidentid)
-    const slaStatus = getSLABadgeStatus(slaInfo, caseItem.statuscode)
+function getStatusBadgeClass(caseItem: CaseListItem) {
+  // For "In Progress" cases (statusCode === 1), use SLA-based colors
+  if (caseItem.statusCode === 1) {
+    const slaStatus = getSLABadgeStatus(caseItem.sla, caseItem.statusCode)
     if (slaStatus !== 'none') {
       return getSLABadgeClass(slaStatus)
     }
   }
   // For other statuses, use default status reason colors
-  return getStatusReasonBadgeClass(caseItem.statecode)
+  return getStatusReasonBadgeClass(caseItem.state)
 }
 
 function handleSort(columnKey: string) {
@@ -90,18 +75,6 @@ function getSortIcon(columnKey: string): Component {
   if (props.sortColumn !== columnKey) return ArrowUpDown
   return props.sortDirection === 'asc' ? ArrowUp : ArrowDown
 }
-
-// Helper to get SLA info for a case (handles case sensitivity of GUIDs)
-function getCaseSLA(caseId: string) {
-  const data = effectiveSLAData.value
-  // Try exact match first
-  if (data[caseId]) {
-    return data[caseId]
-  }
-  // Try lowercase match (Dynamics GUIDs can vary in casing)
-  const lowerId = caseId.toLowerCase()
-  return data[lowerId]
-}
 </script>
 
 <template>
@@ -110,7 +83,6 @@ function getCaseSLA(caseId: string) {
     <CasesCardList
       class="md:hidden"
       :cases="cases"
-      :case-sla-data="caseSLAData"
       :base-path="basePath"
       :empty-title="emptyTitle"
       :empty-description="emptyDescription"
@@ -149,23 +121,23 @@ function getCaseSLA(caseId: string) {
         <tbody class="divide-y">
           <tr
             v-for="(c, index) in cases"
-            :key="c.incidentid"
+            :key="c.id"
             class="group transition-colors hover:bg-muted/50"
           >
             <td class="align-middle">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+              <NuxtLink :to="`${basePath}/${c.id}`" class="flex items-center h-14 px-3">
                 <span class="text-sm text-muted-foreground">{{ index + 1 }}</span>
               </NuxtLink>
             </td>
             <td class="align-middle">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+              <NuxtLink :to="`${basePath}/${c.id}`" class="flex items-center h-14 px-3">
                 <span class="font-mono text-sm font-medium text-primary">
-                  {{ c.ticketnumber }}
+                  {{ c.ticketNumber }}
                 </span>
               </NuxtLink>
             </td>
             <td class="align-middle overflow-hidden">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="block px-3 py-3 overflow-hidden">
+              <NuxtLink :to="`${basePath}/${c.id}`" class="block px-3 py-3 overflow-hidden">
                 <UiTooltip :content="c.description" position="bottom" max-width="450px">
                   <div class="overflow-hidden">
                     <p class="truncate font-medium">{{ c.title }}</p>
@@ -177,47 +149,47 @@ function getCaseSLA(caseId: string) {
               </NuxtLink>
             </td>
             <td class="align-middle">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+              <NuxtLink :to="`${basePath}/${c.id}`" class="flex items-center h-14 px-3">
                 <span
                   :class="[
                     'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
                     getStatusBadgeClass(c)
                   ]"
                 >
-                  {{ getStatusReasonLabel(c['statuscode@OData.Community.Display.V1.FormattedValue']) }}
+                  {{ getStatusReasonLabel(c.statusLabel) }}
                 </span>
               </NuxtLink>
             </td>
             <td class="align-middle">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+              <NuxtLink :to="`${basePath}/${c.id}`" class="flex items-center h-14 px-3">
                 <span
                   :class="[
                     'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
-                    getPriorityBadgeClass(c.prioritycode)
+                    getPriorityBadgeClass(c.priority)
                   ]"
                 >
-                  {{ getPriorityLabel(c.prioritycode) }}
+                  {{ getPriorityLabel(c.priority) }}
                 </span>
               </NuxtLink>
             </td>
             <td class="align-middle">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
-                <span :title="formatCaseDate(c.createdon, true).tooltip" class="text-sm text-muted-foreground">
-                  {{ formatCaseDate(c.createdon, true).text }}
+              <NuxtLink :to="`${basePath}/${c.id}`" class="flex items-center h-14 px-3">
+                <span :title="formatCaseDate(c.createdAt, true).tooltip" class="text-sm text-muted-foreground">
+                  {{ formatCaseDate(c.createdAt, true).text }}
                 </span>
               </NuxtLink>
             </td>
             <td class="align-middle">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
-                <span :title="formatCaseDate(c.modifiedon, true).tooltip" class="text-sm text-muted-foreground">
-                  {{ formatCaseDate(c.modifiedon, true).text }}
+              <NuxtLink :to="`${basePath}/${c.id}`" class="flex items-center h-14 px-3">
+                <span :title="formatCaseDate(c.modifiedAt, true).tooltip" class="text-sm text-muted-foreground">
+                  {{ formatCaseDate(c.modifiedAt, true).text }}
                 </span>
               </NuxtLink>
             </td>
             <td class="align-middle">
-              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+              <NuxtLink :to="`${basePath}/${c.id}`" class="flex items-center h-14 px-3">
                 <span class="text-sm text-muted-foreground">
-                  {{ c['_ent_queueid_value@OData.Community.Display.V1.FormattedValue'] || '—' }}
+                  {{ c.queue?.name || '—' }}
                 </span>
               </NuxtLink>
             </td>

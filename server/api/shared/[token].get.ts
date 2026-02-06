@@ -1,6 +1,7 @@
 import { api } from '@convex/_generated/api'
 import { getConvexClient } from '../../utils/convex'
 import { getDynamicsClientForUser } from '../../utils/dynamics'
+import { buildCaseDetail } from '../../utils/mappers'
 
 export default defineEventHandler(async (event) => {
   const shareToken = getRouterParam(event, 'token')
@@ -46,8 +47,7 @@ export default defineEventHandler(async (event) => {
   const { client } = await getDynamicsClientForUser(share.userId)
 
   try {
-    const caseData = await client.getCase(share.caseId)
-    return caseData
+    return await buildCaseDetail(client, share.caseId)
   } catch (error: unknown) {
     const err = error as Error
     throw createError({

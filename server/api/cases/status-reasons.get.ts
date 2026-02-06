@@ -18,7 +18,7 @@ export default cachedAuthHandler(async (event, user) => {
     })
   }
 }, {
-  maxAge: 60 * 60, // Cache for 1 hour - metadata rarely changes
+  maxAge: 60 * 60 * 24, // Cache for 24 hours - metadata rarely changes
   getKey: (event, user) => {
     const query = getQuery(event)
     const userId = query.userId as string | undefined

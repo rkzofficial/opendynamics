@@ -28,26 +28,11 @@ export interface GetCaseArgs {
   caseId: string
 }
 
-// Case activities
-export interface GetCaseActivitiesArgs {
-  caseId: string
-}
-
 // Add note to case
 export interface AddCaseNoteArgs {
   caseId: string
   noteText: string
   subject?: string
-}
-
-// SLA KPIs
-export interface GetSlaKpisArgs {
-  caseId: string
-}
-
-// Batch SLA
-export interface GetBatchSlaArgs {
-  caseIds: string[]
 }
 
 // Share creation

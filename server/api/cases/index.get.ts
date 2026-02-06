@@ -1,12 +1,12 @@
 import { getDynamicsClientWithUser } from '../../utils/dynamics'
 import { buildCaseFilter } from '../../utils/odata-builder'
 import { cachedAuthHandler } from '../../utils/cache'
+import { mapCaseToListItem, mapBatchSLA } from '../../utils/mappers'
 
 export default cachedAuthHandler(async (event, user) => {
   const query = getQuery(event)
   const userId = query.userId as string | undefined
 
-  // User is already authenticated by cachedAuthHandler
   const { client, dynamicsUserId } = await getDynamicsClientWithUser(user, userId)
   const status = query.status as string | undefined
   const statusReason = query.statusReason as string | undefined
@@ -30,8 +30,33 @@ export default cachedAuthHandler(async (event, user) => {
       skipToken,
     }, dynamicsUserId)
 
+    const rawCases = response.value as any[]
+
+    // Identify in-progress cases (statuscode === 1) for SLA fetch
+    const inProgressCaseIds = rawCases
+      .filter((c: any) => c.statuscode === 1)
+      .map((c: any) => c.incidentid)
+
+    // Fetch SLA data for in-progress cases
+    let slaData: Record<string, any> = {}
+    if (inProgressCaseIds.length > 0) {
+      try {
+        const rawSLA = await client.getBatchCaseSLAKPIs(inProgressCaseIds)
+        slaData = mapBatchSLA(rawSLA)
+      } catch {
+        // Silent fail for SLA data - cases still display without it
+      }
+    }
+
+    // Map cases with embedded SLA data
+    const cases = rawCases.map((c: any) => {
+      const caseId = c.incidentid
+      const sla = slaData[caseId.toLowerCase()]
+      return mapCaseToListItem(c, sla)
+    })
+
     return {
-      cases: response.value,
+      cases,
       skipToken: response.nextSkipToken,
       hasMore: !!response.nextSkipToken,
       pageSize,
@@ -44,10 +69,9 @@ export default cachedAuthHandler(async (event, user) => {
     })
   }
 }, {
-  maxAge: 60 * 5, // Cache for 5 minutes
+  maxAge: 60 * 5,
   getKey: (event, user) => {
     const query = getQuery(event)
-    // Include all query params in cache key to separate different filter combinations
     return `cases:${user._id}:${JSON.stringify(query)}`
   }
 })

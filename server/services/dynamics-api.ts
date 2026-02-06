@@ -1,4 +1,5 @@
 import { buildODataQuery, type ODataQueryOptions } from '../utils/odata-builder'
+import type { DynamicsCase, DynamicsActivity, DynamicsActivityAttachment, DynamicsAnnotation, DynamicsAttachment, DynamicsSLAKpi } from '../utils/mappers'
 
 export interface DynamicsTokens {
   accessToken: string
@@ -161,7 +162,7 @@ export class DynamicsApiClient {
     }
   }
 
-  async getCase(incidentId: string): Promise<unknown> {
+  async getCase(incidentId: string): Promise<DynamicsCase> {
     const query = buildODataQuery({
       select: [
         'incidentid', 'title', 'ticketnumber', 'description', 'statecode', 'statuscode', 'prioritycode',
@@ -185,7 +186,7 @@ export class DynamicsApiClient {
     return this.fetch(`/incidents(${incidentId})${query}`)
   }
 
-  async getCaseSLAKPIs(incidentId: string): Promise<{ value: unknown[] }> {
+  async getCaseSLAKPIs(incidentId: string): Promise<{ value: DynamicsSLAKpi[] }> {
     const query = buildODataQuery({
       select: [
         'slakpiinstanceid', 'name', 'failuretime', 'warningtime', 'status',
@@ -201,13 +202,9 @@ export class DynamicsApiClient {
   async getBatchCaseSLAKPIs(caseIds: string[]): Promise<Record<string, { createdon?: string; warningtime?: string; failuretime?: string; status: number }>> {
     if (caseIds.length === 0) return {}
 
-    // Limit batch size to prevent URL length issues (each GUID adds ~50 chars to filter)
-    const MAX_BATCH_SIZE = 20
-    const limitedCaseIds = caseIds.slice(0, MAX_BATCH_SIZE)
-
     // Build filter using 'or' conditions for each case ID
     // Format: (_regarding_value eq 'guid1' or _regarding_value eq 'guid2' ...)
-    const orConditions = limitedCaseIds.map(id => `_regarding_value eq '${id}'`).join(' or ')
+    const orConditions = caseIds.map(id => `_regarding_value eq '${id}'`).join(' or ')
     const filter = `(${orConditions})`
 
     const query = buildODataQuery({
@@ -247,7 +244,7 @@ export class DynamicsApiClient {
     return result
   }
 
-  async getCaseActivities(incidentId: string): Promise<{ value: unknown[] }> {
+  async getCaseActivities(incidentId: string): Promise<{ value: DynamicsActivity[] }> {
     // First get all activities
     const query = buildODataQuery({
       select: ['activityid', 'subject', 'activitytypecode', 'createdon', 'modifiedon', 'description', 'statecode', 'statuscode'],
@@ -255,22 +252,21 @@ export class DynamicsApiClient {
       orderby: 'createdon desc',
     })
 
-    const activities = await this.fetch<{ value: unknown[] }>(`/activitypointers${query}`)
+    const activities = await this.fetch<{ value: DynamicsActivity[] }>(`/activitypointers${query}`)
 
     // For each email activity, fetch attachments
     for (const activity of activities.value) {
-      const act = activity as Record<string, unknown>
-      if (act.activitytypecode === 'email') {
+      if (activity.activitytypecode === 'email') {
         try {
           const attachmentQuery = buildODataQuery({
             select: ['activitymimeattachmentid', 'filename', 'mimetype', 'body'],
-            filter: `_objectid_value eq ${act.activityid}`,
+            filter: `_objectid_value eq ${activity.activityid}`,
           })
-          const attachments = await this.fetch<{ value: unknown[] }>(`/activitymimeattachments${attachmentQuery}`)
-          ;(act as Record<string, unknown>).attachments = attachments.value
+          const attachments = await this.fetch<{ value: DynamicsActivityAttachment[] }>(`/activitymimeattachments${attachmentQuery}`)
+          ;(activity as DynamicsActivity).attachments = attachments.value
         } catch {
           // If attachments fail to load, continue without them
-          (act as Record<string, unknown>).attachments = []
+          (activity as DynamicsActivity).attachments = []
         }
       }
     }
@@ -278,7 +274,7 @@ export class DynamicsApiClient {
     return activities
   }
 
-  async getCaseAnnotations(incidentId: string): Promise<{ value: unknown[] }> {
+  async getCaseAnnotations(incidentId: string): Promise<{ value: DynamicsAnnotation[] }> {
     const query = buildODataQuery({
       select: ['annotationid', 'subject', 'notetext', 'createdon', 'modifiedon', '_createdby_value', 'isdocument', 'filename', 'mimetype', 'filesize'],
       expand: ['createdby($select=fullname)'],
@@ -289,15 +285,7 @@ export class DynamicsApiClient {
     return this.fetch(`/annotations${query}`)
   }
 
-  async getCaseAttachments(incidentId: string): Promise<{ attachments: Array<{
-    attachmentMetadataId: string
-    fileName: string
-    mimeType: string
-    createdOn: string
-    uploadedBy: string
-    direction: string
-    documentType: string
-  }> }> {
+  async getCaseAttachments(incidentId: string): Promise<{ attachments: DynamicsAttachment[] }> {
     try {
       const response = await this.fetch<{
         result: string

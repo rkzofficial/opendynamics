@@ -2,7 +2,7 @@
 import { onUnmounted } from 'vue'
 import { AlertTriangle } from 'lucide-vue-next'
 import { formatCountdown } from '~/utils/caseHelpers'
-import type { Case, ActivitiesResponse, SLAKPIsResponse, CaseAttachment } from '~/types'
+import type { CaseDetail, AttachmentItem } from '~/types'
 
 definePageMeta({
   layout: 'public',
@@ -12,12 +12,8 @@ const route = useRoute()
 const shareToken = route.params.token as string
 
 // State
-const currentCase = ref<Case | null>(null)
-const activities = ref<ActivitiesResponse | null>(null)
-const slaKPIs = ref<SLAKPIsResponse | null>(null)
+const currentCase = ref<CaseDetail | null>(null)
 const isLoading = ref(true)
-const isLoadingActivities = ref(false)
-const isLoadingSLAKPIs = ref(false)
 const isDownloadingAttachment = ref(false)
 const isLoadingPreview = ref(false)
 const error = ref('')
@@ -29,7 +25,7 @@ const previewUrl = ref<string | null>(null)
 
 // Compare state
 interface CompareItem {
-  attachment: CaseAttachment
+  attachment: { id: string; filename: string; mimeType: string }
   previewUrl: string | null
   isLoading: boolean
 }
@@ -48,7 +44,7 @@ async function fetchCase() {
   isLoading.value = true
   error.value = ''
   try {
-    const response = await $fetch<Case>(`/api/shared/${shareToken}`)
+    const response = await $fetch<CaseDetail>(`/api/shared/${shareToken}`)
     currentCase.value = response
   } catch (err: unknown) {
     const e = err as { statusCode?: number; data?: { message?: string } }
@@ -64,41 +60,17 @@ async function fetchCase() {
   }
 }
 
-async function fetchActivities() {
-  isLoadingActivities.value = true
-  try {
-    const response = await $fetch<ActivitiesResponse>(`/api/shared/${shareToken}/activities`)
-    activities.value = response
-  } catch {
-    // Silently fail - activities are supplementary
-  } finally {
-    isLoadingActivities.value = false
-  }
-}
-
-async function fetchSLAKPIs() {
-  isLoadingSLAKPIs.value = true
-  try {
-    const response = await $fetch<SLAKPIsResponse>(`/api/shared/${shareToken}/sla-kpis`)
-    slaKPIs.value = response
-  } catch {
-    // Silently fail - SLA KPIs are supplementary
-  } finally {
-    isLoadingSLAKPIs.value = false
-  }
-}
-
 function getSLAKPIByName(name: string) {
-  return slaKPIs.value?.slakpis?.find((kpi) => kpi.name?.toLowerCase().includes(name.toLowerCase()))
+  return currentCase.value?.slaKpis?.find((kpi) => kpi.name?.toLowerCase().includes(name.toLowerCase()))
 }
 
 function getFirstResponseSLA() {
   const kpi = getSLAKPIByName('first response')
   if (kpi) {
     return {
-      deadline: kpi.failuretime || kpi.computedfailuretime,
+      deadline: kpi.failureTime || kpi.computedFailureTime,
       status: kpi.status,
-      succeeded: kpi.succeededon,
+      succeeded: kpi.succeededAt,
     }
   }
   return null
@@ -108,9 +80,9 @@ function getCustomerUpdateSLA() {
   const kpi = getSLAKPIByName('customer update')
   if (kpi) {
     return {
-      deadline: kpi.failuretime || kpi.computedfailuretime,
+      deadline: kpi.failureTime || kpi.computedFailureTime,
       status: kpi.status,
-      succeeded: kpi.succeededon,
+      succeeded: kpi.succeededAt,
     }
   }
   return null
@@ -141,11 +113,11 @@ function stopCountdownTimer() {
   }
 }
 
-async function handleDownloadAttachment(attachment: CaseAttachment) {
+async function handleDownloadAttachment(attachment: AttachmentItem) {
   isDownloadingAttachment.value = true
   try {
     const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
-      `/api/shared/${shareToken}/attachment/${attachment.annotationid}`
+      `/api/shared/${shareToken}/attachment/${attachment.id}`
     )
 
     // Convert base64 to blob
@@ -173,16 +145,16 @@ async function handleDownloadAttachment(attachment: CaseAttachment) {
   }
 }
 
-async function getAttachmentPreviewUrl(annotationId: string): Promise<string | null> {
+async function getAttachmentPreviewUrl(attachmentId: string): Promise<string | null> {
   // Check cache first
-  if (previewCache.has(annotationId)) {
-    return previewCache.get(annotationId)!
+  if (previewCache.has(attachmentId)) {
+    return previewCache.get(attachmentId)!
   }
 
   isLoadingPreview.value = true
   try {
     const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
-      `/api/shared/${shareToken}/attachment/${annotationId}`
+      `/api/shared/${shareToken}/attachment/${attachmentId}`
     )
 
     // Convert base64 to blob
@@ -196,7 +168,7 @@ async function getAttachmentPreviewUrl(annotationId: string): Promise<string | n
 
     // Create blob URL and cache it
     const url = URL.createObjectURL(blob)
-    previewCache.set(annotationId, url)
+    previewCache.set(attachmentId, url)
 
     return url
   } catch {
@@ -214,7 +186,7 @@ function clearPreviewCache() {
 }
 
 async function handlePreviewAttachment(index: number) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (index < 0 || index >= attachments.length) return
 
   previewIndex.value = index
@@ -222,19 +194,19 @@ async function handlePreviewAttachment(index: number) {
   previewUrl.value = null
 
   const attachment = attachments[index]
-  const url = await getAttachmentPreviewUrl(attachment.annotationid)
+  const url = await getAttachmentPreviewUrl(attachment.id)
   previewUrl.value = url
 }
 
 async function handleNavigatePreview(index: number) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (index < 0 || index >= attachments.length) return
 
   previewIndex.value = index
   previewUrl.value = null
 
   const attachment = attachments[index]
-  const url = await getAttachmentPreviewUrl(attachment.annotationid)
+  const url = await getAttachmentPreviewUrl(attachment.id)
   previewUrl.value = url
 }
 
@@ -244,7 +216,7 @@ function handleClosePreview() {
 }
 
 async function handleCompareAttachments(indices: number[]) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (indices.length < 2) return
 
   compareItems.value = indices.map(index => ({
@@ -257,7 +229,7 @@ async function handleCompareAttachments(indices: number[]) {
   await Promise.all(
     indices.map(async (index, i) => {
       const attachment = attachments[index]
-      const url = await getAttachmentPreviewUrl(attachment.annotationid)
+      const url = await getAttachmentPreviewUrl(attachment.id)
       if (compareItems.value[i]) {
         compareItems.value[i].previewUrl = url
         compareItems.value[i].isLoading = false
@@ -286,7 +258,6 @@ function handleBack() {
 onMounted(async () => {
   await fetchCase()
   if (!error.value) {
-    await Promise.all([fetchActivities(), fetchSLAKPIs()])
     startCountdownTimer()
   }
 })
@@ -317,10 +288,7 @@ onUnmounted(() => {
     <CasesCaseDetailView
       v-else
       :case="currentCase"
-      :activities="activities"
       :is-loading="isLoading"
-      :is-loading-activities="isLoadingActivities"
-      :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
       :is-downloading-attachment="isDownloadingAttachment"
       :is-preview-open="isPreviewOpen"
       :preview-index="previewIndex"

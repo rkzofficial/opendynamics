@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted } from 'vue'
 import { formatCountdown } from '~/utils/caseHelpers'
+import type { CaseDetail, AttachmentItem } from '~/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -9,17 +10,12 @@ const caseId = computed(() => route.params.caseId as string)
 
 const {
   users,
-  slaKPIs,
   fetchUsersWithDynamics,
   fetchCaseDetails,
-  fetchSLAKPIs,
 } = useAdminCases()
 
-const currentCase = ref<any>(null)
-const activities = ref<any>(null)
+const currentCase = ref<CaseDetail | null>(null)
 const isLoading = ref(true)
-const isLoadingActivities = ref(false)
-const isLoadingSLAKPIs = ref(false)
 const isDownloadingAttachment = ref(false)
 const isLoadingPreview = ref(false)
 const error = ref('')
@@ -31,7 +27,7 @@ const previewUrl = ref<string | null>(null)
 
 // Compare state
 interface CompareItem {
-  attachment: { annotationid: string; filename: string; mimetype: string }
+  attachment: { id: string; filename: string; mimeType: string }
   previewUrl: string | null
   isLoading: boolean
 }
@@ -84,11 +80,9 @@ async function loadCase() {
   error.value = ''
 
   try {
-    currentCase.value = await fetchCaseDetails(userId.value, caseId.value)
-    await Promise.all([
-      loadActivities(),
-      loadSLAKPIs()
-    ])
+    const result = await fetchCaseDetails(userId.value, caseId.value)
+    currentCase.value = result
+    startCountdownTimer()
   } catch (e: any) {
     error.value = e?.data?.message || 'Failed to load case details'
   } finally {
@@ -96,46 +90,17 @@ async function loadCase() {
   }
 }
 
-async function loadActivities() {
-  if (!userId.value || !caseId.value) return
-
-  isLoadingActivities.value = true
-  try {
-    activities.value = await $fetch(`/api/cases/${caseId.value}/activities`, {
-      params: { userId: userId.value }
-    })
-  } catch (e) {
-    // Silent fail for activities
-  } finally {
-    isLoadingActivities.value = false
-  }
-}
-
-async function loadSLAKPIs() {
-  if (!userId.value || !caseId.value) return
-
-  isLoadingSLAKPIs.value = true
-  try {
-    await fetchSLAKPIs(userId.value, caseId.value)
-    startCountdownTimer()
-  } catch (e) {
-    // Silent fail for SLA KPIs
-  } finally {
-    isLoadingSLAKPIs.value = false
-  }
-}
-
 function getSLAKPIByName(name: string) {
-  return slaKPIs.value?.slakpis?.find((kpi: any) => kpi.name?.toLowerCase().includes(name.toLowerCase()))
+  return currentCase.value?.slaKpis?.find((kpi) => kpi.name?.toLowerCase().includes(name.toLowerCase()))
 }
 
 function getFirstResponseSLA() {
   const kpi = getSLAKPIByName('first response')
   if (kpi) {
     return {
-      deadline: kpi.failuretime || kpi.computedfailuretime,
+      deadline: kpi.failureTime || kpi.computedFailureTime,
       status: kpi.status,
-      succeeded: kpi.succeededon,
+      succeeded: kpi.succeededAt,
     }
   }
   return null
@@ -145,9 +110,9 @@ function getCustomerUpdateSLA() {
   const kpi = getSLAKPIByName('customer update')
   if (kpi) {
     return {
-      deadline: kpi.failuretime || kpi.computedfailuretime,
+      deadline: kpi.failureTime || kpi.computedFailureTime,
       status: kpi.status,
-      succeeded: kpi.succeededon,
+      succeeded: kpi.succeededAt,
     }
   }
   return null
@@ -193,7 +158,8 @@ async function handleSubmitReply() {
     })
     replyText.value = ''
     replySubject.value = ''
-    await loadActivities()
+    // Reload the full case to get updated activities
+    await loadCase()
   } catch (e) {
     // Silent fail for reply
   } finally {
@@ -212,12 +178,12 @@ function handleBack() {
   router.push(`/admin/cases/${userId.value}`)
 }
 
-async function handleDownloadAttachment(attachment: { annotationid: string; filename: string }) {
+async function handleDownloadAttachment(attachment: { id: string; filename: string }) {
   if (!caseId.value) return
   isDownloadingAttachment.value = true
   try {
     const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
-      `/api/cases/${caseId.value}/attachments/${attachment.annotationid}`,
+      `/api/cases/${caseId.value}/attachments/${attachment.id}`,
       { params: { userId: userId.value } }
     )
 
@@ -246,11 +212,11 @@ async function handleDownloadAttachment(attachment: { annotationid: string; file
   }
 }
 
-async function getAttachmentPreviewUrl(annotationId: string): Promise<string | null> {
+async function getAttachmentPreviewUrl(attachmentId: string): Promise<string | null> {
   if (!caseId.value) return null
 
   // Check cache first
-  const cacheKey = `${caseId.value}:${annotationId}`
+  const cacheKey = `${caseId.value}:${attachmentId}`
   if (previewCache.has(cacheKey)) {
     return previewCache.get(cacheKey)!
   }
@@ -258,7 +224,7 @@ async function getAttachmentPreviewUrl(annotationId: string): Promise<string | n
   isLoadingPreview.value = true
   try {
     const response = await $fetch<{ documentbody: string; filename: string; mimetype: string }>(
-      `/api/cases/${caseId.value}/attachments/${annotationId}`,
+      `/api/cases/${caseId.value}/attachments/${attachmentId}`,
       { params: { userId: userId.value } }
     )
 
@@ -284,7 +250,7 @@ async function getAttachmentPreviewUrl(annotationId: string): Promise<string | n
 }
 
 async function handlePreviewAttachment(index: number) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (index < 0 || index >= attachments.length) return
 
   previewIndex.value = index
@@ -292,19 +258,19 @@ async function handlePreviewAttachment(index: number) {
   previewUrl.value = null
 
   const attachment = attachments[index]
-  const url = await getAttachmentPreviewUrl(attachment.annotationid)
+  const url = await getAttachmentPreviewUrl(attachment.id)
   previewUrl.value = url
 }
 
 async function handleNavigatePreview(index: number) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (index < 0 || index >= attachments.length) return
 
   previewIndex.value = index
   previewUrl.value = null
 
   const attachment = attachments[index]
-  const url = await getAttachmentPreviewUrl(attachment.annotationid)
+  const url = await getAttachmentPreviewUrl(attachment.id)
   previewUrl.value = url
 }
 
@@ -314,7 +280,7 @@ function handleClosePreview() {
 }
 
 async function handleCompareAttachments(indices: number[]) {
-  const attachments = activities.value?.attachments || []
+  const attachments = currentCase.value?.attachments || []
   if (indices.length < 2) return
 
   // Initialize compare items with loading state
@@ -329,7 +295,7 @@ async function handleCompareAttachments(indices: number[]) {
   await Promise.all(
     indices.map(async (index, i) => {
       const attachment = attachments[index]
-      const url = await getAttachmentPreviewUrl(attachment.annotationid)
+      const url = await getAttachmentPreviewUrl(attachment.id)
       if (compareItems.value[i]) {
         compareItems.value[i].previewUrl = url
         compareItems.value[i].isLoading = false
@@ -355,10 +321,7 @@ function handleRemoveFromCompare(index: number) {
 <template>
   <CasesCaseDetailView
     :case="currentCase"
-    :activities="activities"
     :is-loading="isLoading"
-    :is-loading-activities="isLoadingActivities"
-    :is-loading-s-l-a-k-p-is="isLoadingSLAKPIs"
     :is-downloading-attachment="isDownloadingAttachment"
     :is-preview-open="isPreviewOpen"
     :preview-index="previewIndex"
