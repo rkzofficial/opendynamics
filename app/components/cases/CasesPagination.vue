@@ -26,12 +26,12 @@ const pageSizeOptions = [
 </script>
 
 <template>
-  <div class="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t bg-muted/30">
     <p class="text-sm text-muted-foreground">
       Showing <span class="font-medium text-foreground">{{ casesCount }}</span>
       {{ casesCount === 1 ? 'case' : 'cases' }}
     </p>
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3 sm:gap-4">
       <UiSelect
         :model-value="String(props.pageSize)"
         @update:model-value="emit('pageSizeChange', Number($event))"
@@ -56,8 +56,8 @@ const pageSizeOptions = [
           :disabled="!canGoBack"
           @click="emit('previous')"
         >
-          <ChevronLeft class="mr-1 h-4 w-4" />
-          Previous
+          <ChevronLeft class="h-4 w-4 sm:mr-1" />
+          <span class="hidden sm:inline">Previous</span>
         </UiButton>
         <UiButton
           variant="outline"
@@ -65,8 +65,8 @@ const pageSizeOptions = [
           :disabled="!hasMore"
           @click="emit('next')"
         >
-          Next
-          <ChevronRight class="ml-1 h-4 w-4" />
+          <span class="hidden sm:inline">Next</span>
+          <ChevronRight class="h-4 w-4 sm:ml-1" />
         </UiButton>
       </div>
     </div>
