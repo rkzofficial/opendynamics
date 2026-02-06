@@ -62,7 +62,7 @@ function handleCardClick(caseId: string) {
 <template>
   <div v-if="cases.length > 0" class="divide-y">
     <div
-      v-for="c in cases"
+      v-for="(c, index) in cases"
       :key="c.incidentid"
       class="px-4 py-3 active:bg-muted/50 cursor-pointer transition-colors"
       @click="handleCardClick(c.incidentid)"
@@ -87,8 +87,10 @@ function handleCardClick(caseId: string) {
         </span>
       </div>
 
-      <!-- Row 2: Ticket number -->
+      <!-- Row 2: Index + Ticket number -->
       <p class="mt-2 font-mono text-sm font-medium text-primary">
+        <span class="text-muted-foreground">{{ index + 1 }}</span>
+        <span class="text-muted-foreground mx-1">&middot;</span>
         {{ c.ticketnumber }}
       </p>
 

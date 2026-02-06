@@ -58,6 +58,7 @@ interface ColumnConfig {
 }
 
 const columns: ColumnConfig[] = [
+  { key: '#', label: '#', icon: Hash, width: 'w-[50px]' },
   { key: 'ticketnumber', label: 'Ticket', icon: Hash, width: 'w-[130px]' },
   { key: 'title', label: 'Title', icon: FileText, width: '' },
   { key: 'statuscode', label: 'Reason', icon: Info, width: 'w-[160px]' },
@@ -132,15 +133,15 @@ function getCaseSLA(caseId: string) {
               :class="[
                 'h-12 px-3 text-left align-middle font-medium text-muted-foreground',
                 col.width,
-                sortable ? 'cursor-pointer select-none hover:bg-muted/80 transition-colors' : ''
+                col.key !== '#' && sortable ? 'cursor-pointer select-none hover:bg-muted/80 transition-colors' : ''
               ]"
-              @click="handleSort(col.key)"
+              @click="col.key !== '#' && handleSort(col.key)"
             >
               <span class="flex items-center gap-1.5">
                 <component :is="col.icon" class="h-3.5 w-3.5" />
                 {{ col.label }}
                 <component
-                  v-if="sortable"
+                  v-if="sortable && col.key !== '#'"
                   :is="getSortIcon(col.key)"
                   :class="[
                     'h-3.5 w-3.5 ml-auto',
@@ -153,11 +154,14 @@ function getCaseSLA(caseId: string) {
         </thead>
         <tbody class="divide-y">
           <tr
-            v-for="c in cases"
+            v-for="(c, index) in cases"
             :key="c.incidentid"
             class="group transition-colors hover:bg-muted/50 cursor-pointer"
             @click="handleRowClick(c.incidentid)"
           >
+            <td class="h-14 px-3 align-middle">
+              <span class="text-sm text-muted-foreground">{{ index + 1 }}</span>
+            </td>
             <td class="h-14 px-3 align-middle">
               <span class="font-mono text-sm font-medium text-primary">
                 {{ c.ticketnumber }}
