@@ -48,8 +48,6 @@ const emit = defineEmits<{
   'sort-change': [column: string, direction: 'asc' | 'desc']
 }>()
 
-const router = useRouter()
-
 interface ColumnConfig {
   key: string
   label: string
@@ -80,10 +78,6 @@ function getStatusBadgeClass(caseItem: Case) {
   }
   // For other statuses, use default status reason colors
   return getStatusReasonBadgeClass(caseItem.statecode)
-}
-
-function handleRowClick(caseId: string) {
-  router.push(`${props.basePath}/${caseId}`)
 }
 
 function handleSort(columnKey: string) {
@@ -156,61 +150,76 @@ function getCaseSLA(caseId: string) {
           <tr
             v-for="(c, index) in cases"
             :key="c.incidentid"
-            class="group transition-colors hover:bg-muted/50 cursor-pointer"
-            @click="handleRowClick(c.incidentid)"
+            class="group transition-colors hover:bg-muted/50"
           >
-            <td class="h-14 px-3 align-middle">
-              <span class="text-sm text-muted-foreground">{{ index + 1 }}</span>
+            <td class="align-middle">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+                <span class="text-sm text-muted-foreground">{{ index + 1 }}</span>
+              </NuxtLink>
             </td>
-            <td class="h-14 px-3 align-middle">
-              <span class="font-mono text-sm font-medium text-primary">
-                {{ c.ticketnumber }}
-              </span>
+            <td class="align-middle">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+                <span class="font-mono text-sm font-medium text-primary">
+                  {{ c.ticketnumber }}
+                </span>
+              </NuxtLink>
             </td>
-            <td class="px-3 py-3 align-middle overflow-hidden">
-              <UiTooltip :content="c.description" position="bottom" max-width="450px">
-                <div class="overflow-hidden">
-                  <p class="truncate font-medium">{{ c.title }}</p>
-                  <p v-if="c.description" class="truncate text-sm text-muted-foreground mt-0.5">
-                    {{ c.description }}
-                  </p>
-                </div>
-              </UiTooltip>
+            <td class="align-middle overflow-hidden">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="block px-3 py-3 overflow-hidden">
+                <UiTooltip :content="c.description" position="bottom" max-width="450px">
+                  <div class="overflow-hidden">
+                    <p class="truncate font-medium">{{ c.title }}</p>
+                    <p v-if="c.description" class="truncate text-sm text-muted-foreground mt-0.5">
+                      {{ c.description }}
+                    </p>
+                  </div>
+                </UiTooltip>
+              </NuxtLink>
             </td>
-            <td class="h-14 px-3 align-middle">
-              <span
-                :class="[
-                  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
-                  getStatusBadgeClass(c)
-                ]"
-              >
-                {{ getStatusReasonLabel(c['statuscode@OData.Community.Display.V1.FormattedValue']) }}
-              </span>
+            <td class="align-middle">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+                <span
+                  :class="[
+                    'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
+                    getStatusBadgeClass(c)
+                  ]"
+                >
+                  {{ getStatusReasonLabel(c['statuscode@OData.Community.Display.V1.FormattedValue']) }}
+                </span>
+              </NuxtLink>
             </td>
-            <td class="h-14 px-3 align-middle">
-              <span
-                :class="[
-                  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
-                  getPriorityBadgeClass(c.prioritycode)
-                ]"
-              >
-                {{ getPriorityLabel(c.prioritycode) }}
-              </span>
+            <td class="align-middle">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+                <span
+                  :class="[
+                    'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                    getPriorityBadgeClass(c.prioritycode)
+                  ]"
+                >
+                  {{ getPriorityLabel(c.prioritycode) }}
+                </span>
+              </NuxtLink>
             </td>
-            <td class="h-14 px-3 align-middle">
-              <span :title="formatCaseDate(c.createdon, true).tooltip" class="text-sm text-muted-foreground">
-                {{ formatCaseDate(c.createdon, true).text }}
-              </span>
+            <td class="align-middle">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+                <span :title="formatCaseDate(c.createdon, true).tooltip" class="text-sm text-muted-foreground">
+                  {{ formatCaseDate(c.createdon, true).text }}
+                </span>
+              </NuxtLink>
             </td>
-            <td class="h-14 px-3 align-middle">
-              <span :title="formatCaseDate(c.modifiedon, true).tooltip" class="text-sm text-muted-foreground">
-                {{ formatCaseDate(c.modifiedon, true).text }}
-              </span>
+            <td class="align-middle">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+                <span :title="formatCaseDate(c.modifiedon, true).tooltip" class="text-sm text-muted-foreground">
+                  {{ formatCaseDate(c.modifiedon, true).text }}
+                </span>
+              </NuxtLink>
             </td>
-            <td class="h-14 px-3 align-middle">
-              <span class="text-sm text-muted-foreground">
-                {{ c['_ent_queueid_value@OData.Community.Display.V1.FormattedValue'] || '—' }}
-              </span>
+            <td class="align-middle">
+              <NuxtLink :to="`${basePath}/${c.incidentid}`" class="flex items-center h-14 px-3">
+                <span class="text-sm text-muted-foreground">
+                  {{ c['_ent_queueid_value@OData.Community.Display.V1.FormattedValue'] || '—' }}
+                </span>
+              </NuxtLink>
             </td>
           </tr>
         </tbody>

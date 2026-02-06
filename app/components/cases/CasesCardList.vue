@@ -25,8 +25,6 @@ const props = withDefaults(defineProps<Props>(), {
   emptyDescription: '',
 })
 
-const router = useRouter()
-
 // Use composable as fallback for SLA data when prop not provided
 const { caseSLAData: composableSLAData } = useCases()
 
@@ -54,18 +52,15 @@ function getStatusBadgeClass(caseItem: Case) {
   return getStatusReasonBadgeClass(caseItem.statecode)
 }
 
-function handleCardClick(caseId: string) {
-  router.push(`${props.basePath}/${caseId}`)
-}
 </script>
 
 <template>
   <div v-if="cases.length > 0" class="divide-y">
-    <div
+    <NuxtLink
       v-for="(c, index) in cases"
       :key="c.incidentid"
-      class="px-4 py-3 active:bg-muted/50 cursor-pointer transition-colors"
-      @click="handleCardClick(c.incidentid)"
+      :to="`${basePath}/${c.incidentid}`"
+      class="block px-4 py-3 active:bg-muted/50 cursor-pointer transition-colors"
     >
       <!-- Row 1: Priority badge (left) + Status reason badge (right) -->
       <div class="flex items-center justify-between gap-2">
@@ -124,7 +119,7 @@ function handleCardClick(caseId: string) {
           {{ c['_ent_queueid_value@OData.Community.Display.V1.FormattedValue'] }}
         </span>
       </div>
-    </div>
+    </NuxtLink>
   </div>
 
   <div v-else class="flex flex-col items-center justify-center py-16 text-muted-foreground">
