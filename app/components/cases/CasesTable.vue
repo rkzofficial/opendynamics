@@ -89,7 +89,7 @@ function getSortIcon(columnKey: string): Component {
       :sortable="sortable"
       :sort-column="sortColumn"
       :sort-direction="sortDirection"
-      @sort-change="(col, dir) => $emit('sort-change', col, dir)"
+      @sort-change="$emit('sort-change', $event[0], $event[1])"
     />
 
     <!-- Desktop: Table -->
