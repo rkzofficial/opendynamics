@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { FolderOpen, Calendar, Clock, Inbox, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-vue-next'
+import type { Component } from 'vue'
 import type { CaseListItem } from '~/types'
 import {
   getStatusReasonLabel,
@@ -43,14 +44,22 @@ const sortOptions: SortOption[] = [
   { key: 'ticketnumber', label: 'Ticket #' },
   { key: 'title', label: 'Title' },
   { key: 'prioritycode', label: 'Priority' },
+  { key: 'statuscode', label: 'Status' },
   { key: 'createdon', label: 'Created' },
   { key: 'modifiedon', label: 'Modified' },
+  { key: '_ent_queueid_value', label: 'Queue' },
 ]
 
-function handleSort(columnKey: string) {
+function handleColumnChange(columnKey: string) {
   if (!props.sortable) return
-  const newDirection = props.sortColumn === columnKey && props.sortDirection === 'desc' ? 'asc' : 'desc'
-  emit('sort-change', columnKey, newDirection)
+  // When changing column, keep current direction
+  emit('sort-change', columnKey, props.sortDirection)
+}
+
+function toggleDirection() {
+  if (!props.sortable || !props.sortColumn) return
+  const newDirection = props.sortDirection === 'desc' ? 'asc' : 'desc'
+  emit('sort-change', props.sortColumn, newDirection)
 }
 
 function getSortLabel(): string {
@@ -58,7 +67,7 @@ function getSortLabel(): string {
   return option ? option.label : 'Sort by'
 }
 
-function getSortDirectionIcon() {
+function getSortDirectionIcon(): Component {
   return props.sortDirection === 'asc' ? ArrowUp : ArrowDown
 }
 
@@ -78,7 +87,7 @@ function getStatusBadgeClass(caseItem: CaseListItem) {
   <div class="space-y-3">
     <!-- Sort Dropdown for Mobile -->
     <div v-if="sortable" class="flex items-center justify-between px-1">
-      <UiSelect :model-value="sortColumn" @update:model-value="handleSort($event)">
+      <UiSelect :model-value="sortColumn" @update:model-value="handleColumnChange($event)">
         <UiSelectTrigger class="h-9 w-auto min-w-[160px] bg-background">
           <span class="flex items-center gap-2">
             <component :is="sortColumn ? getSortDirectionIcon() : ArrowUpDown" class="h-3.5 w-3.5" />
@@ -110,7 +119,7 @@ function getStatusBadgeClass(caseItem: CaseListItem) {
         variant="ghost"
         size="sm"
         class="h-9 px-3"
-        @click="handleSort(sortColumn)"
+        @click="toggleDirection"
       >
         <component :is="getSortDirectionIcon()" class="h-4 w-4" />
         <span class="ml-2 text-xs">{{ sortDirection === 'asc' ? 'Ascending' : 'Descending' }}</span>
@@ -118,7 +127,8 @@ function getStatusBadgeClass(caseItem: CaseListItem) {
     </div>
 
     <!-- Card List -->
-    <div v-if="cases.length > 0" class="divide-y border rounded-lg overflow-hidden">
+    <template v-if="cases.length > 0">
+      <div class="divide-y border rounded-lg overflow-hidden">
       <NuxtLink
         v-for="(c, index) in cases"
         :key="c.id"
@@ -183,9 +193,10 @@ function getStatusBadgeClass(caseItem: CaseListItem) {
         </span>
       </div>
     </NuxtLink>
-  </div>
+      </div>
+    </template>
 
-  <div v-else class="flex flex-col items-center justify-center py-16 text-muted-foreground">
+    <div v-else class="flex flex-col items-center justify-center py-16 text-muted-foreground">
     <div class="rounded-full bg-muted p-4 mb-4">
       <FolderOpen class="h-8 w-8 opacity-50" />
     </div>
