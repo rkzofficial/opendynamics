@@ -30,6 +30,7 @@ watch(isAuthenticated, (value) => {
 
   <div v-else-if="isAuthenticated" class="min-h-screen flex flex-col">
     <LayoutHeader />
+    <LayoutGlobalCommandPalette />
 
     <main class="flex-1 p-4 md:p-6">
       <slot />

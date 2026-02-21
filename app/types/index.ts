@@ -135,6 +135,16 @@ export interface CasesResponse {
   pageSize: number
 }
 
+export interface CommandCaseResult {
+  id: string
+  ticketNumber: string
+  title: string
+  description?: string
+  customerName?: string
+  companyName?: string
+  modifiedAt: string
+}
+
 // Dashboard KPI types
 export interface DashboardStats {
   totalCases: number

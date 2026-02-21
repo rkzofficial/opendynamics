@@ -162,6 +162,32 @@ export class DynamicsApiClient {
     }
   }
 
+  async searchCases(options: { query?: string; top?: number; ownerId?: string } = {}): Promise<{ value: DynamicsCase[] }> {
+    const pageSize = options.top || 100
+    const conditions: string[] = []
+
+    if (options.query) {
+      const escaped = options.query.replace(/'/g, "''")
+      conditions.push(
+        `(contains(ticketnumber,'${escaped}') or contains(title,'${escaped}') or contains(description,'${escaped}') or contains(customerid_contact/fullname,'${escaped}') or contains(primarycontactid/fullname,'${escaped}') or contains(customerid_account/name,'${escaped}'))`
+      )
+    }
+
+    if (options.ownerId) {
+      conditions.push(`_ownerid_value eq ${options.ownerId}`)
+    }
+
+    const query = buildODataQuery({
+      select: ['incidentid', 'title', 'ticketnumber', 'description', 'modifiedon', '_customerid_value', '_ent_contact_value'],
+      expand: ['customerid_contact($select=fullname)', 'primarycontactid($select=fullname)', 'customerid_account($select=name)'],
+      filter: conditions.length > 0 ? conditions.join(' and ') : undefined,
+      orderby: 'modifiedon desc',
+      top: pageSize,
+    })
+
+    return this.fetch(`/incidents${query}`)
+  }
+
   async getCase(incidentId: string): Promise<DynamicsCase> {
     const query = buildODataQuery({
       select: [

@@ -16,6 +16,8 @@ export interface DynamicsCase {
   createdon: string
   modifiedon: string
   customerid_contact?: { fullname?: string; emailaddress1?: string }
+  '_customerid_value@OData.Community.Display.V1.FormattedValue'?: string
+  '_ent_contact_value@OData.Community.Display.V1.FormattedValue'?: string
   owninguser?: { fullname?: string }
   _ent_queueid_value?: string
   '_ent_queueid_value@OData.Community.Display.V1.FormattedValue'?: string

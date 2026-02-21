@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Menu, Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, X } from 'lucide-vue-next'
+import { Menu, Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, X, Search } from 'lucide-vue-next'
 
 const { isAdmin } = useAuth()
+const { openPalette } = useCommandPalette()
 const route = useRoute()
 
 const mobileMenuOpen = ref(false)
@@ -77,6 +78,19 @@ function isActive(href: string) {
 
       <!-- Right Side Actions -->
       <div class="flex items-center gap-1">
+        <UiButton
+          variant="outline"
+          size="sm"
+          class="hidden lg:inline-flex h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
+          @click="openPalette"
+        >
+          <Search class="h-3.5 w-3.5 mr-2" />
+          Search
+          <kbd class="ml-2 rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            Ctrl + /
+          </kbd>
+        </UiButton>
+
         <LayoutThemeToggle />
 
         <UiButton variant="ghost" size="icon" class="h-8 w-8">
