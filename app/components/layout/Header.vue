@@ -32,6 +32,11 @@ function isActive(href: string) {
   }
   return route.path.startsWith(href)
 }
+
+function openSearchFromMobile() {
+  mobileMenuOpen.value = false
+  openPalette()
+}
 </script>
 
 <template>
@@ -79,6 +84,16 @@ function isActive(href: string) {
       <!-- Right Side Actions -->
       <div class="flex items-center gap-1">
         <UiButton
+          variant="ghost"
+          size="icon"
+          class="lg:hidden h-8 w-8"
+          @click="openPalette"
+        >
+          <Search class="h-4 w-4" />
+          <span class="sr-only">Search</span>
+        </UiButton>
+
+        <UiButton
           variant="outline"
           size="sm"
           class="hidden lg:inline-flex h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
@@ -117,6 +132,15 @@ function isActive(href: string) {
       class="md:hidden border-t bg-background px-4 py-2"
     >
       <div class="flex flex-col gap-1">
+        <UiButton
+          variant="ghost"
+          class="justify-start gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          @click="openSearchFromMobile"
+        >
+          <Search class="h-4 w-4" />
+          Search
+        </UiButton>
+
         <NuxtLink
           v-for="item in navigation"
           :key="item.name"
