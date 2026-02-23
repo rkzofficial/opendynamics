@@ -42,7 +42,7 @@ const editor = useEditor({
   editable: !props.disabled,
   editorProps: {
     attributes: {
-      class: 'prose prose-sm dark:prose-invert max-w-none min-h-[10rem] focus:outline-none',
+      class: 'prose prose-sm dark:prose-invert max-w-none min-h-[10rem] focus:outline-none [&_p]:my-0 [&_ul]:my-0 [&_ol]:my-0 [&_pre]:my-0',
     },
   },
   onUpdate: ({ editor }) => {
@@ -90,6 +90,7 @@ function toggleLink() {
     .setLink({ href })
     .run()
 }
+
 </script>
 
 <template>

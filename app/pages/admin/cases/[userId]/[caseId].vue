@@ -222,11 +222,46 @@ function handleInternalNoteModalOpenChange(open: boolean) {
   }
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function getCustomerFirstName(): string {
+  const fullName = currentCase.value?.contact?.name?.trim()
+    || currentCase.value?.customer?.name?.trim()
+    || ''
+
+  if (!fullName) return '{{customerFirstName}}'
+  return fullName.split(/\s+/)[0]
+}
+
+function getSupportEngineerFullName(): string {
+  const fullName = currentCase.value?.owner?.name?.trim() || ''
+  return fullName || '{{SupportEngineerFullName}}'
+}
+
+function getExternalNoteTemplateHtml(): string {
+  const customerFirstName = escapeHtml(getCustomerFirstName())
+  const supportEngineerFullName = escapeHtml(getSupportEngineerFullName())
+
+  return `<p>Hi ${customerFirstName},<br><br><br><br>Best Regards,<br>${supportEngineerFullName}</p>`
+}
+
 function handleExternalNoteModalOpenChange(open: boolean) {
   isExternalNoteModalOpen.value = open
-  if (!open) {
-    externalNoteError.value = ''
+  if (open) {
+    if (!hasVisibleHtmlContent(externalNoteMessageHtml.value)) {
+      externalNoteMessageHtml.value = getExternalNoteTemplateHtml()
+    }
+    return
   }
+
+  externalNoteError.value = ''
 }
 
 function getUserDisplayName(user: typeof selectedUser.value): string {

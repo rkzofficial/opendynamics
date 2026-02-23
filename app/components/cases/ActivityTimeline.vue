@@ -67,6 +67,12 @@ function getActivityContent(activity: ActivityItem): string {
 
 function sanitizeRichHtml(html: string): string {
   if (!html) return ''
+
+  const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(html)
+  if (!hasHtmlTags) {
+    return escapeHtml(html).replace(/\r\n|\r|\n/g, '<br>')
+  }
+
   if (!domPurify) return escapeHtml(html)
 
   return domPurify.sanitize(html, {

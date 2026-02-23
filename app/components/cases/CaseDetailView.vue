@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User, Share2 } from 'lucide-vue-next'
+import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User, Share2, Send } from 'lucide-vue-next'
 import type { CaseDetail, AttachmentItem, ActivityItem, NoteItem } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
 import { hasVisibleHtmlContent } from '~/utils/html'
@@ -375,6 +375,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
       :open="isInternalNoteModalOpen"
       title="Add Internal Note"
       description="Add a private internal note to this case."
+      class="w-[min(56rem,calc(100vw-2rem))] max-w-none max-h-[85vh] overflow-y-auto"
       @update:open="emit('update:isInternalNoteModalOpen', $event)"
     >
       <div class="space-y-4">
@@ -393,6 +394,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
           <UiLabel>Message</UiLabel>
           <UiRichTextEditor
             :model-value="internalNoteDescription"
+            class="[&_.ProseMirror]:min-h-[14rem]"
             placeholder="Enter internal note details"
             :disabled="isSubmittingInternalNote"
             @update:model-value="emit('update:internalNoteDescription', String($event ?? ''))"
@@ -418,7 +420,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
           @click="handleSubmitInternalNote"
         >
           <UiSpinner v-if="isSubmittingInternalNote" size="sm" class="mr-2" />
-          Add Internal Note
+          <Send v-else class="mr-2 h-4 w-4" />
+          {{ isSubmittingInternalNote ? 'Submitting...' : 'Submit' }}
         </UiButton>
       </template>
     </UiDialog>
@@ -427,6 +430,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
       :open="isExternalNoteModalOpen"
       title="Add External Note"
       description="Send a rich-text response to the customer."
+      class="w-[min(56rem,calc(100vw-2rem))] max-w-none max-h-[85vh] overflow-y-auto"
       @update:open="emit('update:isExternalNoteModalOpen', $event)"
     >
       <div class="space-y-4">
@@ -452,6 +456,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
           <UiLabel>Message</UiLabel>
           <UiRichTextEditor
             :model-value="externalNoteMessageHtml"
+            class="[&_.ProseMirror]:min-h-[14rem]"
             placeholder="Write the customer message"
             :disabled="isSubmittingExternalNote"
             @update:model-value="emit('update:externalNoteMessageHtml', String($event ?? ''))"
@@ -477,7 +482,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
           @click="handleSubmitExternalNote"
         >
           <UiSpinner v-if="isSubmittingExternalNote" size="sm" class="mr-2" />
-          Add External Note
+          <Send v-else class="mr-2 h-4 w-4" />
+          {{ isSubmittingExternalNote ? 'Submitting...' : 'Submit' }}
         </UiButton>
       </template>
     </UiDialog>
