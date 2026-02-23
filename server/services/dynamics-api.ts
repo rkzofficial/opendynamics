@@ -120,6 +120,33 @@ export class DynamicsApiClient {
     return response.json()
   }
 
+  private async fetchNoContent(endpoint: string, options: RequestInit = {}, retryCount = 0): Promise<void> {
+    const response = await this.executeFetch(endpoint, options)
+
+    if (response.status === 401) {
+      if (retryCount > 0) {
+        throw new Error(`Dynamics API error: ${response.status} - Token refresh failed or token still invalid`)
+      }
+
+      if (!this.onTokenRefresh) {
+        const errorText = await response.text()
+        throw new Error(`Dynamics API error: ${response.status} - ${errorText}`)
+      }
+
+      try {
+        await this.refreshToken()
+        return this.fetchNoContent(endpoint, options, retryCount + 1)
+      } catch {
+        throw new Error('Dynamics API error: 401 - Session expired. Please reconnect to Dynamics.')
+      }
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Dynamics API error: ${response.status} - ${errorText}`)
+    }
+  }
+
   async whoAmI(): Promise<{ UserId: string; BusinessUnitId: string; OrganizationId: string }> {
     return this.fetch('/WhoAmI')
   }
@@ -390,6 +417,31 @@ export class DynamicsApiClient {
         'objectid_incident@odata.bind': `/incidents(${incidentId})`,
         notetext: noteText,
         subject: subject || 'Note',
+      }),
+    })
+  }
+
+  async createInternalNote(
+    incidentId: string,
+    subject: string,
+    description: string,
+    ownerSystemUserId: string
+  ): Promise<void> {
+    return this.fetchNoContent('/ent_internalnoteses', {
+      method: 'POST',
+      body: JSON.stringify({
+        subject,
+        description,
+        ent_type: 1,
+        ent_isstartdatepopulatedbyagent: true,
+        ent_wfexecutionstatus: 117710000,
+        ent_restriction: false,
+        ent_commenttype: 117710000,
+        statuscode: 1,
+        statecode: 0,
+        processid: '00000000-0000-0000-0000-000000000000',
+        'ownerid_ent_internalnotes@odata.bind': `/systemusers(${ownerSystemUserId})`,
+        'regardingobjectid_incident_ent_internalnotes@odata.bind': `/incidents(${incidentId})`,
       }),
     })
   }

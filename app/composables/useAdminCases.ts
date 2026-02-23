@@ -171,13 +171,16 @@ export function useAdminCases() {
     skipTokenHistory.value = []
   }
 
-  async function fetchCaseDetails(userId: string, caseId: string) {
+  async function fetchCaseDetails(userId: string, caseId: string, options?: { forceRefresh?: boolean }) {
     loading.value = true
     error.value = ''
 
     try {
+      const params = options?.forceRefresh
+        ? { userId, _noCache: '1' }
+        : { userId }
       const response = await $fetch<CaseDetail>(`/api/cases/${caseId}`, {
-        params: { userId },
+        params,
       })
       return response
     } catch (e: unknown) {

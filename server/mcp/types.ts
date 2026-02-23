@@ -28,11 +28,11 @@ export interface GetCaseArgs {
   caseId: string
 }
 
-// Add note to case
-export interface AddCaseNoteArgs {
+// Add internal note to case
+export interface AddInternalNoteArgs {
   caseId: string
-  noteText: string
-  subject?: string
+  subject: string
+  description: string
 }
 
 // Share creation

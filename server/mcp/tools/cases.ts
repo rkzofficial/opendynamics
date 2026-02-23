@@ -2,7 +2,7 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import { getDynamicsClientForUser } from '../../utils/dynamics'
 import { buildCaseFilter } from '../../utils/odata-builder'
 import { mapCaseToListItem, mapBatchSLA, buildCaseDetail } from '../../utils/mappers'
-import type { McpToolContext, ToolResult, ListCasesArgs, GetCaseArgs, AddCaseNoteArgs } from '../types'
+import type { McpToolContext, ToolResult, ListCasesArgs, GetCaseArgs, AddInternalNoteArgs } from '../types'
 
 // Tool definitions
 export const caseTools: Tool[] = [
@@ -60,8 +60,8 @@ export const caseTools: Tool[] = [
     },
   },
   {
-    name: 'add_case_note',
-    description: 'Add a note/annotation to a case.',
+    name: 'add_internal_note',
+    description: 'Add an internal note to a case (maps to POST /api/cases/:id/internal-notes).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -69,16 +69,16 @@ export const caseTools: Tool[] = [
           type: 'string',
           description: 'The case ID (incidentid GUID)',
         },
-        noteText: {
-          type: 'string',
-          description: 'The note content',
-        },
         subject: {
           type: 'string',
-          description: 'Optional subject line for the note',
+          description: 'Internal note subject (required)',
+        },
+        description: {
+          type: 'string',
+          description: 'Internal note description/content (required)',
         },
       },
-      required: ['caseId', 'noteText'],
+      required: ['caseId', 'subject', 'description'],
     },
   },
 ]
@@ -179,29 +179,46 @@ export async function handleGetCase(args: GetCaseArgs, context: McpToolContext):
   }
 }
 
-export async function handleAddCaseNote(args: AddCaseNoteArgs, context: McpToolContext): Promise<ToolResult> {
+export async function handleAddInternalNote(args: AddInternalNoteArgs, context: McpToolContext): Promise<ToolResult> {
   try {
-    if (!args.caseId || !args.noteText) {
+    const caseId = args.caseId?.trim()
+    const subject = args.subject?.trim()
+    const description = args.description?.trim()
+
+    if (!caseId || !subject || !description) {
       return {
-        content: [{ type: 'text', text: 'Error: caseId and noteText are required' }],
+        content: [{ type: 'text', text: 'Error: caseId, subject, and description are required' }],
         isError: true,
       }
     }
 
-    const { client } = await getDynamicsClientForUser(context.userId)
-    await client.createAnnotation(args.caseId, args.noteText, args.subject)
+    const { client, dynamicsUserId } = await getDynamicsClientForUser(context.userId)
+    let ownerSystemUserId = dynamicsUserId
+    if (!ownerSystemUserId) {
+      const whoAmI = await client.whoAmI()
+      ownerSystemUserId = whoAmI?.UserId
+    }
+
+    if (!ownerSystemUserId) {
+      return {
+        content: [{ type: 'text', text: 'Error: Failed to resolve Dynamics owner user ID' }],
+        isError: true,
+      }
+    }
+
+    await client.createInternalNote(caseId, subject, description, ownerSystemUserId)
 
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({ success: true, message: 'Note added successfully' }),
+          text: JSON.stringify({ success: true, message: 'Internal note added successfully' }),
         },
       ],
     }
   } catch (error) {
     return {
-      content: [{ type: 'text', text: `Error adding note: ${(error as Error).message}` }],
+      content: [{ type: 'text', text: `Error adding internal note: ${(error as Error).message}` }],
       isError: true,
     }
   }

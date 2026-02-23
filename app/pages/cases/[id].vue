@@ -14,15 +14,17 @@ const {
   isDownloadingAttachment,
   isLoadingPreview,
   fetchCase,
-  addReply,
+  addInternalNote,
   downloadAttachment,
   getAttachmentPreviewUrl,
   clearPreviewCache,
 } = useCases()
 
-const replyText = ref('')
-const replySubject = ref('')
-const isSubmitting = ref(false)
+const internalNoteSubject = ref('')
+const internalNoteDescription = ref('')
+const internalNoteError = ref('')
+const isSubmittingInternalNote = ref(false)
+const isInternalNoteModalOpen = ref(false)
 
 // Preview state
 const isPreviewOpen = ref(false)
@@ -114,18 +116,35 @@ function stopCountdownTimer() {
   }
 }
 
-async function handleSubmitReply() {
-  if (!replyText.value.trim()) return
+async function handleSubmitInternalNote() {
+  const subject = internalNoteSubject.value.trim()
+  const description = internalNoteDescription.value.trim()
+  if (!subject || !description) {
+    internalNoteError.value = 'Subject and description are required'
+    return
+  }
 
-  isSubmitting.value = true
+  isSubmittingInternalNote.value = true
+  internalNoteError.value = ''
   try {
-    const result = await addReply(caseId, replyText.value, replySubject.value || undefined)
+    const result = await addInternalNote(caseId, subject, description)
     if (result.success) {
-      replyText.value = ''
-      replySubject.value = ''
+      internalNoteSubject.value = ''
+      internalNoteDescription.value = ''
+      isInternalNoteModalOpen.value = false
+      await fetchCase(caseId, { forceRefresh: true })
+    } else {
+      internalNoteError.value = result.error || 'Failed to add internal note'
     }
   } finally {
-    isSubmitting.value = false
+    isSubmittingInternalNote.value = false
+  }
+}
+
+function handleInternalNoteModalOpenChange(open: boolean) {
+  isInternalNoteModalOpen.value = open
+  if (!open) {
+    internalNoteError.value = ''
   }
 }
 
@@ -290,12 +309,18 @@ async function copyExistingShareUrl(token: string) {
       :customer-update-s-l-a="getCustomerUpdateSLA()"
       :first-response-countdown="firstResponseCountdown"
       :customer-update-countdown="customerUpdateCountdown"
-      v-model:reply-subject="replySubject"
-      v-model:reply-text="replyText"
-      :is-submitting="isSubmitting"
+      :show-note-actions="true"
+      :is-internal-note-modal-open="isInternalNoteModalOpen"
+      :internal-note-subject="internalNoteSubject"
+      :internal-note-description="internalNoteDescription"
+      :is-submitting-internal-note="isSubmittingInternalNote"
+      :internal-note-error="internalNoteError"
       :show-share-button="true"
       @back="handleBack"
-      @submit-reply="handleSubmitReply"
+      @update:is-internal-note-modal-open="handleInternalNoteModalOpenChange"
+      @update:internal-note-subject="internalNoteSubject = $event"
+      @update:internal-note-description="internalNoteDescription = $event"
+      @submit-internal-note="handleSubmitInternalNote"
       @download-attachment="handleDownloadAttachment"
       @preview-attachment="handlePreviewAttachment"
       @navigate-preview="handleNavigatePreview"

@@ -6,7 +6,7 @@ import {
   caseTools,
   handleListCases,
   handleGetCase,
-  handleAddCaseNote,
+  handleAddInternalNote,
 } from './cases'
 import {
   dashboardTools,
@@ -46,8 +46,8 @@ export async function handleToolCall(
       return handleListCases(args as any, context)
     case 'get_case':
       return handleGetCase(args as any, context)
-    case 'add_case_note':
-      return handleAddCaseNote(args as any, context)
+    case 'add_internal_note':
+      return handleAddInternalNote(args as any, context)
 
     // Dashboard tools
     case 'get_dashboard_stats':

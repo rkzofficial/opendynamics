@@ -37,9 +37,11 @@ const compareItems = ref<CompareItem[]>([])
 // Preview cache for admin page
 const previewCache = new Map<string, string>()
 
-const replyText = ref('')
-const replySubject = ref('')
-const isSubmitting = ref(false)
+const internalNoteSubject = ref('')
+const internalNoteDescription = ref('')
+const internalNoteError = ref('')
+const isSubmittingInternalNote = ref(false)
+const isInternalNoteModalOpen = ref(false)
 
 // Countdown timer for SLA deadlines
 const firstResponseCountdown = ref('')
@@ -143,27 +145,42 @@ function stopCountdownTimer() {
   }
 }
 
-async function handleSubmitReply() {
-  if (!replyText.value.trim() || !userId.value || !caseId.value) return
+async function handleSubmitInternalNote() {
+  const subject = internalNoteSubject.value.trim()
+  const description = internalNoteDescription.value.trim()
+  if (!subject || !description || !userId.value || !caseId.value) {
+    internalNoteError.value = 'Subject and description are required'
+    return
+  }
 
-  isSubmitting.value = true
+  isSubmittingInternalNote.value = true
+  internalNoteError.value = ''
   try {
-    await $fetch(`/api/cases/${caseId.value}/reply`, {
+    await $fetch(`/api/cases/${caseId.value}/internal-notes`, {
       method: 'POST',
       params: { userId: userId.value },
       body: {
-        text: replyText.value,
-        subject: replySubject.value || undefined
+        subject,
+        description,
       }
     })
-    replyText.value = ''
-    replySubject.value = ''
-    // Reload the full case to get updated activities
-    await loadCase()
-  } catch (e) {
-    // Silent fail for reply
+    internalNoteSubject.value = ''
+    internalNoteDescription.value = ''
+    isInternalNoteModalOpen.value = false
+    // Reload full case and bypass cache to include latest timeline entries
+    const result = await fetchCaseDetails(userId.value, caseId.value, { forceRefresh: true })
+    currentCase.value = result
+  } catch {
+    internalNoteError.value = 'Failed to add internal note'
   } finally {
-    isSubmitting.value = false
+    isSubmittingInternalNote.value = false
+  }
+}
+
+function handleInternalNoteModalOpenChange(open: boolean) {
+  isInternalNoteModalOpen.value = open
+  if (!open) {
+    internalNoteError.value = ''
   }
 }
 
@@ -333,13 +350,19 @@ function handleRemoveFromCompare(index: number) {
     :customer-update-s-l-a="getCustomerUpdateSLA()"
     :first-response-countdown="firstResponseCountdown"
     :customer-update-countdown="customerUpdateCountdown"
-    v-model:reply-subject="replySubject"
-    v-model:reply-text="replyText"
-    :is-submitting="isSubmitting"
+    :show-note-actions="true"
+    :is-internal-note-modal-open="isInternalNoteModalOpen"
+    :internal-note-subject="internalNoteSubject"
+    :internal-note-description="internalNoteDescription"
+    :is-submitting-internal-note="isSubmittingInternalNote"
+    :internal-note-error="internalNoteError"
     :admin-user-info="adminUserInfo"
     :error="error"
     @back="handleBack"
-    @submit-reply="handleSubmitReply"
+    @update:is-internal-note-modal-open="handleInternalNoteModalOpenChange"
+    @update:internal-note-subject="internalNoteSubject = $event"
+    @update:internal-note-description="internalNoteDescription = $event"
+    @submit-internal-note="handleSubmitInternalNote"
     @download-attachment="handleDownloadAttachment"
     @preview-attachment="handlePreviewAttachment"
     @navigate-preview="handleNavigatePreview"

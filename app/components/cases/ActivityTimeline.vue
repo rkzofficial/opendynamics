@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Mail, Phone, FileText, MessageSquare, Calendar, Clock, User } from 'lucide-vue-next'
+import { Mail, Phone, FileText, MessageSquare, Calendar, Clock, User, Plus, Shield, MessageCircle } from 'lucide-vue-next'
 import type { ActivityItem, NoteItem } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
 import {
@@ -20,12 +20,31 @@ interface Props {
   items: TimelineItem[]
   isLoading?: boolean
   variant?: 'detailed' | 'simple'
+  showCreateNoteActions?: boolean
+  isCreatingNote?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isLoading: false,
   variant: 'detailed',
+  showCreateNoteActions: false,
+  isCreatingNote: false,
 })
+
+const emit = defineEmits<{
+  selectInternalNote: []
+  selectExternalNote: []
+}>()
+
+function handleSelectInternalNote(close: () => void) {
+  close()
+  emit('selectInternalNote')
+}
+
+function handleSelectExternalNote(close: () => void) {
+  close()
+  emit('selectExternalNote')
+}
 
 function getActivityContent(activity: ActivityItem): string {
   if (activity.type === 'email' && activity.attachments) {
@@ -108,10 +127,36 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
 <template>
   <UiCard>
     <UiCardHeader class="pb-3">
-      <UiCardTitle class="flex items-center gap-2">
-        <Clock class="h-4 w-4 text-muted-foreground" />
-        Activity Timeline
-      </UiCardTitle>
+      <div class="flex items-center justify-between gap-3">
+        <UiCardTitle class="flex items-center gap-2">
+          <Clock class="h-4 w-4 text-muted-foreground" />
+          Activity Timeline
+        </UiCardTitle>
+
+        <UiDropdownMenu v-if="showCreateNoteActions" align="end">
+          <template #trigger>
+            <UiButton
+              variant="outline"
+              size="icon"
+              class="h-8 w-8"
+              :disabled="isCreatingNote"
+            >
+              <Plus class="h-4 w-4" />
+            </UiButton>
+          </template>
+
+          <template #default="{ close }">
+            <UiDropdownMenuItem class="gap-2" @click="handleSelectInternalNote(close)">
+              <Shield class="h-4 w-4 flex-shrink-0 text-orange-500" />
+              <span class="min-w-[7rem] whitespace-nowrap">Internal Note</span>
+            </UiDropdownMenuItem>
+            <UiDropdownMenuItem class="gap-2" @click="handleSelectExternalNote(close)">
+              <MessageCircle class="h-4 w-4 flex-shrink-0 text-cyan-600" />
+              <span class="min-w-[7rem] whitespace-nowrap">External Note</span>
+            </UiDropdownMenuItem>
+          </template>
+        </UiDropdownMenu>
+      </div>
     </UiCardHeader>
     <UiCardContent>
       <div v-if="isLoading" class="space-y-4">

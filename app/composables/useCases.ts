@@ -107,10 +107,11 @@ export function useCases() {
     await fetchCases({ skipToken: previousSkipToken })
   }
 
-  async function fetchCase(id: string) {
+  async function fetchCase(id: string, options?: { forceRefresh?: boolean }) {
     casesState.isLoading = true
     try {
-      const response = await $fetch<CaseDetail>(`/api/cases/${id}`)
+      const params = options?.forceRefresh ? { _noCache: '1' } : undefined
+      const response = await $fetch<CaseDetail>(`/api/cases/${id}`, { params })
       casesState.currentCase = response
       return response
     } catch (error) {
@@ -121,18 +122,16 @@ export function useCases() {
     }
   }
 
-  async function addReply(caseId: string, noteText: string, subject?: string) {
+  async function addInternalNote(caseId: string, subject: string, description: string) {
     try {
-      await $fetch(`/api/cases/${caseId}/reply`, {
+      await $fetch(`/api/cases/${caseId}/internal-notes`, {
         method: 'POST',
-        body: { noteText, subject },
+        body: { subject, description },
       })
-      // Refresh case to get updated activities
-      await fetchCase(caseId)
       return { success: true }
     } catch (error) {
-      console.error('Failed to add reply:', error)
-      return { success: false, error: 'Failed to add reply' }
+      console.error('Failed to add internal note:', error)
+      return { success: false, error: 'Failed to add internal note' }
     }
   }
 
@@ -260,7 +259,7 @@ export function useCases() {
     fetchPreviousPage,
     fetchCase,
     fetchStatusReasonOptions,
-    addReply,
+    addInternalNote,
     downloadAttachment,
     getAttachmentPreviewUrl,
     clearPreviewCache,

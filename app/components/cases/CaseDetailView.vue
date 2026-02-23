@@ -38,6 +38,12 @@ interface Props {
   adminUserInfo?: { name: string }
   error?: string
   showShareButton?: boolean
+  internalNoteSubject?: string
+  internalNoteDescription?: string
+  isSubmittingInternalNote?: boolean
+  internalNoteError?: string
+  isInternalNoteModalOpen?: boolean
+  showNoteActions?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -52,6 +58,12 @@ const props = withDefaults(defineProps<Props>(), {
   isCompareOpen: false,
   compareItems: () => [],
   showShareButton: false,
+  internalNoteSubject: '',
+  internalNoteDescription: '',
+  isSubmittingInternalNote: false,
+  internalNoteError: '',
+  isInternalNoteModalOpen: false,
+  showNoteActions: false,
 })
 
 const emit = defineEmits<{
@@ -64,6 +76,11 @@ const emit = defineEmits<{
   closeCompare: []
   removeFromCompare: [index: number]
   share: []
+  'update:internalNoteSubject': [value: string]
+  'update:internalNoteDescription': [value: string]
+  'update:isInternalNoteModalOpen': [value: boolean]
+  submitInternalNote: []
+  selectExternalNote: []
 }>()
 
 const descriptionCopied = ref(false)
@@ -100,6 +117,17 @@ const linkedDescription = computed(() => {
   if (!props.case?.description) return ''
   return linkifyText(props.case.description)
 })
+
+const canSubmitInternalNote = computed(() => {
+  return !!props.internalNoteSubject.trim()
+    && !!props.internalNoteDescription.trim()
+    && !props.isSubmittingInternalNote
+})
+
+function handleSubmitInternalNote() {
+  if (!canSubmitInternalNote.value) return
+  emit('submitInternalNote')
+}
 
 const timelineItems = computed<TimelineItem[]>(() => {
   const items: TimelineItem[] = []
@@ -285,6 +313,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
           <CasesActivityTimeline
             :items="timelineItems"
             variant="detailed"
+            :show-create-note-actions="showNoteActions"
+            :is-creating-note="isSubmittingInternalNote"
+            @select-internal-note="emit('update:isInternalNoteModalOpen', true)"
+            @select-external-note="emit('selectExternalNote')"
           />
         </div>
 
@@ -309,5 +341,59 @@ const timelineItems = computed<TimelineItem[]>(() => {
         </UiButton>
       </UiCardContent>
     </UiCard>
+
+    <UiDialog
+      :open="isInternalNoteModalOpen"
+      title="Add Internal Note"
+      description="Add a private internal note to this case."
+      @update:open="emit('update:isInternalNoteModalOpen', $event)"
+    >
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <UiLabel for="internal-note-subject-modal">Subject</UiLabel>
+          <UiInput
+            id="internal-note-subject-modal"
+            :model-value="internalNoteSubject"
+            placeholder="Enter internal note subject"
+            :disabled="isSubmittingInternalNote"
+            @update:model-value="emit('update:internalNoteSubject', $event)"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <UiLabel for="internal-note-description-modal">Description</UiLabel>
+          <UiTextarea
+            id="internal-note-description-modal"
+            :model-value="internalNoteDescription"
+            placeholder="Enter internal note details"
+            :rows="5"
+            :disabled="isSubmittingInternalNote"
+            @update:model-value="emit('update:internalNoteDescription', $event)"
+          />
+        </div>
+
+        <UiAlert v-if="internalNoteError" variant="destructive">
+          <AlertTriangle class="h-4 w-4" />
+          <UiAlertDescription>{{ internalNoteError }}</UiAlertDescription>
+        </UiAlert>
+      </div>
+
+      <template #footer>
+        <UiButton
+          variant="outline"
+          :disabled="isSubmittingInternalNote"
+          @click="emit('update:isInternalNoteModalOpen', false)"
+        >
+          Cancel
+        </UiButton>
+        <UiButton
+          :disabled="!canSubmitInternalNote"
+          @click="handleSubmitInternalNote"
+        >
+          <UiSpinner v-if="isSubmittingInternalNote" size="sm" class="mr-2" />
+          Add Internal Note
+        </UiButton>
+      </template>
+    </UiDialog>
   </div>
 </template>
