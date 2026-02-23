@@ -135,6 +135,19 @@ export function useCases() {
     }
   }
 
+  async function addExternalNote(caseId: string, actionType: 0 | 1 | 2, messageHtml: string) {
+    try {
+      await $fetch(`/api/cases/${caseId}/external-notes`, {
+        method: 'POST',
+        body: { actionType, messageHtml },
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to add external note:', error)
+      return { success: false, error: 'Failed to add external note' }
+    }
+  }
+
   async function fetchStatusReasonOptions() {
     try {
       const options = await $fetch<StatusReasonOption[]>('/api/cases/status-reasons')
@@ -260,6 +273,7 @@ export function useCases() {
     fetchCase,
     fetchStatusReasonOptions,
     addInternalNote,
+    addExternalNote,
     downloadAttachment,
     getAttachmentPreviewUrl,
     clearPreviewCache,

@@ -1,4 +1,5 @@
 import { getDynamicsClient } from '../../../utils/dynamics'
+import { hasVisibleHtmlContent } from '../../../utils/html'
 
 interface InternalNoteBody {
   subject?: string
@@ -18,8 +19,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody<InternalNoteBody>(event)
-  const subject = body?.subject?.trim()
-  const description = body?.description?.trim()
+  const subject = typeof body?.subject === 'string' ? body.subject.trim() : ''
+  const description = typeof body?.description === 'string' ? body.description : ''
 
   if (!subject) {
     throw createError({
@@ -28,7 +29,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (!description) {
+  if (!description || !hasVisibleHtmlContent(description)) {
     throw createError({
       statusCode: 400,
       message: 'Description is required',
@@ -54,11 +55,10 @@ export default defineEventHandler(async (event) => {
   try {
     await client.createInternalNote(caseId, subject, description, ownerSystemUserId)
     return { success: true }
-  } catch (error: unknown) {
-    const err = error as Error
+  } catch {
     throw createError({
       statusCode: 500,
-      message: err.message || 'Failed to add internal note',
+      message: 'Failed to add internal note',
     })
   }
 })

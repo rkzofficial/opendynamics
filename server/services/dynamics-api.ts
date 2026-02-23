@@ -446,6 +446,23 @@ export class DynamicsApiClient {
     })
   }
 
+  async createExternalNote(
+    incidentId: string,
+    actionType: 0 | 1 | 2,
+    messageHtml: string
+  ): Promise<void> {
+    return this.fetchNoContent('/ent_customernotes', {
+      method: 'POST',
+      body: JSON.stringify({
+        ent_type: actionType,
+        ent_description_rtf: messageHtml,
+        description: messageHtml,
+        'regardingobjectid_incident@odata.bind': `/incidents(${incidentId})`,
+        ent_notificationpreference: 117710000,
+      }),
+    })
+  }
+
   async getDashboardStats(ownerId?: string): Promise<{
     totalCases: number
     openCases: number

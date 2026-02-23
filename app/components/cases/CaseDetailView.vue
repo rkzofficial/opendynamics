@@ -2,6 +2,7 @@
 import { ArrowLeft, FileText, Copy, Check, Users, AlertTriangle, User, Share2 } from 'lucide-vue-next'
 import type { CaseDetail, AttachmentItem, ActivityItem, NoteItem } from '~/types'
 import type { TimelineItem } from '~/components/cases/ActivityTimeline.vue'
+import { hasVisibleHtmlContent } from '~/utils/html'
 import {
   getStatusReasonLabel,
   getStatusReasonBadgeClass,
@@ -43,6 +44,11 @@ interface Props {
   isSubmittingInternalNote?: boolean
   internalNoteError?: string
   isInternalNoteModalOpen?: boolean
+  externalNoteActionType?: string
+  externalNoteMessageHtml?: string
+  isSubmittingExternalNote?: boolean
+  externalNoteError?: string
+  isExternalNoteModalOpen?: boolean
   showNoteActions?: boolean
 }
 
@@ -63,6 +69,11 @@ const props = withDefaults(defineProps<Props>(), {
   isSubmittingInternalNote: false,
   internalNoteError: '',
   isInternalNoteModalOpen: false,
+  externalNoteActionType: '2',
+  externalNoteMessageHtml: '',
+  isSubmittingExternalNote: false,
+  externalNoteError: '',
+  isExternalNoteModalOpen: false,
   showNoteActions: false,
 })
 
@@ -80,7 +91,10 @@ const emit = defineEmits<{
   'update:internalNoteDescription': [value: string]
   'update:isInternalNoteModalOpen': [value: boolean]
   submitInternalNote: []
-  selectExternalNote: []
+  'update:externalNoteActionType': [value: string]
+  'update:externalNoteMessageHtml': [value: string]
+  'update:isExternalNoteModalOpen': [value: boolean]
+  submitExternalNote: []
 }>()
 
 const descriptionCopied = ref(false)
@@ -120,13 +134,28 @@ const linkedDescription = computed(() => {
 
 const canSubmitInternalNote = computed(() => {
   return !!props.internalNoteSubject.trim()
-    && !!props.internalNoteDescription.trim()
+    && hasVisibleHtmlContent(props.internalNoteDescription)
     && !props.isSubmittingInternalNote
+})
+
+const canSubmitExternalNote = computed(() => {
+  return !!props.externalNoteActionType
+    && hasVisibleHtmlContent(props.externalNoteMessageHtml)
+    && !props.isSubmittingExternalNote
+})
+
+const isCreatingNote = computed(() => {
+  return props.isSubmittingInternalNote || props.isSubmittingExternalNote
 })
 
 function handleSubmitInternalNote() {
   if (!canSubmitInternalNote.value) return
   emit('submitInternalNote')
+}
+
+function handleSubmitExternalNote() {
+  if (!canSubmitExternalNote.value) return
+  emit('submitExternalNote')
 }
 
 const timelineItems = computed<TimelineItem[]>(() => {
@@ -314,9 +343,9 @@ const timelineItems = computed<TimelineItem[]>(() => {
             :items="timelineItems"
             variant="detailed"
             :show-create-note-actions="showNoteActions"
-            :is-creating-note="isSubmittingInternalNote"
+            :is-creating-note="isCreatingNote"
             @select-internal-note="emit('update:isInternalNoteModalOpen', true)"
-            @select-external-note="emit('selectExternalNote')"
+            @select-external-note="emit('update:isExternalNoteModalOpen', true)"
           />
         </div>
 
@@ -361,14 +390,12 @@ const timelineItems = computed<TimelineItem[]>(() => {
         </div>
 
         <div class="space-y-2">
-          <UiLabel for="internal-note-description-modal">Description</UiLabel>
-          <UiTextarea
-            id="internal-note-description-modal"
+          <UiLabel>Message</UiLabel>
+          <UiRichTextEditor
             :model-value="internalNoteDescription"
             placeholder="Enter internal note details"
-            :rows="5"
             :disabled="isSubmittingInternalNote"
-            @update:model-value="emit('update:internalNoteDescription', $event)"
+            @update:model-value="emit('update:internalNoteDescription', String($event ?? ''))"
           />
         </div>
 
@@ -392,6 +419,65 @@ const timelineItems = computed<TimelineItem[]>(() => {
         >
           <UiSpinner v-if="isSubmittingInternalNote" size="sm" class="mr-2" />
           Add Internal Note
+        </UiButton>
+      </template>
+    </UiDialog>
+
+    <UiDialog
+      :open="isExternalNoteModalOpen"
+      title="Add External Note"
+      description="Send a rich-text response to the customer."
+      @update:open="emit('update:isExternalNoteModalOpen', $event)"
+    >
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <UiLabel for="external-note-action-type">Action Type</UiLabel>
+          <UiSelect
+            :model-value="externalNoteActionType"
+            :disabled="isSubmittingExternalNote"
+            @update:model-value="emit('update:externalNoteActionType', String($event ?? ''))"
+          >
+            <UiSelectTrigger id="external-note-action-type">
+              <UiSelectValue placeholder="Select action type" />
+            </UiSelectTrigger>
+            <UiSelectContent>
+              <UiSelectItem value="2">Pending Response</UiSelectItem>
+              <UiSelectItem value="1">Comment</UiSelectItem>
+              <UiSelectItem value="0">Resolution Provided</UiSelectItem>
+            </UiSelectContent>
+          </UiSelect>
+        </div>
+
+        <div class="space-y-2">
+          <UiLabel>Message</UiLabel>
+          <UiRichTextEditor
+            :model-value="externalNoteMessageHtml"
+            placeholder="Write the customer message"
+            :disabled="isSubmittingExternalNote"
+            @update:model-value="emit('update:externalNoteMessageHtml', String($event ?? ''))"
+          />
+        </div>
+
+        <UiAlert v-if="externalNoteError" variant="destructive">
+          <AlertTriangle class="h-4 w-4" />
+          <UiAlertDescription>{{ externalNoteError }}</UiAlertDescription>
+        </UiAlert>
+      </div>
+
+      <template #footer>
+        <UiButton
+          variant="outline"
+          :disabled="isSubmittingExternalNote"
+          @click="emit('update:isExternalNoteModalOpen', false)"
+        >
+          Cancel
+        </UiButton>
+        <UiButton
+          :disabled="!canSubmitExternalNote"
+          @click="handleSubmitExternalNote"
+        >
+          <UiSpinner v-if="isSubmittingExternalNote" size="sm" class="mr-2" />
+          Add External Note
         </UiButton>
       </template>
     </UiDialog>

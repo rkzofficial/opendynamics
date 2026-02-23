@@ -2,6 +2,7 @@
 import { onUnmounted } from 'vue'
 import { Copy, Check, Trash2, Eye, Clock, Link2 } from 'lucide-vue-next'
 import { formatCountdown } from '~/utils/caseHelpers'
+import { hasVisibleHtmlContent } from '~/utils/html'
 import type { CaseShare } from '~/types'
 
 const route = useRoute()
@@ -15,6 +16,7 @@ const {
   isLoadingPreview,
   fetchCase,
   addInternalNote,
+  addExternalNote,
   downloadAttachment,
   getAttachmentPreviewUrl,
   clearPreviewCache,
@@ -25,6 +27,11 @@ const internalNoteDescription = ref('')
 const internalNoteError = ref('')
 const isSubmittingInternalNote = ref(false)
 const isInternalNoteModalOpen = ref(false)
+const externalNoteActionType = ref('2')
+const externalNoteMessageHtml = ref('')
+const externalNoteError = ref('')
+const isSubmittingExternalNote = ref(false)
+const isExternalNoteModalOpen = ref(false)
 
 // Preview state
 const isPreviewOpen = ref(false)
@@ -118,8 +125,8 @@ function stopCountdownTimer() {
 
 async function handleSubmitInternalNote() {
   const subject = internalNoteSubject.value.trim()
-  const description = internalNoteDescription.value.trim()
-  if (!subject || !description) {
+  const description = internalNoteDescription.value
+  if (!subject || !hasVisibleHtmlContent(description)) {
     internalNoteError.value = 'Subject and description are required'
     return
   }
@@ -141,10 +148,43 @@ async function handleSubmitInternalNote() {
   }
 }
 
+async function handleSubmitExternalNote() {
+  const actionType = Number(externalNoteActionType.value)
+  const messageHtml = externalNoteMessageHtml.value
+
+  if (![0, 1, 2].includes(actionType) || !hasVisibleHtmlContent(messageHtml)) {
+    externalNoteError.value = 'Action type and message are required'
+    return
+  }
+
+  isSubmittingExternalNote.value = true
+  externalNoteError.value = ''
+  try {
+    const result = await addExternalNote(caseId, actionType as 0 | 1 | 2, messageHtml)
+    if (result.success) {
+      externalNoteActionType.value = '2'
+      externalNoteMessageHtml.value = ''
+      isExternalNoteModalOpen.value = false
+      await fetchCase(caseId, { forceRefresh: true })
+    } else {
+      externalNoteError.value = result.error || 'Failed to add external note'
+    }
+  } finally {
+    isSubmittingExternalNote.value = false
+  }
+}
+
 function handleInternalNoteModalOpenChange(open: boolean) {
   isInternalNoteModalOpen.value = open
   if (!open) {
     internalNoteError.value = ''
+  }
+}
+
+function handleExternalNoteModalOpenChange(open: boolean) {
+  isExternalNoteModalOpen.value = open
+  if (!open) {
+    externalNoteError.value = ''
   }
 }
 
@@ -315,12 +355,21 @@ async function copyExistingShareUrl(token: string) {
       :internal-note-description="internalNoteDescription"
       :is-submitting-internal-note="isSubmittingInternalNote"
       :internal-note-error="internalNoteError"
+      :is-external-note-modal-open="isExternalNoteModalOpen"
+      :external-note-action-type="externalNoteActionType"
+      :external-note-message-html="externalNoteMessageHtml"
+      :is-submitting-external-note="isSubmittingExternalNote"
+      :external-note-error="externalNoteError"
       :show-share-button="true"
       @back="handleBack"
       @update:is-internal-note-modal-open="handleInternalNoteModalOpenChange"
       @update:internal-note-subject="internalNoteSubject = $event"
       @update:internal-note-description="internalNoteDescription = $event"
       @submit-internal-note="handleSubmitInternalNote"
+      @update:is-external-note-modal-open="handleExternalNoteModalOpenChange"
+      @update:external-note-action-type="externalNoteActionType = $event"
+      @update:external-note-message-html="externalNoteMessageHtml = $event"
+      @submit-external-note="handleSubmitExternalNote"
       @download-attachment="handleDownloadAttachment"
       @preview-attachment="handlePreviewAttachment"
       @navigate-preview="handleNavigatePreview"

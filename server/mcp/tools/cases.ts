@@ -2,7 +2,8 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import { getDynamicsClientForUser } from '../../utils/dynamics'
 import { buildCaseFilter } from '../../utils/odata-builder'
 import { mapCaseToListItem, mapBatchSLA, buildCaseDetail } from '../../utils/mappers'
-import type { McpToolContext, ToolResult, ListCasesArgs, GetCaseArgs, AddInternalNoteArgs } from '../types'
+import { hasVisibleHtmlContent } from '../../utils/html'
+import type { McpToolContext, ToolResult, ListCasesArgs, GetCaseArgs, AddInternalNoteArgs, AddExternalNoteArgs } from '../types'
 
 // Tool definitions
 export const caseTools: Tool[] = [
@@ -61,7 +62,7 @@ export const caseTools: Tool[] = [
   },
   {
     name: 'add_internal_note',
-    description: 'Add an internal note to a case (maps to POST /api/cases/:id/internal-notes).',
+    description: 'Add an internal/private note to a case (maps to POST /api/cases/:id/internal-notes).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -75,10 +76,33 @@ export const caseTools: Tool[] = [
         },
         description: {
           type: 'string',
-          description: 'Internal note description/content (required)',
+          description: 'Internal note rich HTML body (required)',
         },
       },
       required: ['caseId', 'subject', 'description'],
+    },
+  },
+  {
+    name: 'add_external_note',
+    description: 'Add an external/customer note to a case (maps to POST /api/cases/:id/external-notes). actionType values: 2=Pending Response, 1=Comment, 0=Resolution Provided.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        caseId: {
+          type: 'string',
+          description: 'The case ID (incidentid GUID)',
+        },
+        actionType: {
+          type: 'number',
+          enum: [0, 1, 2],
+          description: 'External action type: 2=Pending Response, 1=Comment, 0=Resolution Provided',
+        },
+        messageHtml: {
+          type: 'string',
+          description: 'External note rich HTML body (required)',
+        },
+      },
+      required: ['caseId', 'actionType', 'messageHtml'],
     },
   },
 ]
@@ -181,11 +205,11 @@ export async function handleGetCase(args: GetCaseArgs, context: McpToolContext):
 
 export async function handleAddInternalNote(args: AddInternalNoteArgs, context: McpToolContext): Promise<ToolResult> {
   try {
-    const caseId = args.caseId?.trim()
-    const subject = args.subject?.trim()
-    const description = args.description?.trim()
+    const caseId = typeof args.caseId === 'string' ? args.caseId.trim() : ''
+    const subject = typeof args.subject === 'string' ? args.subject.trim() : ''
+    const description = typeof args.description === 'string' ? args.description : ''
 
-    if (!caseId || !subject || !description) {
+    if (!caseId || !subject || !description || !hasVisibleHtmlContent(description)) {
       return {
         content: [{ type: 'text', text: 'Error: caseId, subject, and description are required' }],
         isError: true,
@@ -219,6 +243,52 @@ export async function handleAddInternalNote(args: AddInternalNoteArgs, context: 
   } catch (error) {
     return {
       content: [{ type: 'text', text: `Error adding internal note: ${(error as Error).message}` }],
+      isError: true,
+    }
+  }
+}
+
+export async function handleAddExternalNote(args: AddExternalNoteArgs, context: McpToolContext): Promise<ToolResult> {
+  try {
+    const caseId = typeof args.caseId === 'string' ? args.caseId.trim() : ''
+    const messageHtml = typeof args.messageHtml === 'string' ? args.messageHtml : ''
+    const actionType = Number(args.actionType)
+
+    if (!caseId) {
+      return {
+        content: [{ type: 'text', text: 'Error: caseId is required' }],
+        isError: true,
+      }
+    }
+
+    if (!Number.isInteger(actionType) || ![0, 1, 2].includes(actionType)) {
+      return {
+        content: [{ type: 'text', text: 'Error: actionType must be one of 0, 1, or 2' }],
+        isError: true,
+      }
+    }
+
+    if (!messageHtml || !hasVisibleHtmlContent(messageHtml)) {
+      return {
+        content: [{ type: 'text', text: 'Error: messageHtml is required' }],
+        isError: true,
+      }
+    }
+
+    const { client } = await getDynamicsClientForUser(context.userId)
+    await client.createExternalNote(caseId, actionType as 0 | 1 | 2, messageHtml)
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ success: true, message: 'External note added successfully' }),
+        },
+      ],
+    }
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: `Error adding external note: ${(error as Error).message}` }],
       isError: true,
     }
   }

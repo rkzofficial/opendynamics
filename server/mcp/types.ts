@@ -35,6 +35,13 @@ export interface AddInternalNoteArgs {
   description: string
 }
 
+// Add external note to case
+export interface AddExternalNoteArgs {
+  caseId: string
+  actionType: 0 | 1 | 2
+  messageHtml: string
+}
+
 // Share creation
 export interface CreateShareArgs {
   caseId: string

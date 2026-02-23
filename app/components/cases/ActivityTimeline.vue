@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Mail, Phone, FileText, MessageSquare, Calendar, Clock, User, Plus, Shield, MessageCircle } from 'lucide-vue-next'
+import createDOMPurify from 'dompurify'
 import type { ActivityItem, NoteItem } from '~/types'
 import { processEmailHtml } from '~/utils/email-processor'
 import {
   formatCaseDate,
   getActivityIcon,
   getActivityLabel,
+  escapeHtml,
   linkifyText,
 } from '~/utils/caseHelpers'
 
@@ -36,6 +38,8 @@ const emit = defineEmits<{
   selectExternalNote: []
 }>()
 
+const domPurify = import.meta.client ? createDOMPurify(window) : null
+
 function handleSelectInternalNote(close: () => void) {
   close()
   emit('selectInternalNote')
@@ -50,10 +54,24 @@ function getActivityContent(activity: ActivityItem): string {
   if (activity.type === 'email' && activity.attachments) {
     return processEmailHtml(activity.description || '', activity.attachments)
   }
+
+  if (activity.type === 'ent_internalnote' || activity.type === 'ent_customernote') {
+    return sanitizeRichHtml(activity.description || '')
+  }
+
   if (props.variant === 'detailed') {
     return linkifyText(activity.description || '')
   }
   return activity.description || ''
+}
+
+function sanitizeRichHtml(html: string): string {
+  if (!html) return ''
+  if (!domPurify) return escapeHtml(html)
+
+  return domPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+  })
 }
 
 function getActivityColorClasses(item: TimelineItem): { border: string; header: string; badge: string; dot: string } {
@@ -133,7 +151,7 @@ function getActivityColorClasses(item: TimelineItem): { border: string; header: 
           Activity Timeline
         </UiCardTitle>
 
-        <UiDropdownMenu v-if="showCreateNoteActions" align="end">
+        <UiDropdownMenu v-if="showCreateNoteActions" align="end" class="ml-auto">
           <template #trigger>
             <UiButton
               variant="outline"
