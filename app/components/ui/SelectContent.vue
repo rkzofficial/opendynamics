@@ -14,6 +14,7 @@ const props = withDefaults(
   {
     position: 'popper',
     sideOffset: 4,
+    bodyLock: false,
   }
 )
 

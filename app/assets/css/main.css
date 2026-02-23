@@ -50,9 +50,42 @@
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable both-edges;
+  }
+
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
   }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.45);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
