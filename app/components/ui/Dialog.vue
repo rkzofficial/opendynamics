@@ -12,19 +12,10 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
-const { trigger } = useHaptics()
 
 function close() {
   emit('update:open', false)
 }
-
-watch(() => props.open, (open, previousOpen) => {
-  if (previousOpen === undefined) {
-    return
-  }
-
-  trigger(open ? 'modalOpen' : 'modalClose')
-}, { immediate: true })
 </script>
 
 <template>

@@ -279,7 +279,6 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
 }
 
 function handleBack() {
-  trigger('navigation')
   router.push(`/admin/cases/${userId.value}`)
 }
 

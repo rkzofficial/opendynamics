@@ -4,7 +4,6 @@ import type { User } from '~/types'
 
 const { isAdmin } = useAuth()
 const router = useRouter()
-const { trigger } = useHaptics()
 
 // Redirect non-admins
 onMounted(() => {
@@ -40,7 +39,6 @@ const editForm = reactive({
 const isSubmitting = ref(false)
 
 function goBack() {
-  trigger('navigation')
   router.push('/admin')
 }
 

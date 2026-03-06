@@ -241,13 +241,7 @@ export interface ApiKey {
 }
 
 export type HapticIntent =
-  | 'tap'
-  | 'navigation'
-  | 'modalOpen'
-  | 'modalClose'
-  | 'selection'
   | 'copy'
-  | 'refresh'
   | 'success'
   | 'warning'
   | 'error'

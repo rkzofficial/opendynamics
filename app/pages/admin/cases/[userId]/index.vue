@@ -3,7 +3,6 @@ import { ArrowLeft, Users, ArrowLeftCircle } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
-const { trigger } = useHaptics()
 
 const userId = computed(() => route.params.userId as string)
 
@@ -91,7 +90,6 @@ async function goToPreviousPage() {
 }
 
 function goBack() {
-  trigger('navigation')
   router.push('/admin/cases')
 }
 </script>

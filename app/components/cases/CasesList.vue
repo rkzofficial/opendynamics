@@ -49,7 +49,6 @@ const emit = defineEmits<{
   filterChange: [filters: { search: string; status: string; statusReason: string; priority: string; dxPendingRelease: boolean; orderBy: string; orderDirection: 'asc' | 'desc' }]
   pageSizeChange: [size: number]
 }>()
-const { trigger } = useHaptics()
 
 const searchQuery = ref(props.initialSearch)
 const statusFilter = ref(props.initialStatus)
@@ -187,7 +186,6 @@ function emitFilterChange() {
 function handleSortChange(column: string, direction: 'asc' | 'desc') {
   sortColumn.value = column
   sortDirection.value = direction
-  trigger('selection')
   emitFilterChange()
 }
 
@@ -200,12 +198,10 @@ function handleClearFilters() {
   slaFilter.value = 'all'
   sortColumn.value = props.initialSortColumn
   sortDirection.value = props.initialSortDirection
-  trigger('refresh')
   emitFilterChange()
 }
 
 function handleRefresh() {
-  trigger('refresh')
   emit('refresh', {
     search: searchQuery.value,
     status: statusFilter.value,
@@ -218,12 +214,10 @@ function handleRefresh() {
 }
 
 function handlePrevious() {
-  trigger('navigation')
   emit('previous')
 }
 
 function handleNext() {
-  trigger('navigation')
   emit('next')
 }
 

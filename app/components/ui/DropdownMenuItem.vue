@@ -11,7 +11,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   destructive: false,
-  hapticIntent: 'tap',
+  hapticIntent: 'none',
 })
 
 const emit = defineEmits<{

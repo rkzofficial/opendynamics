@@ -68,7 +68,6 @@ async function handleSave() {
 onMounted(fetchConfig)
 
 function goBack() {
-  trigger('navigation')
   router.push('/settings')
 }
 </script>

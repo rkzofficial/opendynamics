@@ -3,14 +3,12 @@ import { Users, ArrowLeft } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
-const { trigger } = useHaptics()
 
 const selectedUserId = ref<string | null>(null)
 
 // Redirect to userId page when a user is selected
 watch(selectedUserId, (newValue) => {
   if (newValue) {
-    trigger('navigation')
     router.push(`/admin/cases/${newValue}`)
   }
 })
@@ -27,7 +25,6 @@ onMounted(() => {
 const isIndex = computed(() => route.path === '/admin/cases')
 
 function goHome() {
-  trigger('navigation')
   router.push('/')
 }
 </script>

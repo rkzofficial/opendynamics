@@ -1,5 +1,4 @@
 import { ref, computed } from 'vue'
-import { NOTIFICATION_HAPTIC_PATTERN } from '~/utils/haptics'
 
 export type NotificationPermission = 'default' | 'granted' | 'denied'
 
@@ -58,7 +57,6 @@ export function useNotifications() {
         requireInteraction: options.requireInteraction,
         actions: options.actions,
         data: options.data,
-        vibrate: NOTIFICATION_HAPTIC_PATTERN,
       })
     } catch (error) {
       console.error('Error showing notification:', error)

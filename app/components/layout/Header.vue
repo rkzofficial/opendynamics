@@ -4,7 +4,6 @@ import { Menu, Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, X, 
 const { isAdmin } = useAuth()
 const { openPalette } = useCommandPalette()
 const route = useRoute()
-const { trigger } = useHaptics()
 
 const mobileMenuOpen = ref(false)
 
@@ -38,14 +37,6 @@ function openSearchFromMobile() {
   mobileMenuOpen.value = false
   openPalette()
 }
-
-watch(mobileMenuOpen, (open, previousOpen) => {
-  if (previousOpen === undefined) {
-    return
-  }
-
-  trigger(open ? 'modalOpen' : 'modalClose')
-}, { immediate: true })
 </script>
 
 <template>

@@ -231,7 +231,6 @@ function handleExternalNoteModalOpenChange(open: boolean) {
 }
 
 function handleBack() {
-  trigger('navigation')
   router.push('/cases')
 }
 

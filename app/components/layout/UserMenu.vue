@@ -3,14 +3,12 @@ import { LogOut, User } from 'lucide-vue-next'
 
 const { user, logout, isAdmin } = useAuth()
 const router = useRouter()
-const { trigger } = useHaptics()
 
 async function handleLogout() {
   await logout()
 }
 
 function goToProfile() {
-  trigger('navigation')
   router.push('/settings')
 }
 </script>

@@ -14,12 +14,8 @@ const tabs = inject<{
 }>('tabs')
 
 const isActive = computed(() => tabs?.activeTab.value === props.value)
-const { trigger } = useHaptics()
 
 function handleClick() {
-  if (!isActive.value) {
-    trigger('selection')
-  }
   tabs?.setActiveTab(props.value)
 }
 </script>

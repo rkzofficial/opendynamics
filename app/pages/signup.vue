@@ -140,7 +140,6 @@ function handleCancel() {
   deviceCode.value = null
   step.value = 'form'
   error.value = ''
-  trigger('warning')
 }
 
 async function copyCode() {

@@ -71,7 +71,6 @@ const handleInstall = async () => {
 
 const handleDismiss = () => {
   isDismissed.value = true
-  trigger('warning')
 }
 
 const canShowPrompt = computed(() => {

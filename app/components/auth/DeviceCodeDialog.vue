@@ -30,7 +30,6 @@ async function copyCode() {
 function handleCancel() {
   emit('cancel')
   emit('update:open', false)
-  trigger('warning')
 }
 </script>
 

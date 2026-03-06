@@ -167,7 +167,6 @@ function handleCancelConnect() {
     pollInterval.value = null
   }
   cancelConnect()
-  trigger('warning')
 }
 
 async function copyCode() {
