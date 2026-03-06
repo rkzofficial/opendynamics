@@ -7,7 +7,6 @@ const { trigger } = useHaptics()
 
 async function handleLogout() {
   await logout()
-  trigger('success')
 }
 
 function goToProfile() {

@@ -52,11 +52,13 @@ const props = withDefaults(defineProps<Props>(), {
   asChild: false,
   disabled: false,
   type: 'button',
-  hapticIntent: 'tap',
+  hapticIntent: 'none',
 })
 
 const { trigger } = useHaptics()
 
+// Keep custom classes merged locally while forwarding all other attrs/events
+// to the rendered root. Native-only button attrs are applied only for buttons.
 const delegatedAttrs = computed(() => {
   const { class: _class, ...rest } = attrs
 
