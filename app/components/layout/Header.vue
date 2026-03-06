@@ -7,7 +7,6 @@ const route = useRoute()
 const { trigger } = useHaptics()
 
 const mobileMenuOpen = ref(false)
-let hasObservedMobileMenuState = false
 
 const navigation = computed(() => {
   const items = [
@@ -40,9 +39,8 @@ function openSearchFromMobile() {
   openPalette()
 }
 
-watch(mobileMenuOpen, (open) => {
-  if (!hasObservedMobileMenuState) {
-    hasObservedMobileMenuState = true
+watch(mobileMenuOpen, (open, previousOpen) => {
+  if (previousOpen === undefined) {
     return
   }
 
@@ -125,7 +123,7 @@ watch(mobileMenuOpen, (open) => {
           <span class="sr-only">Notifications</span>
         </UiButton>
 
-        <UiButton variant="ghost" size="icon" class="h-8 w-8" as-child>
+        <UiButton variant="ghost" size="icon" class="h-8 w-8" haptic-intent="none" as-child>
           <NuxtLink to="/settings">
             <Settings class="h-4 w-4" />
             <span class="sr-only">Settings</span>

@@ -13,15 +13,13 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 const { trigger } = useHaptics()
-let hasObservedOpenState = false
 
 function close() {
   emit('update:open', false)
 }
 
-watch(() => props.open, (open) => {
-  if (!hasObservedOpenState) {
-    hasObservedOpenState = true
+watch(() => props.open, (open, previousOpen) => {
+  if (previousOpen === undefined) {
     return
   }
 

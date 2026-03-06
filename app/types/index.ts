@@ -255,8 +255,11 @@ export type HapticIntent =
 export type HapticPattern = number | number[]
 
 export interface HapticTriggerOptions {
+  // Override the intent's default vibration pattern.
   pattern?: HapticPattern
+  // Bypass interval coalescing when a follow-up haptic must always fire.
   force?: boolean
+  // Override the default interval used to collapse rapid sequential triggers.
   minIntervalMs?: number
 }
 

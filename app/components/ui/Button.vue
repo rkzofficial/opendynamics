@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Primitive, type PrimitiveProps } from 'radix-vue'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '~/utils/cn'
 import type { HapticIntent } from '~/types'
@@ -31,16 +32,21 @@ const buttonVariants = cva(
 
 type ButtonVariants = VariantProps<typeof buttonVariants>
 
-interface Props {
+defineOptions({
+  inheritAttrs: false,
+})
+
+interface Props extends PrimitiveProps {
   variant?: ButtonVariants['variant']
   size?: ButtonVariants['size']
-  asChild?: boolean
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
   hapticIntent?: HapticIntent | 'none'
 }
 
+const attrs = useAttrs()
 const props = withDefaults(defineProps<Props>(), {
+  as: 'button',
   variant: 'default',
   size: 'default',
   asChild: false,
@@ -51,6 +57,20 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { trigger } = useHaptics()
 
+const delegatedAttrs = computed(() => {
+  const { class: _class, ...rest } = attrs
+
+  if (props.asChild || props.as !== 'button') {
+    return rest
+  }
+
+  return {
+    ...rest,
+    disabled: props.disabled,
+    type: props.type,
+  }
+})
+
 function handleClick() {
   if (props.disabled || props.hapticIntent === 'none') return
   trigger(props.hapticIntent)
@@ -58,12 +78,13 @@ function handleClick() {
 </script>
 
 <template>
-  <button
-    :type="type"
-    :disabled="disabled"
-    :class="cn(buttonVariants({ variant, size }), $attrs.class as string)"
+  <Primitive
+    :as="as"
+    :as-child="asChild"
+    v-bind="delegatedAttrs"
+    :class="cn(buttonVariants({ variant, size }), attrs.class as string)"
     @click="handleClick"
   >
     <slot />
-  </button>
+  </Primitive>
 </template>

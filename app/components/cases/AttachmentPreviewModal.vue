@@ -18,7 +18,6 @@ const emit = defineEmits<{
   download: [attachment: AttachmentItem]
 }>()
 const { trigger } = useHaptics()
-let hasObservedOpenState = false
 
 // Zoom state
 const scale = ref(1)
@@ -193,9 +192,8 @@ watch(() => props.currentIndex, () => {
   resetZoom()
 })
 
-watch(() => props.isOpen, (open) => {
-  if (!hasObservedOpenState) {
-    hasObservedOpenState = true
+watch(() => props.isOpen, (open, previousOpen) => {
+  if (previousOpen === undefined) {
     return
   }
 

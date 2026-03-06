@@ -7,6 +7,9 @@ import type {
   HapticTriggerOptions,
 } from '~/types'
 
+// Collapse back-to-back intents from a single interaction into one vibration.
+// Callers that need a deliberate sequence can override this with `force` or
+// a smaller `minIntervalMs`.
 const DEFAULT_MIN_INTERVAL_MS = 45
 
 function createNavigatorVibrateAdapter(): HapticsAdapter {

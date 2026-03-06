@@ -1,5 +1,4 @@
 import type { CommandCaseResult } from '~/types'
-import { useHaptics } from '~/composables/useHaptics'
 
 interface CommandPaletteState {
   open: boolean

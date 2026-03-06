@@ -21,7 +21,6 @@ const emit = defineEmits<{
   remove: [index: number]
 }>()
 const { trigger } = useHaptics()
-let hasObservedOpenState = false
 
 // Independent zoom/pan state for each item
 const itemStates = ref<Array<{
@@ -174,9 +173,8 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
 })
 
-watch(() => props.isOpen, (open) => {
-  if (!hasObservedOpenState) {
-    hasObservedOpenState = true
+watch(() => props.isOpen, (open, previousOpen) => {
+  if (previousOpen === undefined) {
     return
   }
 

@@ -14,7 +14,6 @@ const props = withDefaults(defineProps<Props>(), {
 const isOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 const { trigger } = useHaptics()
-let hasObservedMenuState = false
 
 onClickOutside(menuRef, () => {
   isOpen.value = false
@@ -34,9 +33,8 @@ const alignmentClasses = {
   end: 'right-0',
 }
 
-watch(isOpen, (open) => {
-  if (!hasObservedMenuState) {
-    hasObservedMenuState = true
+watch(isOpen, (open, previousOpen) => {
+  if (previousOpen === undefined) {
     return
   }
 
