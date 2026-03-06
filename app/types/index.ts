@@ -239,3 +239,34 @@ export interface ApiKey {
   expiresAt?: number
   lastUsedAt?: number
 }
+
+export type HapticIntent =
+  | 'tap'
+  | 'navigation'
+  | 'modalOpen'
+  | 'modalClose'
+  | 'selection'
+  | 'copy'
+  | 'refresh'
+  | 'success'
+  | 'warning'
+  | 'error'
+
+export type HapticPattern = number | number[]
+
+export interface HapticTriggerOptions {
+  pattern?: HapticPattern
+  force?: boolean
+  minIntervalMs?: number
+}
+
+export interface HapticsAdapter {
+  name: string
+  isSupported: () => boolean
+  trigger: (pattern: HapticPattern) => boolean
+}
+
+export interface HapticsService {
+  isSupported: () => boolean
+  trigger: (intent: HapticIntent, options?: HapticTriggerOptions) => boolean
+}

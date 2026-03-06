@@ -30,6 +30,7 @@ const deviceCode = ref<{
 } | null>(null)
 const pollInterval = ref<ReturnType<typeof setInterval> | null>(null)
 const copied = ref(false)
+const { trigger } = useHaptics()
 
 // Validation
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -51,6 +52,7 @@ async function handleSubmit() {
   const validationError = validateForm()
   if (validationError) {
     error.value = validationError
+    trigger('error')
     return
   }
 
@@ -86,6 +88,7 @@ async function handleSubmit() {
     error.value = err.data?.message || 'Failed to start signup process'
     step.value = 'form'
     isLoading.value = false
+    trigger('error')
   }
 }
 
@@ -105,6 +108,7 @@ function startPolling(code: string, interval: number) {
 
       if (response.success) {
         clearPolling()
+        trigger('success')
         router.push('/')
       }
     } catch (e: unknown) {
@@ -119,6 +123,7 @@ function startPolling(code: string, interval: number) {
       clearPolling()
       error.value = err.data?.message || 'Authentication failed'
       step.value = 'form'
+      trigger('error')
     }
   }, (interval || 5) * 1000)
 }
@@ -135,11 +140,13 @@ function handleCancel() {
   deviceCode.value = null
   step.value = 'form'
   error.value = ''
+  trigger('warning')
 }
 
 async function copyCode() {
   if (deviceCode.value?.user_code) {
     await navigator.clipboard.writeText(deviceCode.value.user_code)
+    trigger('copy')
     copied.value = true
     setTimeout(() => {
       copied.value = false
@@ -233,7 +240,7 @@ onUnmounted(() => {
             />
           </div>
 
-          <UiButton type="submit" class="w-full" :disabled="isLoading">
+          <UiButton type="submit" class="w-full" :disabled="isLoading" haptic-intent="none">
             <UiSpinner v-if="isLoading" size="sm" class="mr-2" />
             <UserPlus v-else class="mr-2 h-4 w-4" />
             Create Account

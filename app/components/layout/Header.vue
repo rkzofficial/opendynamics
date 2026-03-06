@@ -4,8 +4,10 @@ import { Menu, Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, X, 
 const { isAdmin } = useAuth()
 const { openPalette } = useCommandPalette()
 const route = useRoute()
+const { trigger } = useHaptics()
 
 const mobileMenuOpen = ref(false)
+let hasObservedMobileMenuState = false
 
 const navigation = computed(() => {
   const items = [
@@ -37,6 +39,15 @@ function openSearchFromMobile() {
   mobileMenuOpen.value = false
   openPalette()
 }
+
+watch(mobileMenuOpen, (open) => {
+  if (!hasObservedMobileMenuState) {
+    hasObservedMobileMenuState = true
+    return
+  }
+
+  trigger(open ? 'modalOpen' : 'modalClose')
+}, { immediate: true })
 </script>
 
 <template>
@@ -73,6 +84,7 @@ function openSearchFromMobile() {
         variant="ghost"
         size="icon"
         class="md:hidden h-8 w-8"
+        haptic-intent="none"
         @click="mobileMenuOpen = !mobileMenuOpen"
       >
         <Menu v-if="!mobileMenuOpen" class="h-4 w-4" />

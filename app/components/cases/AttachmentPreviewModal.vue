@@ -17,6 +17,8 @@ const emit = defineEmits<{
   navigate: [index: number]
   download: [attachment: AttachmentItem]
 }>()
+const { trigger } = useHaptics()
+let hasObservedOpenState = false
 
 // Zoom state
 const scale = ref(1)
@@ -190,6 +192,15 @@ onUnmounted(() => {
 watch(() => props.currentIndex, () => {
   resetZoom()
 })
+
+watch(() => props.isOpen, (open) => {
+  if (!hasObservedOpenState) {
+    hasObservedOpenState = true
+    return
+  }
+
+  trigger(open ? 'modalOpen' : 'modalClose')
+}, { immediate: true })
 </script>
 
 <template>

@@ -8,6 +8,7 @@ import type { CaseShare } from '~/types'
 const route = useRoute()
 const router = useRouter()
 const caseId = route.params.id as string
+const { trigger } = useHaptics()
 
 const {
   currentCase,
@@ -128,6 +129,7 @@ async function handleSubmitInternalNote() {
   const description = internalNoteDescription.value
   if (!subject || !hasVisibleHtmlContent(description)) {
     internalNoteError.value = 'Subject and description are required'
+    trigger('error')
     return
   }
 
@@ -139,9 +141,11 @@ async function handleSubmitInternalNote() {
       internalNoteSubject.value = ''
       internalNoteDescription.value = ''
       isInternalNoteModalOpen.value = false
+      trigger('success')
       await fetchCase(caseId, { forceRefresh: true })
     } else {
       internalNoteError.value = result.error || 'Failed to add internal note'
+      trigger('error')
     }
   } finally {
     isSubmittingInternalNote.value = false
@@ -154,6 +158,7 @@ async function handleSubmitExternalNote() {
 
   if (![0, 1, 2].includes(actionType) || !hasVisibleHtmlContent(messageHtml)) {
     externalNoteError.value = 'Action type and message are required'
+    trigger('error')
     return
   }
 
@@ -165,9 +170,11 @@ async function handleSubmitExternalNote() {
       externalNoteActionType.value = '2'
       externalNoteMessageHtml.value = ''
       isExternalNoteModalOpen.value = false
+      trigger('success')
       await fetchCase(caseId, { forceRefresh: true })
     } else {
       externalNoteError.value = result.error || 'Failed to add external note'
+      trigger('error')
     }
   } finally {
     isSubmittingExternalNote.value = false
@@ -224,6 +231,7 @@ function handleExternalNoteModalOpenChange(open: boolean) {
 }
 
 function handleBack() {
+  trigger('navigation')
   router.push('/cases')
 }
 
@@ -325,9 +333,11 @@ async function createShare(expiresInDays?: number) {
     })
     const shareUrl = `${window.location.origin}/shared/${response.shareToken}`
     newShareUrl.value = shareUrl
+    trigger('success')
     await fetchShares()
   } catch {
     // Failed to create share
+    trigger('error')
   } finally {
     isCreatingShare.value = false
   }
@@ -336,6 +346,7 @@ async function createShare(expiresInDays?: number) {
 async function copyShareUrl() {
   if (!newShareUrl.value) return
   await navigator.clipboard.writeText(newShareUrl.value)
+  trigger('copy')
   urlCopied.value = true
   setTimeout(() => {
     urlCopied.value = false
@@ -345,9 +356,11 @@ async function copyShareUrl() {
 async function revokeShare(shareId: string) {
   try {
     await $fetch(`/api/shares/${shareId}`, { method: 'DELETE' })
+    trigger('warning')
     await fetchShares()
   } catch {
     // Failed to revoke share
+    trigger('error')
   }
 }
 
@@ -365,6 +378,7 @@ function getShareUrl(token: string) {
 async function copyExistingShareUrl(token: string) {
   const url = getShareUrl(token)
   await navigator.clipboard.writeText(url)
+  trigger('copy')
 }
 </script>
 
@@ -426,6 +440,7 @@ async function copyExistingShareUrl(token: string) {
               variant="outline"
               size="sm"
               :disabled="isCreatingShare"
+              haptic-intent="none"
               @click="createShare()"
             >
               <Link2 class="mr-2 h-4 w-4" />
@@ -435,6 +450,7 @@ async function copyExistingShareUrl(token: string) {
               variant="outline"
               size="sm"
               :disabled="isCreatingShare"
+              haptic-intent="none"
               @click="createShare(7)"
             >
               <Clock class="mr-2 h-4 w-4" />
@@ -444,6 +460,7 @@ async function copyExistingShareUrl(token: string) {
               variant="outline"
               size="sm"
               :disabled="isCreatingShare"
+              haptic-intent="none"
               @click="createShare(30)"
             >
               <Clock class="mr-2 h-4 w-4" />
@@ -461,7 +478,7 @@ async function copyExistingShareUrl(token: string) {
               readonly
               class="flex-1 min-w-0 font-mono text-xs"
             />
-            <UiButton variant="outline" size="icon" @click="copyShareUrl">
+            <UiButton variant="outline" size="icon" haptic-intent="none" @click="copyShareUrl">
               <Check v-if="urlCopied" class="h-4 w-4 text-green-500" />
               <Copy v-else class="h-4 w-4" />
             </UiButton>
@@ -502,6 +519,7 @@ async function copyExistingShareUrl(token: string) {
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8"
+                  haptic-intent="none"
                   @click="copyExistingShareUrl(share.shareToken)"
                 >
                   <Copy class="h-4 w-4" />
@@ -510,6 +528,7 @@ async function copyExistingShareUrl(token: string) {
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8 text-destructive hover:text-destructive"
+                  haptic-intent="none"
                   @click="revokeShare(share._id)"
                 >
                   <Trash2 class="h-4 w-4" />

@@ -4,6 +4,7 @@ import type { User } from '~/types'
 
 const { isAdmin } = useAuth()
 const router = useRouter()
+const { trigger } = useHaptics()
 
 // Redirect non-admins
 onMounted(() => {
@@ -38,6 +39,11 @@ const editForm = reactive({
 
 const isSubmitting = ref(false)
 
+function goBack() {
+  trigger('navigation')
+  router.push('/admin')
+}
+
 const roleOptions = [
   { value: 'user', label: 'User' },
   { value: 'admin', label: 'Admin' },
@@ -70,10 +76,12 @@ async function handleCreateUser() {
     createForm.email = ''
     createForm.name = ''
     createForm.role = 'user'
+    trigger('success')
     await fetchUsers()
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     error.value = err.data?.message || 'Failed to create user'
+    trigger('error')
   } finally {
     isSubmitting.value = false
   }
@@ -106,10 +114,12 @@ async function handleUpdateUser() {
     })
     showEditDialog.value = false
     selectedUser.value = null
+    trigger('success')
     await fetchUsers()
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     error.value = err.data?.message || 'Failed to update user'
+    trigger('error')
   } finally {
     isSubmitting.value = false
   }
@@ -132,10 +142,12 @@ async function handleDeleteUser() {
     })
     showDeleteDialog.value = false
     selectedUser.value = null
+    trigger('warning')
     await fetchUsers()
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     error.value = err.data?.message || 'Failed to delete user'
+    trigger('error')
   } finally {
     isSubmitting.value = false
   }
@@ -147,7 +159,7 @@ onMounted(fetchUsers)
 <template>
   <div class="space-y-6">
     <div class="flex items-center gap-4">
-      <UiButton variant="ghost" size="icon" @click="router.push('/admin')">
+      <UiButton variant="ghost" size="icon" haptic-intent="none" @click="goBack">
         <ArrowLeft class="h-4 w-4" />
       </UiButton>
       <div>
@@ -288,7 +300,7 @@ onMounted(fetchUsers)
           <UiButton variant="outline" @click="showCreateDialog = false">
             Cancel
           </UiButton>
-          <UiButton :disabled="isSubmitting" @click="handleCreateUser">
+          <UiButton :disabled="isSubmitting" haptic-intent="none" @click="handleCreateUser">
             <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
             Create
           </UiButton>
@@ -359,7 +371,7 @@ onMounted(fetchUsers)
           <UiButton variant="outline" @click="showEditDialog = false">
             Cancel
           </UiButton>
-          <UiButton :disabled="isSubmitting" @click="handleUpdateUser">
+          <UiButton :disabled="isSubmitting" haptic-intent="none" @click="handleUpdateUser">
             <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
             Save
           </UiButton>
@@ -381,7 +393,7 @@ onMounted(fetchUsers)
           <UiButton variant="outline" @click="showDeleteDialog = false">
             Cancel
           </UiButton>
-          <UiButton variant="destructive" :disabled="isSubmitting" @click="handleDeleteUser">
+          <UiButton variant="destructive" :disabled="isSubmitting" haptic-intent="none" @click="handleDeleteUser">
             <UiSpinner v-if="isSubmitting" size="sm" class="mr-2" />
             Delete
           </UiButton>

@@ -3,6 +3,7 @@ import { Link2, FolderOpen } from 'lucide-vue-next'
 
 const { isAdmin } = useAuth()
 const router = useRouter()
+const { trigger } = useHaptics()
 
 // Redirect admins to admin cases page
 onMounted(() => {
@@ -53,6 +54,7 @@ function handleFilterChange(filters: { search: string; status: string; statusRea
 
 function handleClear() {
   clearFilters()
+  trigger('refresh')
   fetchCases()
 }
 

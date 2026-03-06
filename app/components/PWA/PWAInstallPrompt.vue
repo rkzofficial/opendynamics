@@ -12,6 +12,7 @@ const isDismissed = ref(false)
 const showInstallSuccess = ref(false)
 const isStandalone = ref(false)
 const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
+const { trigger } = useHaptics()
 
 onMounted(() => {
   // Check if already running as installed PWA
@@ -26,6 +27,7 @@ onMounted(() => {
   window.addEventListener('appinstalled', () => {
     deferredPrompt.value = null
     showInstallSuccess.value = true
+    trigger('success')
     setTimeout(() => {
       showInstallSuccess.value = false
     }, 3000)
@@ -51,6 +53,7 @@ const handleInstall = async () => {
 
 const handleDismiss = () => {
   isDismissed.value = true
+  trigger('warning')
 }
 
 const canShowPrompt = computed(() => {
@@ -65,6 +68,7 @@ const canShowPrompt = computed(() => {
       variant="ghost"
       size="icon"
       class="absolute top-2 right-2 h-6 w-6"
+      haptic-intent="none"
       @click="handleDismiss"
     >
       <X class="h-4 w-4" />
@@ -82,6 +86,7 @@ const canShowPrompt = computed(() => {
       <UiButton
         size="sm"
         class="w-full"
+        haptic-intent="none"
         @click="handleInstall"
       >
         <Download class="mr-2 h-4 w-4" />

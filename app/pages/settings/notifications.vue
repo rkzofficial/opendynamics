@@ -13,8 +13,15 @@ const {
   unsubscribeFromPush,
   getPushSubscription,
 } = useNotifications()
+const { trigger } = useHaptics()
 
 const isLoading = ref(false)
+
+const handleRequestPermission = async () => {
+  const granted = await requestPermission()
+  trigger(granted ? 'success' : permission.value === 'denied' ? 'warning' : 'error')
+}
+
 const showTestNotification = async () => {
   const { showNotification } = useNotifications()
   await showNotification({
@@ -22,6 +29,7 @@ const showTestNotification = async () => {
     body: 'This is a test notification from OpenDynamics!',
     tag: 'test-notification',
   })
+  trigger('success')
 }
 
 const handleSubscribe = async () => {
@@ -34,6 +42,9 @@ const handleSubscribe = async () => {
       return
     }
     await subscribeToPush(vapidPublicKey)
+    trigger('success')
+  } catch {
+    trigger('error')
   } finally {
     isLoading.value = false
   }
@@ -43,6 +54,9 @@ const handleUnsubscribe = async () => {
   isLoading.value = true
   try {
     await unsubscribeFromPush()
+    trigger('warning')
+  } catch {
+    trigger('error')
   } finally {
     isLoading.value = false
   }
@@ -88,13 +102,15 @@ onMounted(async () => {
             </div>
             <UiButton
               v-if="permission === 'default'"
-              @click="requestPermission"
+              haptic-intent="none"
+              @click="handleRequestPermission"
             >
               Enable Notifications
             </UiButton>
             <UiButton
               v-else-if="permission === 'granted'"
               variant="outline"
+              haptic-intent="none"
               @click="showTestNotification"
             >
               Send Test
@@ -141,6 +157,7 @@ onMounted(async () => {
             v-if="!isSubscribed"
             :disabled="!canNotify || isLoading"
             :loading="isLoading"
+            haptic-intent="none"
             @click="handleSubscribe"
           >
             Subscribe
@@ -149,6 +166,7 @@ onMounted(async () => {
             v-else
             variant="outline"
             :loading="isLoading"
+            haptic-intent="none"
             @click="handleUnsubscribe"
           >
             Unsubscribe

@@ -14,10 +14,12 @@ const emit = defineEmits<{
 }>()
 
 const copied = ref(false)
+const { trigger } = useHaptics()
 
 async function copyCode() {
   if (props.deviceCode?.user_code) {
     await navigator.clipboard.writeText(props.deviceCode.user_code)
+    trigger('copy')
     copied.value = true
     setTimeout(() => {
       copied.value = false
@@ -28,6 +30,7 @@ async function copyCode() {
 function handleCancel() {
   emit('cancel')
   emit('update:open', false)
+  trigger('warning')
 }
 </script>
 
@@ -49,7 +52,7 @@ function handleCancel() {
           <code class="flex-1 text-2xl font-bold tracking-widest bg-muted px-4 py-3 rounded text-center">
             {{ deviceCode.user_code }}
           </code>
-          <UiButton variant="outline" size="icon" @click="copyCode">
+          <UiButton variant="outline" size="icon" haptic-intent="none" @click="copyCode">
             <Copy v-if="!copied" class="h-4 w-4" />
             <CheckCircle v-else class="h-4 w-4 text-green-600" />
           </UiButton>
@@ -75,7 +78,7 @@ function handleCancel() {
     </div>
 
     <template #footer>
-      <UiButton variant="outline" @click="handleCancel">
+      <UiButton variant="outline" haptic-intent="none" @click="handleCancel">
         Cancel
       </UiButton>
     </template>

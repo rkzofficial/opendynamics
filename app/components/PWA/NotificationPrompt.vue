@@ -14,12 +14,15 @@ const emit = defineEmits<{
 
 const { isSupported, permission, canNotify, requestPermission } = useNotifications()
 const variant = computed(() => props.variant || 'card')
+const { trigger } = useHaptics()
 
 const handleRequestPermission = async () => {
   const granted = await requestPermission()
   if (granted) {
+    trigger('success')
     emit('granted')
   } else {
+    trigger(permission.value === 'denied' ? 'warning' : 'error')
     emit('denied')
   }
 }
@@ -72,6 +75,7 @@ const statusConfig = computed(() => {
       <UiCardContent v-if="statusConfig.showButton">
         <UiButton
           size="sm"
+          haptic-intent="none"
           @click="handleRequestPermission"
           class="w-full"
         >
@@ -96,6 +100,7 @@ const statusConfig = computed(() => {
         v-if="statusConfig.showButton"
         size="sm"
         variant="outline"
+        haptic-intent="none"
         @click="handleRequestPermission"
       >
         Enable
@@ -113,6 +118,7 @@ const statusConfig = computed(() => {
         v-if="statusConfig.showButton"
         size="sm"
         variant="secondary"
+        haptic-intent="none"
         @click="handleRequestPermission"
       >
         Enable

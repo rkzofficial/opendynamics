@@ -1,19 +1,32 @@
 <script setup lang="ts">
 import { cn } from '~/utils/cn'
+import type { HapticIntent } from '~/types'
 
 interface Props {
   disabled?: boolean
   destructive?: boolean
+  hapticIntent?: HapticIntent | 'none'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   destructive: false,
+  hapticIntent: 'tap',
 })
 
 const emit = defineEmits<{
   click: []
 }>()
+
+const { trigger } = useHaptics()
+
+function handleClick() {
+  if (!props.disabled && props.hapticIntent !== 'none') {
+    trigger(props.hapticIntent)
+  }
+
+  emit('click')
+}
 </script>
 
 <template>
@@ -24,7 +37,7 @@ const emit = defineEmits<{
       destructive && 'text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive',
       $attrs.class as string
     )"
-    @click="emit('click')"
+    @click="handleClick"
   >
     <slot />
   </button>

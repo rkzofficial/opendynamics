@@ -8,6 +8,7 @@ const route = useRoute()
 const router = useRouter()
 const userId = computed(() => route.params.userId as string)
 const caseId = computed(() => route.params.caseId as string)
+const { trigger } = useHaptics()
 
 const {
   users,
@@ -156,6 +157,7 @@ async function handleSubmitInternalNote() {
   const description = internalNoteDescription.value
   if (!subject || !hasVisibleHtmlContent(description) || !userId.value || !caseId.value) {
     internalNoteError.value = 'Subject and description are required'
+    trigger('error')
     return
   }
 
@@ -173,11 +175,13 @@ async function handleSubmitInternalNote() {
     internalNoteSubject.value = ''
     internalNoteDescription.value = ''
     isInternalNoteModalOpen.value = false
+    trigger('success')
     // Reload full case and bypass cache to include latest timeline entries
     const result = await fetchCaseDetails(userId.value, caseId.value, { forceRefresh: true })
     currentCase.value = result
   } catch {
     internalNoteError.value = 'Failed to add internal note'
+    trigger('error')
   } finally {
     isSubmittingInternalNote.value = false
   }
@@ -189,6 +193,7 @@ async function handleSubmitExternalNote() {
 
   if (![0, 1, 2].includes(actionType) || !hasVisibleHtmlContent(messageHtml) || !userId.value || !caseId.value) {
     externalNoteError.value = 'Action type and message are required'
+    trigger('error')
     return
   }
 
@@ -206,10 +211,12 @@ async function handleSubmitExternalNote() {
     externalNoteActionType.value = '2'
     externalNoteMessageHtml.value = ''
     isExternalNoteModalOpen.value = false
+    trigger('success')
     const result = await fetchCaseDetails(userId.value, caseId.value, { forceRefresh: true })
     currentCase.value = result
   } catch {
     externalNoteError.value = 'Failed to add external note'
+    trigger('error')
   } finally {
     isSubmittingExternalNote.value = false
   }
@@ -272,6 +279,7 @@ function getUserDisplayName(user: typeof selectedUser.value): string {
 }
 
 function handleBack() {
+  trigger('navigation')
   router.push(`/admin/cases/${userId.value}`)
 }
 

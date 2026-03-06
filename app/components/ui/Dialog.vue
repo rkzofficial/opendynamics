@@ -12,10 +12,21 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
+const { trigger } = useHaptics()
+let hasObservedOpenState = false
 
 function close() {
   emit('update:open', false)
 }
+
+watch(() => props.open, (open) => {
+  if (!hasObservedOpenState) {
+    hasObservedOpenState = true
+    return
+  }
+
+  trigger(open ? 'modalOpen' : 'modalClose')
+}, { immediate: true })
 </script>
 
 <template>
@@ -43,6 +54,7 @@ function close() {
             variant="ghost"
             size="icon"
             class="absolute right-4 top-4 h-8 w-8 rounded-sm opacity-70 hover:opacity-100"
+            haptic-intent="none"
             @click="close"
           >
             <X class="h-4 w-4" />

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '~/utils/cn'
+import type { HapticIntent } from '~/types'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
@@ -36,6 +37,7 @@ interface Props {
   asChild?: boolean
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
+  hapticIntent?: HapticIntent | 'none'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -44,7 +46,15 @@ const props = withDefaults(defineProps<Props>(), {
   asChild: false,
   disabled: false,
   type: 'button',
+  hapticIntent: 'tap',
 })
+
+const { trigger } = useHaptics()
+
+function handleClick() {
+  if (props.disabled || props.hapticIntent === 'none') return
+  trigger(props.hapticIntent)
+}
 </script>
 
 <template>
@@ -52,6 +62,7 @@ const props = withDefaults(defineProps<Props>(), {
     :type="type"
     :disabled="disabled"
     :class="cn(buttonVariants({ variant, size }), $attrs.class as string)"
+    @click="handleClick"
   >
     <slot />
   </button>
