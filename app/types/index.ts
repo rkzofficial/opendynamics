@@ -239,3 +239,37 @@ export interface ApiKey {
   expiresAt?: number
   lastUsedAt?: number
 }
+
+export type HapticIntent =
+  | 'tap'
+  | 'navigation'
+  | 'modalOpen'
+  | 'modalClose'
+  | 'selection'
+  | 'copy'
+  | 'refresh'
+  | 'success'
+  | 'warning'
+  | 'error'
+
+export type HapticPattern = number | number[]
+
+export interface HapticTriggerOptions {
+  // Override the intent's default vibration pattern.
+  pattern?: HapticPattern
+  // Bypass interval coalescing when a follow-up haptic must always fire.
+  force?: boolean
+  // Override the default interval used to collapse rapid sequential triggers.
+  minIntervalMs?: number
+}
+
+export interface HapticsAdapter {
+  name: string
+  isSupported: () => boolean
+  trigger: (pattern: HapticPattern) => boolean
+}
+
+export interface HapticsService {
+  isSupported: () => boolean
+  trigger: (intent: HapticIntent, options?: HapticTriggerOptions) => boolean
+}

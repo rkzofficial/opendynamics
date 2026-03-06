@@ -14,6 +14,14 @@ const tabs = inject<{
 }>('tabs')
 
 const isActive = computed(() => tabs?.activeTab.value === props.value)
+const { trigger } = useHaptics()
+
+function handleClick() {
+  if (!isActive.value) {
+    trigger('selection')
+  }
+  tabs?.setActiveTab(props.value)
+}
 </script>
 
 <template>
@@ -23,7 +31,7 @@ const isActive = computed(() => tabs?.activeTab.value === props.value)
       isActive && 'bg-background text-foreground shadow-sm',
       $attrs.class as string
     )"
-    @click="tabs?.setActiveTab(value)"
+    @click="handleClick"
   >
     <slot />
   </button>

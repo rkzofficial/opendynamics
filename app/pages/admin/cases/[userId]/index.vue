@@ -3,6 +3,7 @@ import { ArrowLeft, Users, ArrowLeftCircle } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
+const { trigger } = useHaptics()
 
 const userId = computed(() => route.params.userId as string)
 
@@ -90,6 +91,7 @@ async function goToPreviousPage() {
 }
 
 function goBack() {
+  trigger('navigation')
   router.push('/admin/cases')
 }
 </script>
@@ -98,7 +100,7 @@ function goBack() {
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-4">
-      <UiButton variant="ghost" size="icon" @click="goBack">
+      <UiButton variant="ghost" size="icon" haptic-intent="none" @click="goBack">
         <ArrowLeft class="h-4 w-4" />
       </UiButton>
       <div>
@@ -124,7 +126,7 @@ function goBack() {
               </UiCardDescription>
             </div>
           </div>
-          <UiButton variant="outline" @click="goBack">
+          <UiButton variant="outline" haptic-intent="none" @click="goBack">
             <ArrowLeftCircle class="mr-2 h-4 w-4" />
             Select Different User
           </UiButton>

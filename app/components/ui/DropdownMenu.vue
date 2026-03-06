@@ -13,6 +13,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const isOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
+const { trigger } = useHaptics()
 
 onClickOutside(menuRef, () => {
   isOpen.value = false
@@ -31,6 +32,14 @@ const alignmentClasses = {
   center: 'left-1/2 -translate-x-1/2',
   end: 'right-0',
 }
+
+watch(isOpen, (open, previousOpen) => {
+  if (previousOpen === undefined) {
+    return
+  }
+
+  trigger(open ? 'modalOpen' : 'modalClose')
+}, { immediate: true })
 </script>
 
 <template>

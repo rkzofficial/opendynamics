@@ -98,10 +98,12 @@ const emit = defineEmits<{
 }>()
 
 const descriptionCopied = ref(false)
+const { trigger } = useHaptics()
 
 async function copyDescription() {
   if (!props.case?.description) return
   await navigator.clipboard.writeText(props.case.description)
+  trigger('copy')
   descriptionCopied.value = true
   setTimeout(() => {
     descriptionCopied.value = false
@@ -192,12 +194,12 @@ const timelineItems = computed<TimelineItem[]>(() => {
   <div class="space-y-6">
     <!-- Back button and actions -->
     <div class="flex items-center justify-between">
-      <UiButton variant="ghost" @click="emit('back')">
+      <UiButton variant="ghost" haptic-intent="none" @click="emit('back')">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Cases
       </UiButton>
 
-      <UiButton v-if="showShareButton && props.case" variant="outline" size="sm" @click="emit('share')">
+      <UiButton v-if="showShareButton && props.case" variant="outline" size="sm" haptic-intent="none" @click="emit('share')">
         <Share2 class="mr-2 h-4 w-4" />
         Share
       </UiButton>
@@ -289,6 +291,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8"
+                  haptic-intent="none"
                   @click="copyDescription"
                 >
                   <Check v-if="descriptionCopied" class="h-4 w-4 text-green-500" />
@@ -411,12 +414,14 @@ const timelineItems = computed<TimelineItem[]>(() => {
         <UiButton
           variant="outline"
           :disabled="isSubmittingInternalNote"
+          haptic-intent="none"
           @click="emit('update:isInternalNoteModalOpen', false)"
         >
           Cancel
         </UiButton>
         <UiButton
           :disabled="!canSubmitInternalNote"
+          haptic-intent="none"
           @click="handleSubmitInternalNote"
         >
           <UiSpinner v-if="isSubmittingInternalNote" size="sm" class="mr-2" />
@@ -473,12 +478,14 @@ const timelineItems = computed<TimelineItem[]>(() => {
         <UiButton
           variant="outline"
           :disabled="isSubmittingExternalNote"
+          haptic-intent="none"
           @click="emit('update:isExternalNoteModalOpen', false)"
         >
           Cancel
         </UiButton>
         <UiButton
           :disabled="!canSubmitExternalNote"
+          haptic-intent="none"
           @click="handleSubmitExternalNote"
         >
           <UiSpinner v-if="isSubmittingExternalNote" size="sm" class="mr-2" />

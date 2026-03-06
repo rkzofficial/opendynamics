@@ -4,6 +4,7 @@ import type { OIDCConfig } from '~/types'
 
 const { isAdmin } = useAuth()
 const router = useRouter()
+const { trigger } = useHaptics()
 
 // Redirect non-admins
 onMounted(() => {
@@ -54,21 +55,28 @@ async function handleSave() {
       body: config,
     })
     success.value = 'OIDC configuration saved successfully'
+    trigger('success')
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     error.value = err.data?.message || 'Failed to save configuration'
+    trigger('error')
   } finally {
     isSaving.value = false
   }
 }
 
 onMounted(fetchConfig)
+
+function goBack() {
+  trigger('navigation')
+  router.push('/settings')
+}
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex items-center gap-4">
-      <UiButton variant="ghost" size="icon" @click="router.push('/settings')">
+      <UiButton variant="ghost" size="icon" haptic-intent="none" @click="goBack">
         <ArrowLeft class="h-4 w-4" />
       </UiButton>
       <div>
@@ -152,7 +160,7 @@ onMounted(fetchConfig)
             </div>
           </div>
 
-          <UiButton type="submit" :disabled="isSaving">
+          <UiButton type="submit" :disabled="isSaving" haptic-intent="none">
             <UiSpinner v-if="isSaving" size="sm" class="mr-2" />
             <Save v-else class="mr-2 h-4 w-4" />
             Save Configuration

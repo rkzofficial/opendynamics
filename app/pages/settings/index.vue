@@ -4,6 +4,7 @@ import type { OIDCConfig, DynamicsConfig } from '~/types'
 
 const { user, isAdmin } = useAuth()
 const { connectionStatus, fetchConnectionStatus, startDeviceCodeFlow, pollForToken, disconnect, cancelConnect, deviceCode, isConnecting, isLoading: connectionLoading } = useDynamics()
+const { trigger } = useHaptics()
 
 // OIDC Config
 const oidcConfig = reactive<OIDCConfig>({
@@ -63,9 +64,11 @@ async function handleSaveOIDC() {
       body: oidcConfig,
     })
     oidcSuccess.value = 'OIDC configuration saved successfully'
+    trigger('success')
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     oidcError.value = err.data?.message || 'Failed to save configuration'
+    trigger('error')
   } finally {
     oidcSaving.value = false
   }
@@ -99,9 +102,11 @@ async function handleSaveDynamics() {
       body: dynamicsConfig,
     })
     dynamicsSuccess.value = 'Dynamics configuration saved successfully'
+    trigger('success')
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     dynamicsError.value = err.data?.message || 'Failed to save configuration'
+    trigger('error')
   } finally {
     dynamicsSaving.value = false
   }
@@ -122,6 +127,7 @@ async function handleConnect() {
           pollInterval.value = null
           await fetchConnectionStatus()
           dynamicsSuccess.value = 'Successfully connected to Dynamics CRM'
+          trigger('success')
         }
       } catch (e: unknown) {
         const err = e as { data?: { message?: string } }
@@ -129,12 +135,14 @@ async function handleConnect() {
           clearInterval(pollInterval.value!)
           pollInterval.value = null
           dynamicsError.value = err.data?.message || 'Connection failed'
+          trigger('error')
         }
       }
     }, (response.interval || 5) * 1000)
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     dynamicsError.value = err.data?.message || 'Failed to start device code flow'
+    trigger('error')
   }
 }
 
@@ -145,9 +153,11 @@ async function handleDisconnect() {
   try {
     await disconnect()
     dynamicsSuccess.value = 'Disconnected from Dynamics CRM'
+    trigger('warning')
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     dynamicsError.value = err.data?.message || 'Failed to disconnect'
+    trigger('error')
   }
 }
 
@@ -157,11 +167,13 @@ function handleCancelConnect() {
     pollInterval.value = null
   }
   cancelConnect()
+  trigger('warning')
 }
 
 async function copyCode() {
   if (deviceCode.value?.user_code) {
     await navigator.clipboard.writeText(deviceCode.value.user_code)
+    trigger('copy')
     copied.value = true
     setTimeout(() => {
       copied.value = false
@@ -307,7 +319,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <UiButton type="submit" :disabled="oidcSaving">
+          <UiButton type="submit" :disabled="oidcSaving" haptic-intent="none">
             <UiSpinner v-if="oidcSaving" size="sm" class="mr-2" />
             <Save v-else class="mr-2 h-4 w-4" />
             Save OIDC Configuration
@@ -413,6 +425,7 @@ onUnmounted(() => {
             <UiButton
               v-if="connectionStatus?.connected"
               variant="outline"
+              haptic-intent="none"
               @click="handleDisconnect"
             >
               <Unlink class="mr-2 h-4 w-4" />
@@ -420,6 +433,7 @@ onUnmounted(() => {
             </UiButton>
             <UiButton
               v-else-if="!isConnecting"
+              haptic-intent="none"
               @click="handleConnect"
             >
               <Link2 class="mr-2 h-4 w-4" />
@@ -436,7 +450,7 @@ onUnmounted(() => {
               <code class="text-2xl font-bold tracking-widest bg-background px-4 py-2 rounded">
                 {{ deviceCode.user_code }}
               </code>
-              <UiButton variant="outline" size="icon" @click="copyCode">
+            <UiButton variant="outline" size="icon" haptic-intent="none" @click="copyCode">
                 <Copy v-if="!copied" class="h-4 w-4" />
                 <CheckCircle v-else class="h-4 w-4 text-green-600" />
               </UiButton>
@@ -456,7 +470,7 @@ onUnmounted(() => {
           </div>
 
           <div class="flex justify-center pt-2">
-            <UiButton variant="outline" @click="handleCancelConnect">
+            <UiButton variant="outline" haptic-intent="none" @click="handleCancelConnect">
               Cancel
             </UiButton>
           </div>
@@ -507,7 +521,7 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <UiButton type="submit" :disabled="dynamicsSaving" variant="outline">
+            <UiButton type="submit" :disabled="dynamicsSaving" variant="outline" haptic-intent="none">
               <UiSpinner v-if="dynamicsSaving" size="sm" class="mr-2" />
               <Save v-else class="mr-2 h-4 w-4" />
               Save Dynamics Configuration

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { Primitive, type PrimitiveProps } from 'radix-vue'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '~/utils/cn'
+import type { HapticIntent } from '~/types'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
@@ -30,29 +32,61 @@ const buttonVariants = cva(
 
 type ButtonVariants = VariantProps<typeof buttonVariants>
 
-interface Props {
+defineOptions({
+  inheritAttrs: false,
+})
+
+interface Props extends PrimitiveProps {
   variant?: ButtonVariants['variant']
   size?: ButtonVariants['size']
-  asChild?: boolean
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
+  hapticIntent?: HapticIntent | 'none'
 }
 
+const attrs = useAttrs()
 const props = withDefaults(defineProps<Props>(), {
+  as: 'button',
   variant: 'default',
   size: 'default',
   asChild: false,
   disabled: false,
   type: 'button',
+  hapticIntent: 'none',
 })
+
+const { trigger } = useHaptics()
+
+// Keep custom classes merged locally while forwarding all other attrs/events
+// to the rendered root. Native-only button attrs are applied only for buttons.
+const delegatedAttrs = computed(() => {
+  const { class: _class, ...rest } = attrs
+
+  if (props.asChild || props.as !== 'button') {
+    return rest
+  }
+
+  return {
+    ...rest,
+    disabled: props.disabled,
+    type: props.type,
+  }
+})
+
+function handleClick() {
+  if (props.disabled || props.hapticIntent === 'none') return
+  trigger(props.hapticIntent)
+}
 </script>
 
 <template>
-  <button
-    :type="type"
-    :disabled="disabled"
-    :class="cn(buttonVariants({ variant, size }), $attrs.class as string)"
+  <Primitive
+    :as="as"
+    :as-child="asChild"
+    v-bind="delegatedAttrs"
+    :class="cn(buttonVariants({ variant, size }), attrs.class as string)"
+    @click="handleClick"
   >
     <slot />
-  </button>
+  </Primitive>
 </template>

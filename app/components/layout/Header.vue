@@ -4,6 +4,7 @@ import { Menu, Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, X, 
 const { isAdmin } = useAuth()
 const { openPalette } = useCommandPalette()
 const route = useRoute()
+const { trigger } = useHaptics()
 
 const mobileMenuOpen = ref(false)
 
@@ -37,6 +38,14 @@ function openSearchFromMobile() {
   mobileMenuOpen.value = false
   openPalette()
 }
+
+watch(mobileMenuOpen, (open, previousOpen) => {
+  if (previousOpen === undefined) {
+    return
+  }
+
+  trigger(open ? 'modalOpen' : 'modalClose')
+}, { immediate: true })
 </script>
 
 <template>
@@ -73,6 +82,7 @@ function openSearchFromMobile() {
         variant="ghost"
         size="icon"
         class="md:hidden h-8 w-8"
+        haptic-intent="none"
         @click="mobileMenuOpen = !mobileMenuOpen"
       >
         <Menu v-if="!mobileMenuOpen" class="h-4 w-4" />
@@ -113,7 +123,7 @@ function openSearchFromMobile() {
           <span class="sr-only">Notifications</span>
         </UiButton>
 
-        <UiButton variant="ghost" size="icon" class="h-8 w-8" as-child>
+        <UiButton variant="ghost" size="icon" class="h-8 w-8" haptic-intent="none" as-child>
           <NuxtLink to="/settings">
             <Settings class="h-4 w-4" />
             <span class="sr-only">Settings</span>

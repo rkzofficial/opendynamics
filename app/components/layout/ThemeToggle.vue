@@ -2,13 +2,20 @@
 import { Sun, Moon } from 'lucide-vue-next'
 
 const { isDark, toggleTheme } = useTheme()
+const { trigger } = useHaptics()
+
+function handleToggleTheme() {
+  toggleTheme()
+  trigger('selection')
+}
 </script>
 
 <template>
   <UiButton
     variant="ghost"
     size="icon"
-    @click="toggleTheme"
+    haptic-intent="none"
+    @click="handleToggleTheme"
   >
     <Sun v-if="isDark" class="h-5 w-5" />
     <Moon v-else class="h-5 w-5" />

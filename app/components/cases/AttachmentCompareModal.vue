@@ -20,6 +20,7 @@ const emit = defineEmits<{
   download: [attachment: AttachmentItem]
   remove: [index: number]
 }>()
+const { trigger } = useHaptics()
 
 // Independent zoom/pan state for each item
 const itemStates = ref<Array<{
@@ -171,6 +172,14 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
 })
+
+watch(() => props.isOpen, (open, previousOpen) => {
+  if (previousOpen === undefined) {
+    return
+  }
+
+  trigger(open ? 'modalOpen' : 'modalClose')
+}, { immediate: true })
 </script>
 
 <template>

@@ -49,6 +49,7 @@ const emit = defineEmits<{
   filterChange: [filters: { search: string; status: string; statusReason: string; priority: string; dxPendingRelease: boolean; orderBy: string; orderDirection: 'asc' | 'desc' }]
   pageSizeChange: [size: number]
 }>()
+const { trigger } = useHaptics()
 
 const searchQuery = ref(props.initialSearch)
 const statusFilter = ref(props.initialStatus)
@@ -186,6 +187,7 @@ function emitFilterChange() {
 function handleSortChange(column: string, direction: 'asc' | 'desc') {
   sortColumn.value = column
   sortDirection.value = direction
+  trigger('selection')
   emitFilterChange()
 }
 
@@ -198,10 +200,12 @@ function handleClearFilters() {
   slaFilter.value = 'all'
   sortColumn.value = props.initialSortColumn
   sortDirection.value = props.initialSortDirection
+  trigger('refresh')
   emitFilterChange()
 }
 
 function handleRefresh() {
+  trigger('refresh')
   emit('refresh', {
     search: searchQuery.value,
     status: statusFilter.value,
@@ -214,10 +218,12 @@ function handleRefresh() {
 }
 
 function handlePrevious() {
+  trigger('navigation')
   emit('previous')
 }
 
 function handleNext() {
+  trigger('navigation')
   emit('next')
 }
 
@@ -348,13 +354,14 @@ function handlePageSizeChange(size: number) {
           size="sm"
           class="h-9 px-3"
           :disabled="isRefreshing"
+          haptic-intent="none"
           @click="handleRefresh"
         >
           <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': isRefreshing }" />
         </UiButton>
 
         <!-- Clear Button -->
-        <UiButton variant="ghost" size="sm" class="h-9 text-muted-foreground" @click="handleClearFilters">
+        <UiButton variant="ghost" size="sm" class="h-9 text-muted-foreground" haptic-intent="none" @click="handleClearFilters">
           <X class="mr-1.5 h-3.5 w-3.5" />
           Clear
         </UiButton>

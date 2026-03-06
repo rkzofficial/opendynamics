@@ -14,6 +14,7 @@ const authState = reactive<AuthState>({
 
 export function useAuth() {
   const router = useRouter()
+  const { trigger } = useHaptics()
 
   async function fetchSession() {
     authState.isLoading = true
@@ -55,6 +56,7 @@ export function useAuth() {
     } finally {
       authState.user = null
       authState.isAuthenticated = false
+      trigger('success')
       router.push('/login')
     }
   }

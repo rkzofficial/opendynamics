@@ -7,6 +7,7 @@ definePageMeta({
 
 const { login } = useAuth()
 const router = useRouter()
+const { trigger } = useHaptics()
 
 const form = reactive({
   username: '',
@@ -23,12 +24,15 @@ async function handleSubmit() {
   try {
     const result = await login(form.username, form.password)
     if (result.success) {
+      trigger('success')
       router.push('/')
     } else {
       error.value = result.error || 'Invalid credentials'
+      trigger('error')
     }
   } catch (e) {
     error.value = 'An error occurred. Please try again.'
+    trigger('error')
   } finally {
     isLoading.value = false
   }
@@ -79,7 +83,7 @@ async function handleSubmit() {
             />
           </div>
 
-          <UiButton type="submit" class="w-full" :disabled="isLoading">
+          <UiButton type="submit" class="w-full" :disabled="isLoading" haptic-intent="none">
             <UiSpinner v-if="isLoading" size="sm" class="mr-2" />
             <LogIn v-else class="mr-2 h-4 w-4" />
             Sign in

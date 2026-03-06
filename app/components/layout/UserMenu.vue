@@ -3,12 +3,14 @@ import { LogOut, User } from 'lucide-vue-next'
 
 const { user, logout, isAdmin } = useAuth()
 const router = useRouter()
+const { trigger } = useHaptics()
 
 async function handleLogout() {
   await logout()
 }
 
 function goToProfile() {
+  trigger('navigation')
   router.push('/settings')
 }
 </script>
@@ -30,12 +32,12 @@ function goToProfile() {
         <p class="text-xs text-muted-foreground">{{ user?.email || user?.username }}</p>
       </div>
       <UiSeparator class="my-1" />
-      <UiDropdownMenuItem @click="goToProfile(); close()">
+      <UiDropdownMenuItem haptic-intent="none" @click="goToProfile(); close()">
         <User class="mr-2 h-4 w-4" />
         Profile
       </UiDropdownMenuItem>
       <UiSeparator class="my-1" />
-      <UiDropdownMenuItem destructive @click="handleLogout(); close()">
+      <UiDropdownMenuItem destructive haptic-intent="none" @click="handleLogout(); close()">
         <LogOut class="mr-2 h-4 w-4" />
         Logout
       </UiDropdownMenuItem>

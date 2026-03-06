@@ -44,6 +44,7 @@ export function useCommandPalette() {
   const route = useRoute()
   const router = useRouter()
   const { isAdmin } = useAuth()
+  const { trigger } = useHaptics()
 
   const adminSearchUserId = computed(() => {
     if (!isAdmin()) return undefined
@@ -140,6 +141,7 @@ export function useCommandPalette() {
   }
 
   async function goToResult(result: CommandCaseResult) {
+    trigger('navigation')
     closePalette()
     await router.push(getResultPath(result))
   }

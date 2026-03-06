@@ -29,6 +29,7 @@ const copied = ref(false)
 const showRevokeDialog = ref(false)
 const keyToRevoke = ref<ApiKey | null>(null)
 const isRevoking = ref(false)
+const { trigger } = useHaptics()
 
 // Fetch API keys
 async function fetchKeys() {
@@ -76,9 +77,11 @@ async function handleCreate() {
 
     // Refresh the list
     await fetchKeys()
+    trigger('success')
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     createError.value = err.data?.message || 'Failed to create API key'
+    trigger('error')
   } finally {
     isCreating.value = false
   }
@@ -88,6 +91,7 @@ async function handleCreate() {
 async function copyKey() {
   if (revealedKey.value) {
     await navigator.clipboard.writeText(revealedKey.value)
+    trigger('copy')
     copied.value = true
     setTimeout(() => {
       copied.value = false
@@ -119,10 +123,12 @@ async function handleRevoke() {
     })
     showRevokeDialog.value = false
     keyToRevoke.value = null
+    trigger('warning')
     await fetchKeys()
   } catch (e: unknown) {
     const err = e as { data?: { message?: string } }
     error.value = err.data?.message || 'Failed to revoke API key'
+    trigger('error')
   } finally {
     isRevoking.value = false
   }
@@ -338,7 +344,7 @@ onMounted(() => {
         >
           Cancel
         </UiButton>
-        <UiButton :disabled="isCreating" @click="handleCreate">
+        <UiButton :disabled="isCreating" haptic-intent="none" @click="handleCreate">
           <UiSpinner v-if="isCreating" size="sm" class="mr-2" />
           Create Key
         </UiButton>
@@ -362,7 +368,7 @@ onMounted(() => {
         <code class="flex-1 bg-muted px-4 py-3 rounded-lg text-sm font-mono break-all">
           {{ revealedKey }}
         </code>
-        <UiButton variant="outline" size="icon" @click="copyKey">
+        <UiButton variant="outline" size="icon" haptic-intent="none" @click="copyKey">
           <Copy v-if="!copied" class="h-4 w-4" />
           <CheckCircle v-else class="h-4 w-4 text-green-600" />
         </UiButton>
@@ -398,6 +404,7 @@ onMounted(() => {
         <UiButton
           variant="destructive"
           :disabled="isRevoking"
+          haptic-intent="none"
           @click="handleRevoke"
         >
           <UiSpinner v-if="isRevoking" size="sm" class="mr-2" />

@@ -54,6 +54,7 @@ const pageSizeOptions = [
           variant="outline"
           size="sm"
           :disabled="!canGoBack"
+          haptic-intent="none"
           @click="emit('previous')"
         >
           <ChevronLeft class="h-4 w-4 sm:mr-1" />
@@ -63,6 +64,7 @@ const pageSizeOptions = [
           variant="outline"
           size="sm"
           :disabled="!hasMore"
+          haptic-intent="none"
           @click="emit('next')"
         >
           <span class="hidden sm:inline">Next</span>
