@@ -42,40 +42,44 @@ function handleSearch() {
 
 <template>
   <nav
-    class="pointer-events-none fixed bottom-4 left-0 right-0 z-40 px-4 md:hidden"
+    class="pointer-events-none fixed bottom-0 left-0 right-0 z-40 md:hidden"
     aria-label="Bottom navigation"
   >
     <div
-      class="pointer-events-auto mx-auto flex h-[72px] max-w-xl items-center justify-between rounded-2xl border bg-background/90 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      class="pointer-events-auto flex h-20 items-center justify-around bg-background shadow-[0_-2px_8px_0_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/95"
     >
       <template v-for="item in navItems" :key="item.label">
         <NuxtLink
           v-if="item.type === 'link'"
           :to="item.href"
-          class="flex h-full flex-1 items-center justify-center"
+          class="flex h-full flex-1 items-center justify-center px-3"
           :aria-current="isActive(item) ? 'page' : undefined"
         >
           <div
             :class="[
-              'mx-1 flex h-[56px] w-full max-w-[140px] flex-col items-center justify-center gap-1 rounded-xl text-xs font-semibold transition-colors',
+              'flex min-w-[64px] max-w-[120px] flex-col items-center justify-center gap-1 rounded-2xl px-4 py-3 text-xs font-medium transition-all duration-200',
               isActive(item)
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50 active:bg-muted'
             ]"
           >
-            <component :is="item.icon" class="h-5 w-5" />
-            {{ item.label }}
+            <component :is="item.icon" class="h-6 w-6" />
+            <span class="text-[11px]">{{ item.label }}</span>
           </div>
         </NuxtLink>
 
         <button
           v-else
           type="button"
-          class="mx-1 flex h-[56px] max-w-[140px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          class="flex h-full flex-1 items-center justify-center px-3"
           @click="handleSearch"
         >
-          <Search class="h-5 w-5" />
-          {{ item.label }}
+          <div
+            class="flex min-w-[64px] max-w-[120px] flex-col items-center justify-center gap-1 rounded-2xl bg-secondary px-4 py-3 text-xs font-medium text-foreground transition-all duration-200 hover:bg-secondary/80 active:bg-secondary/90"
+          >
+            <Search class="h-6 w-6" />
+            <span class="text-[11px]">{{ item.label }}</span>
+          </div>
         </button>
       </template>
     </div>
