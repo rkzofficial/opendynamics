@@ -129,23 +129,39 @@ const statCards = computed(() => [
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight">Dashboard</h1>
-      <p class="text-muted-foreground">
-        <template v-if="isAdmin()">
-          Overview of user Dynamics CRM cases and metrics
-        </template>
-        <template v-else>
-          Overview of your Dynamics CRM cases and metrics
-        </template>
-      </p>
-    </div>
+  <div class="space-y-4 sm:space-y-6">
+    <section class="space-y-3 sm:overflow-hidden sm:rounded-[28px] sm:border sm:border-border/70 sm:bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_42%),radial-gradient(circle_at_top_right,rgba(34,197,94,0.12),transparent_34%),hsl(var(--background))] sm:px-6 sm:py-6 sm:shadow-sm">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div class="space-y-2">
+          <span class="hidden items-center rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:inline-flex">
+            CRM Overview
+          </span>
+          <h1 class="text-xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
+          <p class="max-w-[32rem] text-sm leading-6 text-muted-foreground sm:text-base">
+            <template v-if="isAdmin()">
+              Overview of user Dynamics CRM cases and metrics
+            </template>
+            <template v-else>
+              Overview of your Dynamics CRM cases and metrics
+            </template>
+          </p>
+        </div>
+
+        <div
+          v-if="stats && !isAdmin()"
+          class="hidden min-w-[132px] rounded-2xl border border-border/70 bg-background/80 p-3 text-right sm:block"
+        >
+          <p class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">SLA</p>
+          <p class="mt-1 text-2xl font-semibold">{{ kpis?.slaCompliancePercent ?? 0 }}%</p>
+          <p class="text-xs text-muted-foreground">Compliant</p>
+        </div>
+      </div>
+    </section>
 
     <!-- Admin User Selection -->
     <template v-if="isAdmin()">
       <!-- User Selector Card -->
-      <UiCard v-if="!selectedUserId">
+      <UiCard v-if="!selectedUserId" class="overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_36%),hsl(var(--background))]">
         <UiCardHeader>
           <div class="flex items-center gap-3">
             <div class="rounded-full bg-primary/10 p-3">
@@ -193,16 +209,16 @@ const statCards = computed(() => [
       </UiCard>
 
       <!-- Selected User Header -->
-      <UiCard v-else class="bg-muted/50">
+      <UiCard v-else class="overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.1),transparent_34%),hsl(var(--muted)/0.35)]">
         <UiCardContent class="py-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <UiButton variant="ghost" size="icon" @click="clearUserSelection">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <UiButton variant="ghost" size="icon" class="mt-0.5 shrink-0 rounded-full" @click="clearUserSelection">
                 <ArrowLeft class="h-4 w-4" />
               </UiButton>
-              <div>
+              <div class="min-w-0">
                 <p class="text-sm text-muted-foreground">Viewing dashboard for</p>
-                <p class="font-medium">
+                <p class="truncate font-medium">
                   {{ selectedUser?.name || selectedUser?.username }}
                   <span v-if="selectedUser?.email" class="text-muted-foreground">
                     ({{ selectedUser.email }})
@@ -235,9 +251,9 @@ const statCards = computed(() => [
     </UiCard>
 
     <!-- Loading state (show skeleton while checking connection or loading data) -->
-    <div v-if="(isAdmin() && selectedUserId && isLoading) || (!isAdmin() && connectionStatus?.connected !== false && (connectionStatus === null || isLoading))" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div v-if="(isAdmin() && selectedUserId && isLoading) || (!isAdmin() && connectionStatus?.connected !== false && (connectionStatus === null || isLoading))" class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
       <UiCard v-for="i in 4" :key="i">
-        <UiCardContent class="pt-6">
+        <UiCardContent class="p-4 sm:pt-6">
           <UiSkeleton class="h-4 w-24 mb-2" />
           <UiSkeleton class="h-8 w-16" />
         </UiCardContent>
@@ -260,16 +276,20 @@ const statCards = computed(() => [
       </UiCard>
 
       <!-- Stat cards -->
-      <div v-if="stats" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <UiCard v-for="stat in statCards" :key="stat.title">
-          <UiCardContent class="pt-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-muted-foreground">{{ stat.title }}</p>
-                <p class="text-2xl font-bold">{{ stat.value }}</p>
+      <div v-if="stats" class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <UiCard
+          v-for="stat in statCards"
+          :key="stat.title"
+          class="overflow-hidden border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.02),transparent_45%),hsl(var(--background))]"
+        >
+          <UiCardContent class="p-4 sm:pt-6">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-sm sm:normal-case sm:tracking-normal">{{ stat.title }}</p>
+                <p class="mt-2 text-2xl font-bold leading-none sm:text-3xl">{{ stat.value }}</p>
               </div>
-              <div :class="['rounded-full p-3', stat.bgColor]">
-                <component :is="stat.icon" :class="['h-5 w-5', stat.color]" />
+              <div :class="['rounded-2xl p-2.5 sm:rounded-full sm:p-3', stat.bgColor]">
+                <component :is="stat.icon" :class="['h-4 w-4 sm:h-5 sm:w-5', stat.color]" />
               </div>
             </div>
           </UiCardContent>
@@ -277,18 +297,18 @@ const statCards = computed(() => [
       </div>
 
       <!-- Charts section -->
-      <div v-if="kpis" class="grid gap-4 md:grid-cols-2">
+      <div v-if="kpis" class="grid gap-3 sm:gap-4 md:grid-cols-2">
         <DashboardCasesByStatusChart :data="kpis?.casesByStatus ?? []" />
         <DashboardCasesByPriorityChart :data="kpis?.casesByPriority ?? []" />
       </div>
 
-      <div v-if="kpis" class="grid gap-4 md:grid-cols-2">
+      <div v-if="kpis" class="grid gap-3 sm:gap-4 md:grid-cols-2">
         <DashboardResolutionTrendChart :data="kpis?.resolutionTimeTrend ?? []" />
         <DashboardSlaComplianceChart :value="kpis?.slaCompliancePercent ?? 0" />
       </div>
 
       <!-- Recent Cases -->
-      <div v-if="recentCases.length > 0 || !isLoading" class="space-y-4">
+      <div v-if="recentCases.length > 0 || !isLoading" class="space-y-3 sm:space-y-4">
         <div>
           <h2 class="text-lg font-semibold tracking-tight">Recent Cases</h2>
           <p class="text-sm text-muted-foreground">
