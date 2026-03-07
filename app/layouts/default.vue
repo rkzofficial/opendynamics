@@ -10,20 +10,36 @@ const BOTTOM_NAV_HEIGHT = 72
 const headerHiddenOffset = ref(0)
 const bottomHiddenOffset = ref(0)
 const lastScrollY = ref(0)
+const isMobile = ref(false)
 let scrollFrame = 0
+let mediaQuery: MediaQueryList | null = null
+let removeMediaQueryListener: (() => void) | null = null
 
-const headerTransformStyle = computed(() => ({
-  transform: `translateY(-${headerHiddenOffset.value}px)`,
-  willChange: 'transform',
-}))
+const headerTransformStyle = computed(() => {
+  if (!isMobile.value) return {}
 
-const bottomNavTransformStyle = computed(() => ({
-  transform: `translateY(${bottomHiddenOffset.value}px)`,
-  willChange: 'transform',
-}))
+  return {
+    transform: `translateY(-${headerHiddenOffset.value}px)`,
+    willChange: 'transform',
+  }
+})
+
+const bottomNavTransformStyle = computed(() => {
+  if (!isMobile.value) return {}
+
+  return {
+    transform: `translateY(${bottomHiddenOffset.value}px)`,
+    willChange: 'transform',
+  }
+})
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
+}
+
+function resetOffsets() {
+  headerHiddenOffset.value = 0
+  bottomHiddenOffset.value = 0
 }
 
 function applyScrollDelta(delta: number) {
@@ -32,6 +48,11 @@ function applyScrollDelta(delta: number) {
 }
 
 function handleScrollFrame() {
+  if (!isMobile.value) {
+    scrollFrame = 0
+    return
+  }
+
   const currentY = window.scrollY
   const delta = currentY - lastScrollY.value
   lastScrollY.value = currentY
@@ -47,14 +68,51 @@ function handleScrollFrame() {
 }
 
 function onScroll() {
+  if (!isMobile.value) return
   if (scrollFrame) return
   scrollFrame = requestAnimationFrame(handleScrollFrame)
+}
+
+function setIsMobile(matches: boolean) {
+  isMobile.value = matches
+  if (!matches) {
+    if (scrollFrame) {
+      cancelAnimationFrame(scrollFrame)
+      scrollFrame = 0
+    }
+    resetOffsets()
+    return
+  }
+
+  lastScrollY.value = window.scrollY
+}
+
+function addMediaQueryListener() {
+  if (!mediaQuery) return
+
+  const handler = (event: MediaQueryListEvent) => setIsMobile(event.matches)
+  if (mediaQuery.addEventListener) {
+    mediaQuery.addEventListener('change', handler)
+  } else {
+    mediaQuery.addListener(handler)
+  }
+
+  return () => {
+    if (mediaQuery?.removeEventListener) {
+      mediaQuery.removeEventListener('change', handler)
+    } else {
+      mediaQuery?.removeListener(handler)
+    }
+  }
 }
 
 onMounted(async () => {
   initTheme()
   await fetchSession()
-  lastScrollY.value = window.scrollY
+  mediaQuery = window.matchMedia('(max-width: 767px)')
+  removeMediaQueryListener = addMediaQueryListener()
+  setIsMobile(mediaQuery.matches)
+
   window.addEventListener('scroll', onScroll, { passive: true })
 
   if (!isAuthenticated.value) {
@@ -76,6 +134,7 @@ onBeforeUnmount(() => {
     cancelAnimationFrame(scrollFrame)
     scrollFrame = 0
   }
+  removeMediaQueryListener?.()
   window.removeEventListener('scroll', onScroll)
 })
 </script>
