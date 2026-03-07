@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { StyleValue } from 'vue'
 import { cn } from '~/utils/cn'
 import { X } from 'lucide-vue-next'
 
@@ -6,9 +7,22 @@ interface Props {
   open: boolean
   title?: string
   description?: string
+  containerClass?: string
+  contentStyle?: StyleValue
+  showCloseButton?: boolean
+  closeButtonClass?: string
+  backdropClass?: string
+  backdropStyle?: StyleValue
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  containerClass: '',
+  contentStyle: undefined,
+  showCloseButton: true,
+  closeButtonClass: '',
+  backdropClass: '',
+  backdropStyle: undefined,
+})
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
@@ -23,11 +37,12 @@ function close() {
     <Transition name="dialog">
       <div
         v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center"
+        :class="cn('fixed inset-0 z-50 flex items-center justify-center', props.containerClass)"
       >
         <!-- Backdrop -->
         <div
-          class="fixed inset-0 bg-black/80"
+          :class="cn('fixed inset-0 bg-black/80', props.backdropClass)"
+          :style="props.backdropStyle"
           @click="close"
         />
 
@@ -37,12 +52,19 @@ function close() {
             'relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg',
             $attrs.class as string
           )"
+          :style="props.contentStyle"
+          role="dialog"
+          aria-modal="true"
         >
           <!-- Close button -->
           <UiButton
+            v-if="props.showCloseButton"
             variant="ghost"
             size="icon"
-            class="absolute right-4 top-4 h-8 w-8 rounded-sm opacity-70 hover:opacity-100"
+            :class="cn(
+              'absolute right-4 top-4 h-8 w-8 rounded-sm opacity-70 hover:opacity-100',
+              props.closeButtonClass
+            )"
             haptic-intent="none"
             @click="close"
           >

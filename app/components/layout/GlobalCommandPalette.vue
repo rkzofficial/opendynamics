@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, CornerDownLeft, Ticket, UserRound, Building2, LoaderCircle, Command, ArrowDown, ArrowUp } from 'lucide-vue-next'
+import { Search, CornerDownLeft, Ticket, UserRound, Building2, LoaderCircle, Command, ArrowDown, ArrowUp, X } from 'lucide-vue-next'
 import { formatTimeAgo } from '~/utils/timeAgo'
 
 const {
@@ -21,14 +21,30 @@ const {
 } = useCommandPalette()
 
 const SEARCH_DEBOUNCE_MS = 250
+const MOBILE_SHEET_QUERY = '(max-width: 639px)'
+const MOBILE_SHEET_CLOSE_THRESHOLD = 120
+const MOBILE_SHEET_CLOSE_DURATION_MS = 180
 const inputId = 'global-command-palette-search'
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let mobileSheetCloseTimer: ReturnType<typeof setTimeout> | null = null
 const resultsContainerRef = ref<HTMLElement | null>(null)
+const isMobileSheet = ref(false)
+const isDraggingSheet = ref(false)
+const sheetOffsetY = ref(0)
+const dragStartY = ref(0)
+let mobileSheetMediaQuery: MediaQueryList | null = null
+let removeMobileSheetListener: (() => void) | null = null
 
 function clearSearchDebounce() {
   if (!searchDebounceTimer) return
   clearTimeout(searchDebounceTimer)
   searchDebounceTimer = null
+}
+
+function clearMobileSheetCloseTimer() {
+  if (!mobileSheetCloseTimer) return
+  clearTimeout(mobileSheetCloseTimer)
+  mobileSheetCloseTimer = null
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -54,6 +70,107 @@ function focusSearchInput() {
   inputElement?.focus()
   inputElement?.select()
 }
+
+function resetSheetPosition() {
+  clearMobileSheetCloseTimer()
+  isDraggingSheet.value = false
+  sheetOffsetY.value = 0
+  dragStartY.value = 0
+}
+
+function setIsMobileSheet(matches: boolean) {
+  isMobileSheet.value = matches
+  if (!matches) {
+    resetSheetPosition()
+  }
+}
+
+function addMobileSheetListener() {
+  if (!mobileSheetMediaQuery) return
+
+  const handler = (event: MediaQueryListEvent) => setIsMobileSheet(event.matches)
+  if (mobileSheetMediaQuery.addEventListener) {
+    mobileSheetMediaQuery.addEventListener('change', handler)
+  } else {
+    mobileSheetMediaQuery.addListener(handler)
+  }
+
+  return () => {
+    if (mobileSheetMediaQuery?.removeEventListener) {
+      mobileSheetMediaQuery.removeEventListener('change', handler)
+    } else {
+      mobileSheetMediaQuery?.removeListener(handler)
+    }
+  }
+}
+
+function handleSheetPointerDown(event: PointerEvent) {
+  if (!open.value || !isMobileSheet.value) return
+  if (event.pointerType === 'mouse' && event.button !== 0) return
+
+  clearMobileSheetCloseTimer()
+  isDraggingSheet.value = true
+  dragStartY.value = event.clientY
+}
+
+function handleWindowPointerMove(event: PointerEvent) {
+  if (!isDraggingSheet.value || !isMobileSheet.value) return
+
+  const delta = Math.max(0, event.clientY - dragStartY.value)
+  sheetOffsetY.value = delta
+}
+
+function finishSheetDrag(forceClose = false) {
+  if (!isDraggingSheet.value && !forceClose) return
+
+  const shouldClose = forceClose || sheetOffsetY.value >= MOBILE_SHEET_CLOSE_THRESHOLD
+  isDraggingSheet.value = false
+
+  if (!shouldClose) {
+    sheetOffsetY.value = 0
+    return
+  }
+
+  sheetOffsetY.value = window.innerHeight
+  clearMobileSheetCloseTimer()
+  mobileSheetCloseTimer = setTimeout(() => {
+    closePalette()
+    resetSheetPosition()
+  }, MOBILE_SHEET_CLOSE_DURATION_MS)
+}
+
+function handleWindowPointerUp() {
+  finishSheetDrag()
+}
+
+const sheetStyle = computed(() => {
+  if (!isMobileSheet.value) return {}
+
+  return {
+    transform: `translateY(${sheetOffsetY.value}px)`,
+    transition: isDraggingSheet.value
+      ? 'none'
+      : `transform ${MOBILE_SHEET_CLOSE_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+    willChange: 'transform',
+  }
+})
+
+const backdropStyle = computed(() => {
+  if (!isMobileSheet.value) {
+    return {
+      transition: `opacity ${MOBILE_SHEET_CLOSE_DURATION_MS}ms ease`,
+    }
+  }
+
+  const progress = Math.min(sheetOffsetY.value / Math.max(MOBILE_SHEET_CLOSE_THRESHOLD, 1), 1)
+
+  return {
+    opacity: `${1 - progress}`,
+    transition: isDraggingSheet.value
+      ? 'none'
+      : `opacity ${MOBILE_SHEET_CLOSE_DURATION_MS}ms ease`,
+  }
+})
 
 function handleGlobalKeydown(event: KeyboardEvent) {
   if (event.defaultPrevented) return
@@ -183,6 +300,7 @@ watch(query, () => {
 watch(open, (isOpen) => {
   if (!isOpen) {
     clearSearchDebounce()
+    resetSheetPosition()
     return
   }
 
@@ -208,21 +326,44 @@ watch(activeIndex, () => {
 })
 
 onMounted(() => {
+  mobileSheetMediaQuery = window.matchMedia(MOBILE_SHEET_QUERY)
+  removeMobileSheetListener = addMobileSheetListener()
+  setIsMobileSheet(mobileSheetMediaQuery.matches)
   window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('pointermove', handleWindowPointerMove, { passive: true })
+  window.addEventListener('pointerup', handleWindowPointerUp)
+  window.addEventListener('pointercancel', handleWindowPointerUp)
 })
 
 onUnmounted(() => {
   clearSearchDebounce()
+  clearMobileSheetCloseTimer()
+  removeMobileSheetListener?.()
   window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('pointermove', handleWindowPointerMove)
+  window.removeEventListener('pointerup', handleWindowPointerUp)
+  window.removeEventListener('pointercancel', handleWindowPointerUp)
 })
 </script>
 
 <template>
   <UiDialog
     v-model:open="open"
-    class="w-[min(56rem,calc(100vw-2rem))] max-w-none border border-border/80 p-0 gap-0 overflow-hidden shadow-2xl"
+    container-class="items-end sm:items-center"
+    :content-style="sheetStyle"
+    :show-close-button="false"
+    :backdrop-style="backdropStyle"
+    class="mt-auto w-full max-w-none gap-0 overflow-hidden rounded-t-[28px] border-x-0 border-b-0 border-t border-border/80 p-0 shadow-2xl sm:mt-0 sm:w-[min(56rem,calc(100vw-2rem))] sm:rounded-[28px] sm:border"
   >
     <div class="relative min-w-0 max-w-full">
+      <div
+        class="relative flex cursor-grab select-none justify-center border-b border-border/60 bg-background/95 px-4 pb-2 pt-2 [touch-action:none] active:cursor-grabbing sm:hidden"
+        data-command-sheet-handle
+        @pointerdown="handleSheetPointerDown"
+      >
+        <div class="h-1.5 w-12 rounded-full bg-muted-foreground/25" />
+      </div>
+
       <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(120,120,120,0.12),transparent_62%)]" />
 
       <div class="relative border-b bg-muted/20 px-4 pb-3 pt-3.5">
@@ -231,10 +372,22 @@ onUnmounted(() => {
             <Command class="h-3.5 w-3.5" />
             Command Center
           </div>
-          <div class="hidden items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[11px] text-muted-foreground sm:flex">
-            <kbd class="rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px]">Ctrl</kbd>
-            +
-            <kbd class="rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px]">/</kbd>
+          <div class="flex items-center gap-2">
+            <div class="hidden items-center gap-1.5 rounded-md border bg-background/80 px-2 py-1 text-[11px] text-muted-foreground sm:flex">
+              <kbd class="rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px]">Ctrl</kbd>
+              +
+              <kbd class="rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px]">/</kbd>
+            </div>
+            <UiButton
+              variant="ghost"
+              size="icon"
+              class="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+              haptic-intent="none"
+              @click="closePalette"
+            >
+              <X class="h-4 w-4" />
+              <span class="sr-only">Close command center</span>
+            </UiButton>
           </div>
         </div>
 
@@ -270,7 +423,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="relative h-[430px] min-w-0 overflow-hidden bg-background">
+      <div class="relative h-[min(62vh,30rem)] min-w-0 overflow-hidden bg-background sm:h-[430px]">
         <div
           v-if="!isSearchEnabled"
           class="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground"
