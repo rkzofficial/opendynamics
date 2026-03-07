@@ -68,7 +68,7 @@ function isActive(href: string) {
         <UiButton
           variant="ghost"
           size="icon"
-          class="lg:hidden h-8 w-8"
+          class="hidden md:inline-flex lg:hidden h-8 w-8"
           @click="openPalette"
         >
           <Search class="h-4 w-4" />

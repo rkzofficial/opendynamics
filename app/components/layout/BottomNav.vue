@@ -19,7 +19,7 @@ type NavItem = LinkItem | ActionItem
 
 const { isAdmin } = useAuth()
 const route = useRoute()
-const { openPalette } = useCommandPalette()
+const { open: paletteOpen, openPalette } = useCommandPalette()
 
 const navItems = computed<NavItem[]>(() => [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard, type: 'link' },
@@ -35,6 +35,11 @@ function isActive(item: NavItem) {
   return route.path.startsWith(item.href)
 }
 
+function isSelected(item: NavItem) {
+  if (item.type === 'action') return paletteOpen.value
+  return isActive(item)
+}
+
 function handleSearch() {
   openPalette()
 }
@@ -46,42 +51,68 @@ function handleSearch() {
     aria-label="Bottom navigation"
   >
     <div
-      class="pointer-events-auto flex h-20 items-center justify-around bg-background shadow-[0_-2px_8px_0_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/95"
+      class="pointer-events-auto border-t border-border/60 bg-background/95 px-2 shadow-[0_-10px_30px_-24px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-background/85"
     >
-      <template v-for="item in navItems" :key="item.label">
-        <NuxtLink
-          v-if="item.type === 'link'"
-          :to="item.href"
-          class="flex h-full flex-1 items-center justify-center px-3"
-          :aria-current="isActive(item) ? 'page' : undefined"
-        >
-          <div
-            :class="[
-              'flex min-w-[64px] max-w-[120px] flex-col items-center justify-center gap-1 rounded-2xl px-4 py-3 text-xs font-medium transition-all duration-200',
-              isActive(item)
-                ? 'bg-secondary text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50 active:bg-muted'
-            ]"
+      <div class="grid h-20 grid-cols-3 gap-1">
+        <template v-for="item in navItems" :key="item.label">
+          <NuxtLink
+            v-if="item.type === 'link'"
+            :to="item.href"
+            class="group flex min-w-0 items-center justify-center"
+            :aria-current="isActive(item) ? 'page' : undefined"
           >
-            <component :is="item.icon" class="h-6 w-6" />
-            <span class="text-[11px]">{{ item.label }}</span>
-          </div>
-        </NuxtLink>
+            <span class="flex w-full max-w-[112px] flex-col items-center justify-center gap-1 px-1 py-2">
+              <span
+                :class="[
+                  'flex h-8 min-w-[64px] items-center justify-center rounded-full px-5 transition-all duration-200',
+                  isSelected(item)
+                    ? 'bg-secondary text-foreground shadow-sm'
+                    : 'text-muted-foreground group-hover:bg-muted/60 group-active:bg-muted'
+                ]"
+              >
+                <component :is="item.icon" class="h-6 w-6" />
+              </span>
+              <span
+                :class="[
+                  'text-[11px] font-medium leading-none tracking-[0.015em] transition-colors duration-200',
+                  isSelected(item) ? 'text-foreground' : 'text-muted-foreground'
+                ]"
+              >
+                {{ item.label }}
+              </span>
+            </span>
+          </NuxtLink>
 
-        <button
-          v-else
-          type="button"
-          class="flex h-full flex-1 items-center justify-center px-3"
-          @click="handleSearch"
-        >
-          <div
-            class="flex min-w-[64px] max-w-[120px] flex-col items-center justify-center gap-1 rounded-2xl bg-secondary px-4 py-3 text-xs font-medium text-foreground transition-all duration-200 hover:bg-secondary/80 active:bg-secondary/90"
+          <button
+            v-else
+            type="button"
+            class="group flex min-w-0 items-center justify-center"
+            :aria-pressed="isSelected(item)"
+            @click="handleSearch"
           >
-            <Search class="h-6 w-6" />
-            <span class="text-[11px]">{{ item.label }}</span>
-          </div>
-        </button>
-      </template>
+            <span class="flex w-full max-w-[112px] flex-col items-center justify-center gap-1 px-1 py-2">
+              <span
+                :class="[
+                  'flex h-8 min-w-[64px] items-center justify-center rounded-full px-5 transition-all duration-200',
+                  isSelected(item)
+                    ? 'bg-secondary text-foreground shadow-sm'
+                    : 'text-muted-foreground group-hover:bg-muted/60 group-active:bg-muted'
+                ]"
+              >
+                <component :is="item.icon" class="h-6 w-6" />
+              </span>
+              <span
+                :class="[
+                  'text-[11px] font-medium leading-none tracking-[0.015em] transition-colors duration-200',
+                  isSelected(item) ? 'text-foreground' : 'text-muted-foreground'
+                ]"
+              >
+                {{ item.label }}
+              </span>
+            </span>
+          </button>
+        </template>
+      </div>
     </div>
   </nav>
 </template>
