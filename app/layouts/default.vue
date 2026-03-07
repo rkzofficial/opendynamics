@@ -5,7 +5,7 @@ const { initTheme } = useTheme()
 const router = useRouter()
 
 const HEADER_HEIGHT = 56
-const BOTTOM_NAV_HEIGHT = 72
+const BOTTOM_NAV_HEIGHT = 80
 
 const headerHiddenOffset = ref(0)
 const bottomHiddenOffset = ref(0)
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
     <LayoutHeader :style="headerTransformStyle" />
     <LayoutGlobalCommandPalette />
 
-    <main class="flex-1 p-4 pb-28 md:p-6 md:pb-8">
+    <main class="flex-1 p-4 pb-24 md:p-6 md:pb-8">
       <slot />
     </main>
 
