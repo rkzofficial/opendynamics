@@ -231,6 +231,13 @@ function handleExternalNoteModalOpenChange(open: boolean) {
 }
 
 function handleBack() {
+  const previousPath = window.history.state?.back
+
+  if (typeof previousPath === 'string' && previousPath.startsWith('/cases')) {
+    router.back()
+    return
+  }
+
   router.push('/cases')
 }
 

@@ -3,6 +3,9 @@ import { Link2, FolderOpen } from 'lucide-vue-next'
 
 const { isAdmin } = useAuth()
 const router = useRouter()
+const CASES_SCROLL_STORAGE_KEY = 'cases:list:scroll-y'
+const pendingScrollRestoreY = ref<number | null>(null)
+let restoreScrollTimer: ReturnType<typeof setTimeout> | null = null
 
 // Redirect admins to admin cases page
 onMounted(() => {
@@ -30,12 +33,93 @@ const {
   setPageSize,
 } = useCases()
 
+function clearRestoreScrollTimer() {
+  if (!restoreScrollTimer) return
+  clearTimeout(restoreScrollTimer)
+  restoreScrollTimer = null
+}
+
+function saveCasesScrollPosition() {
+  sessionStorage.setItem(CASES_SCROLL_STORAGE_KEY, String(window.scrollY))
+}
+
+function scheduleScrollRestore(attempt = 0) {
+  if (pendingScrollRestoreY.value === null) return
+
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      const targetY = pendingScrollRestoreY.value
+      if (targetY === null) return
+
+      window.scrollTo({ top: targetY, behavior: 'auto' })
+
+      const maxScrollY = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0)
+      const canReachTarget = maxScrollY + 4 >= targetY
+      const restored = canReachTarget && Math.abs(window.scrollY - targetY) < 4
+
+      if (restored || attempt >= 12) {
+        pendingScrollRestoreY.value = null
+        sessionStorage.removeItem(CASES_SCROLL_STORAGE_KEY)
+        clearRestoreScrollTimer()
+        return
+      }
+
+      clearRestoreScrollTimer()
+      restoreScrollTimer = setTimeout(() => {
+        scheduleScrollRestore(attempt + 1)
+      }, 80)
+    })
+  })
+}
+
+function prepareScrollRestore() {
+  if (process.server) return
+
+  const savedValue = Number(sessionStorage.getItem(CASES_SCROLL_STORAGE_KEY))
+  if (!Number.isFinite(savedValue) || savedValue < 0) {
+    sessionStorage.removeItem(CASES_SCROLL_STORAGE_KEY)
+    return
+  }
+
+  pendingScrollRestoreY.value = savedValue
+  scheduleScrollRestore()
+}
+
 // Fetch filter options when connected
 watch(connectionStatus, (status) => {
   if (status?.connected) {
     fetchStatusReasonOptions()
   }
 }, { immediate: true })
+
+watch(
+  () => [isLoading.value, cases.value.length] as const,
+  ([loading]) => {
+    if (!loading && pendingScrollRestoreY.value !== null) {
+      scheduleScrollRestore()
+    }
+  }
+)
+
+onMounted(() => {
+  prepareScrollRestore()
+})
+
+onBeforeRouteLeave((to) => {
+  clearRestoreScrollTimer()
+
+  if (to.path.startsWith('/cases/')) {
+    saveCasesScrollPosition()
+    return
+  }
+
+  sessionStorage.removeItem(CASES_SCROLL_STORAGE_KEY)
+  pendingScrollRestoreY.value = null
+})
+
+onUnmounted(() => {
+  clearRestoreScrollTimer()
+})
 
 function handleFilterChange(filters: { search: string; status: string; statusReason: string; priority: string; dxPendingRelease: boolean; orderBy?: string; orderDirection?: 'asc' | 'desc' }) {
   setFilters({
