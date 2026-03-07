@@ -53,7 +53,7 @@ function handleSearch() {
     <div
       class="pointer-events-auto border-t border-border/60 bg-background/95 px-2 shadow-[0_-10px_30px_-24px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-background/85"
     >
-      <div class="grid h-20 grid-cols-3 gap-1">
+      <div class="grid h-16 grid-cols-3 gap-1">
         <template v-for="item in navItems" :key="item.label">
           <NuxtLink
             v-if="item.type === 'link'"
@@ -61,20 +61,20 @@ function handleSearch() {
             class="group flex min-w-0 items-center justify-center"
             :aria-current="isActive(item) ? 'page' : undefined"
           >
-            <span class="flex w-full max-w-[112px] flex-col items-center justify-center gap-1 px-1 py-2">
+            <span class="flex w-full max-w-[112px] flex-col items-center justify-center gap-0.5 px-1 py-1.5">
               <span
                 :class="[
-                  'flex h-8 min-w-[64px] items-center justify-center rounded-full px-5 transition-all duration-200',
+                  'flex h-7 min-w-[56px] items-center justify-center rounded-full px-4 transition-all duration-200',
                   isSelected(item)
                     ? 'bg-secondary text-foreground shadow-sm'
                     : 'text-muted-foreground group-hover:bg-muted/60 group-active:bg-muted'
                 ]"
               >
-                <component :is="item.icon" class="h-6 w-6" />
+                <component :is="item.icon" class="h-5 w-5" />
               </span>
               <span
                 :class="[
-                  'text-[11px] font-medium leading-none tracking-[0.015em] transition-colors duration-200',
+                  'text-[10px] font-medium leading-none tracking-[0.015em] transition-colors duration-200',
                   isSelected(item) ? 'text-foreground' : 'text-muted-foreground'
                 ]"
               >
@@ -90,20 +90,20 @@ function handleSearch() {
             :aria-pressed="isSelected(item)"
             @click="handleSearch"
           >
-            <span class="flex w-full max-w-[112px] flex-col items-center justify-center gap-1 px-1 py-2">
+            <span class="flex w-full max-w-[112px] flex-col items-center justify-center gap-0.5 px-1 py-1.5">
               <span
                 :class="[
-                  'flex h-8 min-w-[64px] items-center justify-center rounded-full px-5 transition-all duration-200',
+                  'flex h-7 min-w-[56px] items-center justify-center rounded-full px-4 transition-all duration-200',
                   isSelected(item)
                     ? 'bg-secondary text-foreground shadow-sm'
                     : 'text-muted-foreground group-hover:bg-muted/60 group-active:bg-muted'
                 ]"
               >
-                <component :is="item.icon" class="h-6 w-6" />
+                <component :is="item.icon" class="h-5 w-5" />
               </span>
               <span
                 :class="[
-                  'text-[11px] font-medium leading-none tracking-[0.015em] transition-colors duration-200',
+                  'text-[10px] font-medium leading-none tracking-[0.015em] transition-colors duration-200',
                   isSelected(item) ? 'text-foreground' : 'text-muted-foreground'
                 ]"
               >
