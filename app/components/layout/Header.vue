@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { Menu, Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, X, Search } from 'lucide-vue-next'
+import { Bell, Settings, Zap, LayoutDashboard, FolderOpen, Users, Eye, Search } from 'lucide-vue-next'
 
 const { isAdmin } = useAuth()
 const { openPalette } = useCommandPalette()
 const route = useRoute()
-
-const mobileMenuOpen = ref(false)
 
 const navigation = computed(() => {
   const items = [
@@ -31,11 +29,6 @@ function isActive(href: string) {
     return route.path === '/'
   }
   return route.path.startsWith(href)
-}
-
-function openSearchFromMobile() {
-  mobileMenuOpen.value = false
-  openPalette()
 }
 </script>
 
@@ -67,18 +60,6 @@ function openSearchFromMobile() {
           {{ item.name }}
         </NuxtLink>
       </nav>
-
-      <!-- Mobile Menu Button -->
-      <UiButton
-        variant="ghost"
-        size="icon"
-        class="md:hidden h-8 w-8"
-        haptic-intent="none"
-        @click="mobileMenuOpen = !mobileMenuOpen"
-      >
-        <Menu v-if="!mobileMenuOpen" class="h-4 w-4" />
-        <X v-else class="h-4 w-4" />
-      </UiButton>
 
       <div class="flex-1" />
 
@@ -126,38 +107,5 @@ function openSearchFromMobile() {
         <LayoutUserMenu />
       </div>
     </div>
-
-    <!-- Mobile Navigation -->
-    <nav
-      v-if="mobileMenuOpen"
-      class="md:hidden border-t bg-background px-4 py-2"
-    >
-      <div class="flex flex-col gap-1">
-        <UiButton
-          variant="ghost"
-          class="justify-start gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-          @click="openSearchFromMobile"
-        >
-          <Search class="h-4 w-4" />
-          Search
-        </UiButton>
-
-        <NuxtLink
-          v-for="item in navigation"
-          :key="item.name"
-          :to="item.href"
-          :class="[
-            'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-            isActive(item.href)
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-          ]"
-          @click="mobileMenuOpen = false"
-        >
-          <component :is="item.icon" class="h-4 w-4" />
-          {{ item.name }}
-        </NuxtLink>
-      </div>
-    </nav>
   </header>
 </template>
